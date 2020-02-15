@@ -52,10 +52,10 @@ for await (const req of s) {
         {
           type: "reference",
           id: "3f96ad3b1c040452",
-          site: file.name,
+          site: `${file.name}:3000`,
           slug: "welcome-visitors",
-          title: file.name,
-          text: ""
+          title: "Welcome Visitors",
+          text: file.name
         }
       )
     }
