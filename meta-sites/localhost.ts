@@ -22,8 +22,20 @@ class Localhost extends Site {
     }
 
     async serve(req: ServerRequest) {
+        if (req.url == "/welcome-visitors.json") {
+            this.serveJson(req, {
+                title: "Welcome Visitors",
+                story: [
+                    {
+                        type: "paragraph",
+                        text: "[[hello]]",
+                        id: "ab35d"
+                    }
+                ],
+            })
+        }
         // These are meta-pages from the meta-pages folder
-        if (window["metaPages"][req.url]) {
+        else if (window["metaPages"][req.url]) {
             console.log("calling:", window["metaPages"][req.url])
             let data = await window["metaPages"][req.url]()
             this.serveJson(req, data)
