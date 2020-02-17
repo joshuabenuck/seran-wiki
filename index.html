@@ -1,0 +1,234 @@
+<html>
+
+<head>
+    <style>
+        body {
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            position: absolute;
+            background: #eeeeee url("/crosses.png");
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+            font-family: "Helvetica Neue", Verdana, helvetica, Arial, Sans;
+            line-height: 1.3;
+            color: #333333;
+        }
+
+        wiki-root {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        footer {
+            border-top: 1px solid #3d3c43;
+            box-shadow: inset 0px 0px 7px rgba(0, 0, 0, 0.8);
+            background: #eeeeee url("noise.png");
+            flex-basis: 20px;
+            padding: 10px;
+            font-size: 80%;
+            color: #ccdcd2;
+        }
+
+        wiki-lineup {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+        }
+
+        wiki-page {
+            flex: 0 0 480px;
+            background-color: white;
+            margin: 8px;
+        }
+
+        wiki-page.plugin>.paper {
+            box-shadow: inset 0px 0px 40px 0px rgba(0, 220, 0, .5);
+        }
+
+        wiki-page.local>.paper {
+            box-shadow: inset 0px 0px 40px 0px rgba(220, 180, 0, .7);
+        }
+
+        wiki-page.remote>.paper {
+            box-shadow: inset 0px 0px 40px 0px rgba(0, 180, 220, .5);
+        }
+
+        wiki-page.recycler>.paper {
+            box-shadow: inset 0px 0px 40px 0px rgba(220, 0, 0, .5)
+        }
+    </style>
+    <script type="text/javascript">
+        class Paragraph extends HTMLElement {
+            connectedCallback() {
+                let shadow = this.attachShadow({ mode: "open" })
+                let css = `
+                    :host {
+                        display: block;
+                    }
+                `
+                let style = document.createElement("style")
+                style.innerHTML = css
+                shadow.appendChild(style)
+                let p = document.createElement("p")
+                let slot = document.createElement("slot")
+                p.appendChild(slot)
+                shadow.appendChild(p)
+                // placeholder... how to save off content?
+                this.text = this.textContent
+            }
+
+            emit(json) {
+
+            }
+
+            bind() {
+
+            }
+
+            // export to toString or serialize?
+            export() {
+                return {
+                    type: "paragraph",
+                    id: "abc123",
+                    text: this.text
+                }
+            }
+        }
+        customElements.define("wiki-paragraph", Paragraph);
+
+        class Page extends HTMLElement {
+            connectedCallback() {
+                let shadow = this.attachShadow({ mode: 'open' })
+                let css = `
+                    .paper {
+                        /*width: 430px;*/
+                        padding: 30px;
+                        min-height: 100%;
+                    }
+                `
+                let style = document.createElement("style")
+                style.innerHTML = css
+                shadow.appendChild(style)
+
+                let paper = document.createElement("div")
+                paper.className = "paper"
+                shadow.appendChild(paper)
+
+                let title = this.getAttribute("title")
+                if (!title) {
+                    title = "empty"
+                }
+
+                // TODO: Put header into its own web component
+                // <wiki-header title="" flag="" url=""/>
+                let header = document.createElement("div")
+                let h1 = document.createElement("h1")
+                h1.title = title
+
+                let span = document.createElement("span")
+
+                let flagLink = document.createElement("a")
+                flagLink.setAttribute("href", "")
+                flagLink.setAttribute("target", "")
+
+                let flag = document.createElement("img")
+                flag.setAttribute("src", "/favicon.png")
+
+                flagLink.appendChild(flag)
+                span.appendChild(flagLink)
+                span.appendChild(document.createTextNode(title))
+                h1.appendChild(span)
+                header.appendChild(h1)
+                paper.appendChild(header)
+
+                let slot = document.createElement("slot")
+                paper.appendChild(slot)
+            }
+
+            disconnectedCallback() { }
+
+            attributeChangedCallback(attrName, oldValue, newValue) {
+                if (attrName == "TITLE") {
+                }
+            }
+
+            static get observedAttributes() {
+                return ["title"]
+            }
+
+            get title() {
+                this.getElementsByTagName("title")[0]
+            }
+
+            addParagraph(text) {
+                let paragraph = document.createElement("wiki-paragraph")
+                paragraph.textContent = text
+                this.appendChild(paragraph)
+            }
+        }
+        customElements.define("wiki-page", Page);
+
+        class Lineup extends HTMLElement {
+            constructor() {
+                super()
+            }
+
+            get pages() {
+                return this.getElementsByTagName("wiki-page")
+            }
+
+            newPage(title) {
+                let page = new Page()
+                page.setAttribute("title", title)
+                this.appendChild(page)
+                return page
+            }
+        }
+        customElements.define("wiki-lineup", Lineup);
+
+        class Wiki extends HTMLElement {
+            constructor() {
+                super()
+                window.wiki = this
+            }
+
+            connectedCallback() {
+            }
+
+            get lineup() {
+                return this.getElementsByTagName("wiki-lineup")[0]
+            }
+
+            get pages() {
+                return this.lineup.pages
+            }
+        }
+        customElements.define("wiki-root", Wiki);
+
+        document.addEventListener("readystatechange", (e) => {
+            if (event.target.readyState != "complete") {
+                return
+            }
+            let wiki = document.getElementsByTagName("wiki-root")[0]
+            let welcome = wiki.lineup.newPage("Welcome Visitors")
+            welcome.addParagraph("Exploring a possible web components based wiki client side API")
+            let example = wiki.lineup.newPage("API Example")
+            example.addParagraph("These pages and items were created using a simple JavaScript API")
+        })
+    </script>
+</head>
+
+<body>
+    <wiki-root>
+        <wiki-lineup>
+        </wiki-lineup>
+        <footer></footer>
+    </wiki-root>
+</body>
+
+</html>
