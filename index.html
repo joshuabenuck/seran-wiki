@@ -63,6 +63,29 @@
         }
     </style>
     <script type="text/javascript">
+        class Reference extends HTMLElement {
+            connectedCallback() {
+                let shadow = this.attachShadow({ mode: "open" })
+                let css = `
+                    :host {
+                        display: block;
+                    }
+                `
+                let style = document.createElement("style")
+                style.innerHTML = css
+                shadow.appendChild(style)
+                let p = document.createElement("p")
+                let link = document.createElement("a")
+                let site = this.getAttribute("site")
+                let slug = this.getAttribute("slug")
+                link.setAttribute("href", `javascript:wiki.loadRemotePage("${site}", "${slug}")`)
+                link.appendChild(document.createTextNode(`${site}/${slug}`))
+                p.appendChild(link)
+                shadow.appendChild(p)
+            }
+        }
+        customElements.define("wiki-reference", Reference);
+
         class Paragraph extends HTMLElement {
             connectedCallback() {
                 let shadow = this.attachShadow({ mode: "open" })
@@ -170,6 +193,13 @@
                 paragraph.textContent = text
                 this.appendChild(paragraph)
             }
+
+            addReference(site, slug) {
+                let ref = document.createElement("wiki-reference")
+                ref.setAttribute("site", site)
+                ref.setAttribute("slug", slug)
+                this.appendChild(ref)
+            }
         }
         customElements.define("wiki-page", Page);
 
@@ -187,6 +217,10 @@
                 page.setAttribute("title", title)
                 this.appendChild(page)
                 return page
+            }
+
+            closePageByIndex(index) {
+                this.pages[index].remove()
             }
         }
         customElements.define("wiki-lineup", Lineup);
@@ -207,6 +241,33 @@
             get pages() {
                 return this.lineup.pages
             }
+
+            async loadPage(slug) {
+                let res = await fetch(`/${slug}.json`)
+                await this.renderPage(res)
+            }
+
+            async loadRemotePage(site, slug) {
+                let res = await fetch(`http://${site}/${slug}.json`)
+                await this.renderPage(res)
+            }
+
+            async renderPage(res) {
+                let json = await res.json()
+                console.log(json)
+                let page = this.lineup.newPage(json.title)
+                for (let pageContent of json.story) {
+                    if (pageContent.type == "paragraph") {
+                        page.addParagraph(pageContent.text)
+                    }
+                    else if (pageContent.type == "reference") {
+                        page.addReference(pageContent.site, pageContent.slug)
+                    }
+                    else {
+                        page.addParagraph(`Unknown type: ${pageContent.type}`)
+                    }
+                }
+            }
         }
         customElements.define("wiki-root", Wiki);
 
@@ -215,10 +276,9 @@
                 return
             }
             let wiki = document.getElementsByTagName("wiki-root")[0]
-            let welcome = wiki.lineup.newPage("Welcome Visitors")
+            let welcome = wiki.lineup.newPage("Web Components API")
             welcome.addParagraph("Exploring a possible web components based wiki client side API")
-            let example = wiki.lineup.newPage("API Example")
-            example.addParagraph("These pages and items were created using a simple JavaScript API")
+            wiki.loadPage("sites")
         })
     </script>
 </head>
