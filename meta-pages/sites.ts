@@ -11,7 +11,7 @@ async function readDir(path) {
 }
 
 async function sites() {
-    let path = "c:/users/joshu/.wiki"
+    let path = `${Deno.dir("home")}/.wiki`
     let files = []
     for (let file of await readDir(path)) {
         if (file.name == "assets" ||
