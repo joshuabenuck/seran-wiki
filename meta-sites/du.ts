@@ -71,4 +71,4 @@ class DuSite extends Site {
     }
 }
 
-window["metaSites"]["du.rog:8000"] = new DuSite()
+window["metaSites"]["du.localhost:8000"] = new DuSite()
