@@ -244,12 +244,14 @@
 
             async loadPage(slug) {
                 let res = await fetch(`/${slug}.json`)
-                await this.renderPage(res)
+                let page = await this.renderPage(res)
+                page.scrollIntoViewIfNeeded()
             }
 
             async loadRemotePage(site, slug) {
                 let res = await fetch(`http://${site}/${slug}.json`)
-                await this.renderPage(res)
+                let page = await this.renderPage(res)
+                page.scrollIntoViewIfNeeded()
             }
 
             async renderPage(res) {
@@ -267,6 +269,7 @@
                         page.addParagraph(`Unknown type: ${pageContent.type}`)
                     }
                 }
+                return page
             }
         }
         customElements.define("wiki-root", Wiki);
