@@ -1,4 +1,4 @@
-async function sites() {
+export async function sites() {
     let sites = []
     for (let site of Object.keys(window["metaSites"])) {
         sites.push(
@@ -18,5 +18,3 @@ async function sites() {
     }
     return data
 }
-
-window["metaPages"]["/deno-sites.json"] = sites

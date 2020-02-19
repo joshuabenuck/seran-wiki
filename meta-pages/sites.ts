@@ -10,7 +10,7 @@ async function readDir(path) {
     return await Deno.readDir(path);
 }
 
-async function sites() {
+export async function sites() {
     let path = `${Deno.dir("home")}/.wiki`
     let files = []
     for (let file of await readDir(path)) {
@@ -38,5 +38,3 @@ async function sites() {
     console.log("returning data:", data)
     return data
 }
-
-window["metaPages"]["/sites.json"] = sites

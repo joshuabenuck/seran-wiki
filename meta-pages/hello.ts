@@ -1,4 +1,4 @@
-function hello() {
+export function hello() {
     return {
         title: "Welcome Visitors",
         story: [
@@ -10,5 +10,3 @@ function hello() {
         ]
     }
 }
-
-window["metaPages"]["/hello.json"] = hello

@@ -16,8 +16,16 @@ class Localhost extends Site {
     // since constructors cannot be async and readDir is async, use an init method
     async init() {
         for (let metaPagePath of await readDir("./meta-pages")) {
-            console.log(metaPagePath.name)
-            await import(`../meta-pages/${metaPagePath.name}`)
+            let metaPage = await import(`../meta-pages/${metaPagePath.name}`)
+            let exports = Object.keys(metaPage)
+            if (exports.length > 1) {
+                console.log(`Warning: Only registering first export of ${metaPagePath.name}`)
+            }
+            else if (exports.length == 0) {
+                console.log(`Warning: Unable to register meta-page for ${metaPagePath.name}`)
+                continue
+            }
+            this.metaPages[`/${metaPagePath.name.replace(/\.[tj]s$/, "")}.json`] = metaPage[exports[0]]
         }
     }
 
