@@ -12,7 +12,7 @@ async function readDir(path) {
     return await Deno.readDir(path);
 }
 
-class Localhost extends Site {
+export class Localhost extends Site {
     // since constructors cannot be async and readDir is async, use an init method
     async init() {
         for (let metaPagePath of await readDir("./meta-pages")) {
@@ -58,7 +58,3 @@ class Localhost extends Site {
         }
     }
 }
-
-let site = new Localhost()
-await site.init()
-window["metaSites"]["localhost:8000"] = site

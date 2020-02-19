@@ -13,7 +13,7 @@ async function readDir(path) {
     return await Deno.readDir(path);
 }
 
-class DuSite extends Site {
+export class Du extends Site {
     b32path(path) {
         return encode(new TextEncoder().encode(path)).replace(/=/g, "")
     }
@@ -70,5 +70,3 @@ class DuSite extends Site {
         }
     }
 }
-
-window["metaSites"]["du.localhost:8000"] = new DuSite()

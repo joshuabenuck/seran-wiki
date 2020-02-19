@@ -2,7 +2,8 @@ const { ErrorKind, DenoError, args, stat, open, exit } = Deno;
 import { serve } from "https://deno.land/std@v0.30.0/http/server.ts";
 import { main } from "./journalck.ts"
 import { WikiClient } from "./client.ts"
-const s = serve({ port: 8000 });
+let port = 8000
+const s = serve({ port });
 
 async function readDir(path) {
   let fileInfo = await stat(path)
@@ -19,7 +20,21 @@ window["metaPages"] = {}
 window["metaSites"] = {}
 for (let metaSitePath of await readDir("./meta-sites")) {
   console.log(metaSitePath.name)
-  await import(`./meta-sites/${metaSitePath.name}`)
+  let metaSite = await import(`./meta-sites/${metaSitePath.name}`)
+  let name = metaSitePath.name.replace(/\.[tj]s$/, "")
+  let exports = Object.keys(metaSite)
+  if (exports.length > 1) {
+      console.log(`Warning: Only registering first export of ${metaSitePath.name}`)
+  }
+  else if (exports.length == 0) {
+      console.log(`Warning: Unable to register meta-site for ${metaSitePath.name}`)
+      continue
+  }
+  let site = new metaSite[exports[0]]()
+  if (site.init) {
+    await site.init()
+  }
+  window["metaSites"][`${name}:${port}`] = site
 }
 
 for await (const req of s) {
