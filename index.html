@@ -44,23 +44,14 @@
             flex: 0 0 480px;
             background-color: white;
             margin: 8px;
+            box-shadow: 2px 1px 4px rgba(0, 0, 0, 0.2);
         }
 
-        wiki-page.plugin>.paper {
-            box-shadow: inset 0px 0px 40px 0px rgba(0, 220, 0, .5);
+        wiki-page.active {
+            box-shadow: 2px 1px 24px rgba(0, 0, 0, 0.4);
+            z-index: 10;
         }
 
-        wiki-page.local>.paper {
-            box-shadow: inset 0px 0px 40px 0px rgba(220, 180, 0, .7);
-        }
-
-        wiki-page.remote>.paper {
-            box-shadow: inset 0px 0px 40px 0px rgba(0, 180, 220, .5);
-        }
-
-        wiki-page.recycler>.paper {
-            box-shadow: inset 0px 0px 40px 0px rgba(220, 0, 0, .5)
-        }
     </style>
     <script type="text/javascript">
         class Reference extends HTMLElement {
@@ -129,6 +120,21 @@
                 this.addEventListener("click", this.activate)
                 let shadow = this.attachShadow({ mode: 'open' })
                 let css = `
+                    :host(.plugin)>.paper {
+                        box-shadow: inset 0px 0px 40px 0px rgba(0, 220, 0, .5);
+                    }
+
+                    :host(.local)>.paper {
+                        box-shadow: inset 0px 0px 40px 0px rgba(220, 180, 0, .7);
+                    }
+
+                    :host(.remote)>.paper {
+                        box-shadow: inset 0px 0px 40px 0px rgba(0, 180, 220, .5);
+                    }
+
+                    :host(.recycler)>.paper {
+                        box-shadow: inset 0px 0px 40px 0px rgba(220, 0, 0, .5)
+                    }
                     .paper {
                         /*width: 430px;*/
                         padding: 30px;
@@ -140,6 +146,9 @@
                 shadow.appendChild(style)
 
                 let site = this.getAttribute("site")
+                if (site) {
+                    this.classList.add("remote")
+                }
 
                 let title = this.getAttribute("title")
                 if (!title) {
@@ -225,24 +234,21 @@
             connectedCallback() {
                 this.setAttribute("tabindex", -1)
                 this.addEventListener("keydown", (ev) => {
-                    console.log(ev)
-                    let actives = document.getElementsByClassName(".active")
+                    let actives = document.getElementsByClassName("active")
                     if (actives.length == 0) {
                         actives = [this.pages[this.pages.length - 1]]
                     }
-                    let active = this.actives[0]
+                    let active = actives[0]
                     let index = [...this.pages].indexOf(active)
                     let max = this.pages.length - 1
                     let min = 0
                     if (ev.key == "ArrowLeft") {
-                        console.log("left")
-                        if (index != min) {
+                        if (index > min) {
                             this.pages[index - 1].activate()
                         }
                     }
                     if (ev.key == "ArrowRight") {
-                        console.log("right")
-                        if (index != max) {
+                        if (index < max) {
                             this.pages[index + 1].activate()
                         }
                     }
