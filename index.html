@@ -126,6 +126,10 @@
 
         class Page extends HTMLElement {
             connectedCallback() {
+                this.addEventListener("keydown", (ev) => {
+                    console.log(ev)
+                })
+                this.addEventListener("click", this.activate)
                 let shadow = this.attachShadow({ mode: 'open' })
                 let css = `
                     .paper {
@@ -138,14 +142,17 @@
                 style.innerHTML = css
                 shadow.appendChild(style)
 
-                let paper = document.createElement("div")
-                paper.className = "paper"
-                shadow.appendChild(paper)
+                let site = this.getAttribute("site")
 
                 let title = this.getAttribute("title")
                 if (!title) {
                     title = "empty"
                 }
+
+                // TODO: Style if remote or ghost or local
+                let paper = document.createElement("div")
+                paper.className = "paper"
+                shadow.appendChild(paper)
 
                 // TODO: Put header into its own web component
                 // <wiki-header title="" flag="" url=""/>
@@ -155,12 +162,17 @@
 
                 let span = document.createElement("span")
 
+                let prefix = ""
+                if (site) {
+                    // TODO: Descend into madness by detecting http vs https
+                    prefix = `http://${site}`
+                }
                 let flagLink = document.createElement("a")
-                flagLink.setAttribute("href", "")
+                flagLink.setAttribute("href", `${prefix}/view/welcome-visitors`)
                 flagLink.setAttribute("target", "")
 
                 let flag = document.createElement("img")
-                flag.setAttribute("src", "/favicon.png")
+                flag.setAttribute("src", `${prefix}/favicon.png`)
 
                 flagLink.appendChild(flag)
                 span.appendChild(flagLink)
@@ -200,20 +212,31 @@
                 ref.setAttribute("slug", slug)
                 this.appendChild(ref)
             }
+
+            activate() {
+                this.scrollIntoViewIfNeeded()
+                let actives = document.getElementsByClassName("active")
+                for (let active of actives) {
+                    active.classList.remove("active")
+                }
+                this.classList.add("active")
+            }
         }
         customElements.define("wiki-page", Page);
 
         class Lineup extends HTMLElement {
-            constructor() {
-                super()
+            connectedCallback() {
             }
 
             get pages() {
                 return this.getElementsByTagName("wiki-page")
             }
 
-            newPage(title) {
+            newPage(title, site) {
                 let page = new Page()
+                if (site) {
+                    page.setAttribute("site", site)
+                }
                 page.setAttribute("title", title)
                 this.appendChild(page)
                 return page
@@ -250,14 +273,14 @@
 
             async loadRemotePage(site, slug) {
                 let res = await fetch(`http://${site}/${slug}.json`)
-                let page = await this.renderPage(res)
+                let page = await this.renderPage(res, site)
                 page.scrollIntoViewIfNeeded()
             }
 
-            async renderPage(res) {
+            async renderPage(res, site) {
                 let json = await res.json()
                 console.log(json)
-                let page = this.lineup.newPage(json.title)
+                let page = this.lineup.newPage(json.title, site)
                 for (let pageContent of json.story) {
                     if (pageContent.type == "paragraph") {
                         page.addParagraph(pageContent.text)
