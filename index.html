@@ -126,9 +126,6 @@
 
         class Page extends HTMLElement {
             connectedCallback() {
-                this.addEventListener("keydown", (ev) => {
-                    console.log(ev)
-                })
                 this.addEventListener("click", this.activate)
                 let shadow = this.attachShadow({ mode: 'open' })
                 let css = `
@@ -226,6 +223,30 @@
 
         class Lineup extends HTMLElement {
             connectedCallback() {
+                this.setAttribute("tabindex", -1)
+                this.addEventListener("keydown", (ev) => {
+                    console.log(ev)
+                    let actives = document.getElementsByClassName(".active")
+                    if (actives.length == 0) {
+                        actives = [this.pages[this.pages.length - 1]]
+                    }
+                    let active = this.actives[0]
+                    let index = [...this.pages].indexOf(active)
+                    let max = this.pages.length - 1
+                    let min = 0
+                    if (ev.key == "ArrowLeft") {
+                        console.log("left")
+                        if (index != min) {
+                            this.pages[index - 1].activate()
+                        }
+                    }
+                    if (ev.key == "ArrowRight") {
+                        console.log("right")
+                        if (index != max) {
+                            this.pages[index + 1].activate()
+                        }
+                    }
+                })
             }
 
             get pages() {
