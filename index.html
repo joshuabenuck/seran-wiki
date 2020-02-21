@@ -57,6 +57,12 @@
                     :host {
                         display: block;
                     }
+                    img {
+                        width: 16px;
+                        height: 16px;
+                        margin-right: 6px;
+                        margin-bottom: -3px;
+                    }
                 `
                 let style = document.createElement("style")
                 style.innerHTML = css
@@ -65,8 +71,14 @@
                 let link = document.createElement("a")
                 let site = this.getAttribute("site")
                 let slug = this.getAttribute("slug")
+                let flag = document.createElement("img")
+                flag.setAttribute("src", `http://${site}/favicon.png`)
+                p.appendChild(flag)
                 link.setAttribute("href", `javascript:wiki.loadRemotePage("${site}", "${slug}")`)
-                link.appendChild(document.createTextNode(`${site}/${slug}`))
+                function asTitle (slug) {
+                    return slug.replace(/-/g, ' ')
+                }
+                link.appendChild(document.createTextNode(`${asTitle(slug)}`))
                 p.appendChild(link)
                 shadow.appendChild(p)
             }
@@ -154,7 +166,6 @@
                         right: 0;
                         position: absolute;
                     }
-
                     .flag {
                         margin-right: 6px;
                         margin-bottom: -6px;
