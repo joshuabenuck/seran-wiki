@@ -3,11 +3,6 @@
 <head>
     <style>
         body {
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            position: absolute;
             background: #eeeeee url("/crosses.png");
             overflow: hidden;
             padding: 0;
@@ -45,6 +40,7 @@
             background-color: white;
             margin: 8px;
             box-shadow: 2px 1px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
         }
 
         wiki-page.active {
@@ -148,10 +144,20 @@
                     :host(.recycler)>.paper {
                         box-shadow: inset 0px 0px 40px 0px rgba(220, 0, 0, .5)
                     }
+
                     .paper {
-                        /*width: 430px;*/
                         padding: 30px;
-                        min-height: 100%;
+                        overflow: scroll;
+                        top: 0;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        position: absolute;
+                    }
+
+                    .flag {
+                        margin-right: 6px;
+                        margin-bottom: -6px;
                     }
                 `
                 let style = document.createElement("style")
@@ -191,6 +197,7 @@
                 flagLink.setAttribute("target", "")
 
                 let flag = document.createElement("img")
+                flag.classList.add("flag")
                 flag.setAttribute("src", `${prefix}/favicon.png`)
 
                 flagLink.appendChild(flag)
