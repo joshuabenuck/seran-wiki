@@ -92,8 +92,21 @@
                 let slot = document.createElement("slot")
                 p.appendChild(slot)
                 shadow.appendChild(p)
-                // placeholder... how to save off content?
-                this.text = this.textContent
+
+                function asSlug(name) {
+                    return name.replace(/\s/g, '-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase()
+                }
+                let site = this.parentElement.getAttribute("site")
+                this.innerHTML = this.innerHTML.replace(/\[\[(.*?)\]\]/g, (_full, match) => {
+                    if (site) {
+                        return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}")'>${match}</a>`
+                    }
+                    return `<a href='javascript:wiki.loadPage("${asSlug(match)})"'>${match}</a>`
+                })
+                this.innerHTML = this.innerHTML.replace(/\[(.*)\]/g, (_full, match) => {
+                    let [url, text] = match.split(" ")
+                    return `<a href='${url}' target="_blank">${text}</a>`
+                })
             }
 
             emit(json) {
@@ -331,6 +344,7 @@
             let wiki = document.getElementsByTagName("wiki-root")[0]
             let welcome = wiki.lineup.newPage("Web Components API")
             welcome.addParagraph("Exploring a possible web components based wiki client side API")
+            welcome.addReference("wiki.randombits.xyz", "welcome-visitors")
             wiki.loadPage("deno-sites")
         })
     </script>
