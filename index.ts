@@ -38,9 +38,11 @@ async function readDir(path) {
   return await Deno.readDir(path);
 }
 
-window["metaPages"] = {}
+interface System {
+  metaSites: {}
+}
+let system: System = { metaSites: {} }
 
-window["metaSites"] = {}
 async function importMetaSite(path) {
   console.log(path)
   let metaSite = await import(path)
@@ -48,7 +50,7 @@ async function importMetaSite(path) {
   if (metaSite.init) {
     await metaSite.init()
   }
-  window["metaSites"][`${name}:${port}`] = metaSite
+  system.metaSites[`${name}:${port}`] = metaSite
 }
 for (let metaSitePath of params["meta-site"]) {
   await importMetaSite(metaSitePath)
@@ -73,9 +75,9 @@ for await (const req of s) {
     };
     req.respond(res)
   }
-  let metaSite = window["metaSites"][req.headers.get("host")]
+  let metaSite = system.metaSites[req.headers.get("host")]
   if (metaSite) {
-    metaSite.serve(req, site)
+    metaSite.serve(req, site, system)
     continue
   }
 }

@@ -1,6 +1,6 @@
-export async function sites() {
+export async function sites(_site, system) {
     let sites = []
-    for (let site of Object.keys(window["metaSites"])) {
+    for (let site of Object.keys(system.metaSites)) {
         sites.push(
             {
                 type: "reference",

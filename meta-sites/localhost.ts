@@ -29,7 +29,7 @@ export async function init() {
     }
 }
 
-export async function serve(req: ServerRequest, site) {
+export async function serve(req: ServerRequest, site, system) {
     if (req.url == "/welcome-visitors.json") {
         site.serveJson(req, {
             title: "Welcome Visitors",
@@ -45,7 +45,7 @@ export async function serve(req: ServerRequest, site) {
     // These are meta-pages from the meta-pages folder
     else if (metaPages[req.url]) {
         console.log("calling:", metaPages[req.url])
-        let data = await metaPages[req.url]()
+        let data = await metaPages[req.url](site, system)
         site.serveJson(req, data)
     }
     else if (req.url.indexOf("/index.html") == 0) {
