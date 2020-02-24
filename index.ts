@@ -45,8 +45,16 @@ let system: System = { metaSites: {} }
 
 async function importMetaSite(path) {
   console.log(path)
+  let name = undefined
+  if (path.indexOf("@") != -1) {
+    let parts = path.split("@")
+    path = parts[0]
+    name = parts[1]
+  }
   let metaSite = await import(path)
-  let name = basename(path.replace(/\.[tj]s$/, ""))
+  if (!name) {
+    name = basename(path.replace(/\.[tj]s$/, ""))
+  }
   if (metaSite.init) {
     await metaSite.init()
   }
@@ -80,4 +88,5 @@ for await (const req of s) {
     metaSite.serve(req, site, system)
     continue
   }
+  site.serve404(req)
 }

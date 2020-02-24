@@ -64,6 +64,14 @@ export function serveSiteMap(req, pages) {
 
 }
 
+export function serve404(req) {
+    console.log(`Unable to handle request: ${req.url}`)
+    req.respond({
+        status: 404,
+        body: `Unable to handle request: ${req.url}`
+    });
+}
+
 export async function serve(req: ServerRequest) {
     let metaPage = metaPages[req.url]
     if (metaPage) {
@@ -76,10 +84,6 @@ export async function serve(req: ServerRequest) {
         serveFile(req, "image/png", filePath)
     }
     else {
-        console.log(`Unable to handle request: ${req.url}`)
-        req.respond({
-            status: 404,
-            body: `Unable to handle request: ${req.url}`
-        });
+        serve404(req)
     }
 }
