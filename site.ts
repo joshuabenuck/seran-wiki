@@ -60,8 +60,37 @@ export function serveSiteIndex(req) {
     serveJson(req, data)
 }
 
-export function serveSiteMap(req, pages) {
-
+export function serveSiteMap(req, site, system, pages) {
+    let headers = baseHeaders()
+    if (!pages) {
+        pages = []
+    }
+    let siteMap = [
+    ]
+    for (let page of Object.keys(pages)) {
+        let synopsis = ''
+        let title = ''
+        if (!pages[page].title) {
+            let contents = pages[page](req, site, system)
+            title = contents.title
+            if (contents.story && contents.story.length != 0 && contents.story[0].text) {
+                synopsis = contents.story[0].text
+            }
+        }
+        else {
+            synopsis = pages[page].synopsis
+            title = pages[page].title
+        }
+        siteMap.push(
+            { slug: page, title: title, date: new Date(), synopsis }
+        )
+    }
+    console.log('sitemap', siteMap)
+    req.respond({
+        status: 200,
+        body: JSON.stringify(siteMap, null, 2),
+        headers
+    });
 }
 
 export function serve404(req) {
@@ -72,10 +101,10 @@ export function serve404(req) {
     });
 }
 
-export async function serve(req: ServerRequest) {
+export async function serve(req: ServerRequest, site, system) {
     let metaPage = metaPages[req.url]
     if (metaPage) {
-        let data = await metaPage()
+        let data = await metaPage(req, site, system)
         serveJson(req, data)
     }
     // TODO: Make safe for multi-tenant use

@@ -16,10 +16,17 @@ function b32path(path) {
     return encode(new TextEncoder().encode(path)).replace(/=/g, "")
 }
 
-export async function serve(req: ServerRequest, site) {
+export async function serve(req: ServerRequest, site, system) {
     console.log("du", req.url)
-    // let metaPage = metaPages[req.url]
-    if (req.url == "/welcome-visitors.json") {
+    if (req.url == "/system/sitemap.json") {
+        site.serveSiteMap(req, site, system, {
+            'welcome-visitors': {
+                title: 'Welcome Visitors',
+                synopsis: '...'
+            }
+        })
+    }
+    else if (req.url == "/welcome-visitors.json") {
         site.serveJson(req, {
             title: "Welcome Visitors",
             story: [
@@ -31,10 +38,7 @@ export async function serve(req: ServerRequest, site) {
             ],
         })
     }
-    // else if (metaPage) {
-    //     site.serveJson(req, await metaPage())
-    // }
-    else if (req.url.match("/[a-z0-9]+.json")) {
+    else if (req.url.match("/^[a-z0-9]+.json")) {
         let parts = req.url.split(".json")
         let base32path = parts[0].substring(1, parts[0].length)
         let multipleOf = Math.ceil(base32path.length / 8)
@@ -64,6 +68,6 @@ export async function serve(req: ServerRequest, site) {
         site.serveJson(req, data)
     }
     else {
-        site.serve(req)
+        site.serve(req, site, system)
     }
 }
