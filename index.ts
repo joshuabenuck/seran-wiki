@@ -40,8 +40,15 @@ async function readDir(path) {
 
 interface System {
   metaSites: {}
+  siteMaps: {}
+  requestedSite: string
 }
-let system: System = { metaSites: {} }
+
+let system: System = {
+  metaSites: {},
+  siteMaps: {},
+  requestedSite: undefined
+}
 
 async function importMetaSite(path) {
   console.log(path)
@@ -58,7 +65,12 @@ async function importMetaSite(path) {
   if (metaSite.init) {
     await metaSite.init()
   }
-  system.metaSites[`${name}:${port}`] = metaSite
+  let targetHost = `${name}:${port}`
+  system.metaSites[targetHost] = metaSite
+  system.siteMaps[targetHost] = []
+  if (metaSite.siteMap) {
+    system.siteMaps[targetHost] = metaSite.siteMap()
+  }
 }
 for (let metaSitePath of params["meta-site"]) {
   await importMetaSite(metaSitePath)
@@ -83,8 +95,10 @@ for await (const req of s) {
     };
     req.respond(res)
   }
-  let metaSite = system.metaSites[req.headers.get("host")]
+  let requestedSite = req.headers.get("host")
+  let metaSite = system.metaSites[requestedSite]
   if (metaSite) {
+    system.requestedSite = requestedSite
     metaSite.serve(req, site, system)
     continue
   }

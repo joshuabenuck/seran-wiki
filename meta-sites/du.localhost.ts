@@ -16,17 +16,20 @@ function b32path(path) {
     return encode(new TextEncoder().encode(path)).replace(/=/g, "")
 }
 
-export async function serve(req: ServerRequest, site, system) {
-    console.log("du", req.url)
-    if (req.url == "/system/sitemap.json") {
-        site.serveSiteMap(req, site, system, {
+export function siteMap() {
+    return [
+        {
             'welcome-visitors': {
                 title: 'Welcome Visitors',
                 synopsis: '...'
             }
-        })
-    }
-    else if (req.url == "/welcome-visitors.json") {
+        }
+    ]
+}
+
+export async function serve(req: ServerRequest, site, system) {
+    console.log("du", req.url)
+    if (req.url == "/welcome-visitors.json") {
         site.serveJson(req, site.page("Welcome Visitors", [ site.paragraph(`[[${b32path("/")}]] - /`) ]))
     }
     else if (req.url.match("/^[a-z0-9]+.json")) {

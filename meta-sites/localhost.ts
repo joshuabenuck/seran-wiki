@@ -45,6 +45,6 @@ export async function serve(req: ServerRequest, site, system) {
     }
     // This will serve system urls and class local meta-pages
     else {
-        site.serve(req)
+        site.serve(req, site, system)
     }
 }
