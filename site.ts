@@ -127,7 +127,7 @@ export function page(title, items) {
 export function item(type, props) {
     let item = {
         type,
-        id: "ab35d"
+        id: itemId()
     }
     for (let prop of Object.keys(props)) {
         item[prop] = props[prop]
@@ -141,4 +141,20 @@ export function paragraph(text) {
 
 export function reference(site, slug, title, text) {
     return item("reference", { site, slug, title, text })
+}
+
+function randomByte() {
+    return (((1+Math.random())*0x100)|0).toString(16).substring(1)
+}
+
+function randomBytes(n) {
+    let bytes = []
+    for (let _i of [...Array(n).keys()]) {
+        bytes.push(randomByte())
+    }
+    return bytes.join('')
+}
+
+function itemId() {
+    return randomBytes(8)
 }
