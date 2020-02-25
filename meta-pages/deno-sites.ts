@@ -1,20 +1,7 @@
-export async function sites(_site, system) {
+export async function sites(req, site, system) {
     let sites = []
-    for (let site of Object.keys(system.metaSites)) {
-        sites.push(
-            {
-                type: "reference",
-                id: "3f96ad3b1c040452",
-                site: `${site}`,
-                slug: "welcome-visitors",
-                title: "Welcome Visitors",
-                text: site
-            }
-        )
+    for (let metaSite of Object.keys(system.metaSites)) {
+        sites.push(site.reference(metaSite, "welcome-visitors", "Welcome Visitors", metaSite))
     }
-    let data = {
-        title: "Deno Sites",
-        story: sites,
-    }
-    return data
+    return site.page("Deno Sites", sites)
 }

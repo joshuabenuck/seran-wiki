@@ -31,21 +31,12 @@ export async function init() {
 
 export async function serve(req: ServerRequest, site, system) {
     if (req.url == "/welcome-visitors.json") {
-        site.serveJson(req, {
-            title: "Welcome Visitors",
-            story: [
-                {
-                    type: "paragraph",
-                    text: "[[hello]]",
-                    id: "ab35d"
-                }
-            ],
-        })
+        site.serveJson(req, site.page("Welcome Visitors", [ site.paragraph("[[hello]]") ]))
     }
     // These are meta-pages from the meta-pages folder
     else if (metaPages[req.url]) {
         console.log("calling:", metaPages[req.url])
-        let data = await metaPages[req.url](site, system)
+        let data = await metaPages[req.url](req, site, system)
         site.serveJson(req, data)
     }
     else if (req.url.indexOf("/index.html") == 0) {

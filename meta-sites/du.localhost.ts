@@ -27,16 +27,7 @@ export async function serve(req: ServerRequest, site, system) {
         })
     }
     else if (req.url == "/welcome-visitors.json") {
-        site.serveJson(req, {
-            title: "Welcome Visitors",
-            story: [
-                {
-                    type: "paragraph",
-                    text: `[[${b32path("/")}]] - /`,
-                    id: "ab35d"
-                }
-            ],
-        })
+        site.serveJson(req, site.page("Welcome Visitors", [ site.paragraph(`[[${b32path("/")}]] - /`) ]))
     }
     else if (req.url.match("/^[a-z0-9]+.json")) {
         let parts = req.url.split(".json")
@@ -51,19 +42,10 @@ export async function serve(req: ServerRequest, site, system) {
         let files = []
         for (let file of await readDir(path)) {
             let fullPath = [path, file.name].join("/").replace("//", "/")
-            files.push(
-                {
-                    type: "paragraph",
-                    text: `[[${b32path(fullPath)}]] ${fullPath} - ${file.len}`,
-                    id: "ab35d"
-                }
-            )
+            files.push(site.paragraph(`[[${b32path(fullPath)}]] ${fullPath} - ${file.len}`))
         }
 
-        let data = {
-            title: path,
-            story: files,
-        }
+        let data = site.page(path, files)
 
         site.serveJson(req, data)
     }

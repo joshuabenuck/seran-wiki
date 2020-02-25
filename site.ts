@@ -116,3 +116,29 @@ export async function serve(req: ServerRequest, site, system) {
         serve404(req)
     }
 }
+
+export function page(title, items) {
+    return {
+        title,
+        story: items
+    }
+}
+
+export function item(type, props) {
+    let item = {
+        type,
+        id: "ab35d"
+    }
+    for (let prop of Object.keys(props)) {
+        item[prop] = props[prop]
+    }
+    return item
+}
+
+export function paragraph(text) {
+    return item("paragraph", { text })
+}
+
+export function reference(site, slug, title, text) {
+    return item("reference", { site, slug, title, text })
+}
