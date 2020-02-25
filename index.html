@@ -76,6 +76,8 @@
                 let link = document.createElement("a")
                 let site = this.getAttribute("site")
                 let slug = this.getAttribute("slug")
+                let title = this.getAttribute("title")
+                let text = this.getAttribute("text")
                 let flag = document.createElement("img")
                 flag.setAttribute("src", `http://${site}/favicon.png`)
                 p.appendChild(flag)
@@ -83,8 +85,11 @@
                 function asTitle(slug) {
                     return slug.replace(/-/g, ' ')
                 }
-                link.appendChild(document.createTextNode(`${asTitle(slug)}`))
+                link.appendChild(document.createTextNode(title))
                 p.appendChild(link)
+                let desc = document.createElement('span')
+                desc.textContent = ` - ${text}`
+                p.appendChild(desc)
                 shadow.appendChild(p)
             }
         }
@@ -248,10 +253,12 @@
                 this.appendChild(paragraph)
             }
 
-            addReference(site, slug) {
+            addReference(site, slug, title, text) {
                 let ref = document.createElement("wiki-reference")
                 ref.setAttribute("site", site)
                 ref.setAttribute("slug", slug)
+                ref.setAttribute("title", title)
+                ref.setAttribute("text", text)
                 this.appendChild(ref)
             }
 
@@ -349,7 +356,7 @@
                         page.addParagraph(pageContent.text)
                     }
                     else if (pageContent.type == "reference") {
-                        page.addReference(pageContent.site, pageContent.slug)
+                        page.addReference(pageContent.site, pageContent.slug, pageContent.title, pageContent.text)
                     }
                     else {
                         page.addParagraph(`Unknown type: ${pageContent.type}`)
@@ -367,7 +374,7 @@
             let wiki = document.getElementsByTagName("wiki-root")[0]
             let welcome = wiki.lineup.newPage("Web Components API")
             welcome.addParagraph("Exploring a possible web components based wiki client side API")
-            welcome.addReference("wiki.randombits.xyz", "welcome-visitors")
+            welcome.addReference("wiki.randombits.xyz", "welcome-visitors", "Welcome Visitors", "Link to an external site")
             wiki.loadPage("deno-sites")
         })
     </script>
