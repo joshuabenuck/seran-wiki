@@ -114,6 +114,10 @@ export function reference(site, slug, title, text) {
     return item("reference", { site, slug, title, text })
 }
 
+export function roster(roster) {
+    return { type: "roster", id: itemId(), text: roster }
+}
+
 function randomByte() {
     return (((1+Math.random())*0x100)|0).toString(16).substring(1)
 }
@@ -126,6 +130,6 @@ function randomBytes(n) {
     return bytes.join('')
 }
 
-function itemId() {
+export function itemId() {
     return randomBytes(8)
 }

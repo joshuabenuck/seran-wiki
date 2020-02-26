@@ -7,7 +7,7 @@ export function serve(req, site, system) {
         site.serveJson(req, 
             site.page("Welcome Visitors", [
                 site.paragraph("Data goes here: [[Sites]]"),
-                { type: "roster", id: "abc", text: "Sites:\n\n" + [...sites.values()].join('\n') }
+                site.roster([...sites.values()].join('\n'))
             ])
         )
     }
