@@ -115,7 +115,7 @@ export function reference(site, slug, title, text) {
 }
 
 export function roster(roster) {
-    return { type: "roster", id: itemId(), text: roster }
+    return item("roster", { text: roster })
 }
 
 function randomByte() {
