@@ -1,29 +1,30 @@
 const { ErrorKind, DenoError, args, stat, open, exit } = Deno;
 import { readFileStr } from 'https://deno.land/std@v0.30.0/fs/mod.ts';
 
+export let metaPages = {}
 
-export function serve(req, site, system) {
-    if (req.url == "/welcome-visitors.json") {
-        site.serveJson(req, 
-            site.page("Welcome Visitors", [
-                site.paragraph("Data goes here: [[Sites]]"),
-                site.roster([...sites.values()].join('\n'))
-            ])
-        )
-    }
-    else if (req.url == "/sites.json") {
-        let paras = []
-        for (let s of sites) {
-            paras.push(site.paragraph(s))
-        }
-        site.serveJson(req, 
-            site.page("Sites", paras)
-        )
-    }
-    else {
-        site.serve(req, site, system)
-    }
+function route(url, fn) {
+    metaPages[url] = fn
 }
+
+route("/welcome-visitors.json", (req, site, _system) => {
+    site.serveJson(req,
+        site.page("Welcome Visitors", [
+            site.paragraph("Data goes here: [[Sites]]"),
+            site.roster([...sites.values()].join('\n'))
+        ])
+    )
+})
+
+route("/sites.json", (req, site, _system) => {
+    let paras = []
+    for (let s of sites) {
+        paras.push(site.paragraph(s))
+    }
+    site.serveJson(req,
+        site.page("Sites", paras)
+    )
+})
 
 async function readDir(path) {
   let fileInfo = await stat(path)
@@ -36,7 +37,7 @@ async function readDir(path) {
 }
 
 let sites = new Set()
-async function init() {
+export async function init() {
     let files = await readDir("./data/wiki.dbbs.co")
     for (let file of files) {
         console.log(file.name)
@@ -45,5 +46,3 @@ async function init() {
         localSites.forEach((s) => sites.add(s))
     }
 }
-
-init()

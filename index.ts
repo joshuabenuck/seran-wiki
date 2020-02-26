@@ -63,7 +63,7 @@ async function importMetaSite(path) {
     name = basename(path.replace(/\.[tj]s$/, ""))
   }
   if (metaSite.init) {
-    await metaSite.init()
+    metaSite.init()
   }
   let targetHost = `${name}:${port}`
   system.metaSites[targetHost] = metaSite
@@ -99,7 +99,18 @@ for await (const req of s) {
   let metaSite = system.metaSites[requestedSite]
   if (metaSite) {
     system.requestedSite = requestedSite
-    metaSite.serve(req, site, system)
+    if (metaSite.serve) {
+      metaSite.serve(req, site, system)
+    }
+    if (metaSite.metaPages) {
+      let metaPage = metaSite.metaPages[req.url]
+      if (metaPage) {
+        metaPage(req, site, system)
+      }
+      else {
+        site.serve(req, site, system)
+      }
+    }
     continue
   }
   site.serve404(req)
