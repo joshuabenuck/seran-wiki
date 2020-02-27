@@ -97,12 +97,15 @@ for await (const req of s) {
   }
   let requestedSite = req.headers.get("host")
   let metaSite = system.metaSites[requestedSite]
+  console.log("requested-site:", requestedSite)
   if (metaSite) {
     system.requestedSite = requestedSite
     if (metaSite.serve) {
+      console.log("meta-site:", req.url)
       metaSite.serve(req, site, system)
     }
     if (metaSite.metaPages) {
+      console.log("meta-page:", req.url)
       let metaPage = metaSite.metaPages[req.url]
       if (metaPage) {
         metaPage(req, site, system)
@@ -113,5 +116,6 @@ for await (const req of s) {
     }
     continue
   }
+  console.log("unhandled-request:", req.url)
   site.serve404(req)
 }
