@@ -55,6 +55,12 @@
         }
     </style>
     <script type="text/javascript">
+        window.plugins = {}
+        function registerPlugin(name, cls) {
+            window.plugins[name] = cls
+            customElements.define(`wiki-${name}`, cls);
+        }
+
         class Reference extends HTMLElement {
             connectedCallback() {
                 let shadow = this.attachShadow({ mode: "open" })
@@ -92,8 +98,15 @@
                 p.appendChild(desc)
                 shadow.appendChild(p)
             }
+
+            render(json) {
+                this.setAttribute("site", json.site)
+                this.setAttribute("slug", json.slug)
+                this.setAttribute("title", json.title)
+                this.setAttribute("text", json.text)
+            }
         }
-        customElements.define("wiki-reference", Reference);
+        registerPlugin("reference", Reference);
 
         class Paragraph extends HTMLElement {
             connectedCallback() {
@@ -127,8 +140,8 @@
                 })
             }
 
-            emit(json) {
-
+            render(json) {
+                this.textContent = json.text
             }
 
             bind() {
@@ -144,7 +157,7 @@
                 }
             }
         }
-        customElements.define("wiki-paragraph", Paragraph);
+        registerPlugin("paragraph", Paragraph);
 
         class Page extends HTMLElement {
             connectedCallback() {
@@ -259,6 +272,8 @@
                 ref.setAttribute("slug", slug)
                 ref.setAttribute("title", title)
                 ref.setAttribute("text", text)
+                // or...
+                // ref.render({ site, slug, title, text})
                 this.appendChild(ref)
             }
 
@@ -271,7 +286,7 @@
                 this.classList.add("active")
             }
         }
-        customElements.define("wiki-page", Page);
+        registerPlugin("page", Page);
 
         class Lineup extends HTMLElement {
             connectedCallback() {
@@ -352,11 +367,11 @@
                 console.log(json)
                 let page = this.lineup.newPage(json.title, site)
                 for (let pageContent of json.story) {
-                    if (pageContent.type == "paragraph") {
-                        page.addParagraph(pageContent.text)
-                    }
-                    else if (pageContent.type == "reference") {
-                        page.addReference(pageContent.site, pageContent.slug, pageContent.title, pageContent.text)
+                    let plugin = window.plugins[pageContent.type]
+                    if (plugin) {
+                        let element = new plugin()
+                        element.render(pageContent)
+                        page.appendChild(element)
                     }
                     else {
                         page.addParagraph(`Unknown type: ${pageContent.type}`)
