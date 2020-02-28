@@ -12,7 +12,7 @@
             color: #333333;
         }
 
-        wiki-root {
+        wiki-wiki {
             width: 100%;
             height: 100%;
             display: flex;
@@ -494,13 +494,13 @@
                 page.activate()
             }
         }
-        customElements.define("wiki-root", Wiki);
+        customElements.define("wiki-wiki", Wiki);
 
         document.addEventListener("readystatechange", (e) => {
             if (event.target.readyState != "complete") {
                 return
             }
-            let wiki = document.getElementsByTagName("wiki-root")[0]
+            let wiki = document.getElementsByTagName("wiki-wiki")[0]
             let welcome = wiki.lineup.newPage("Web Components API")
             welcome.addParagraph("Exploring a possible web components based wiki client side API")
             welcome.addReference("wiki.randombits.xyz", "welcome-visitors", "Welcome Visitors", "Link to an external site")
@@ -510,13 +510,13 @@
 </head>
 
 <body>
-    <wiki-root>
+    <wiki-wiki>
         <wiki-lineup>
         </wiki-lineup>
         <footer>
             <wiki-neighborhood></wiki-neighborhood>
         </footer>
-    </wiki-root>
+    </wiki-wiki>
 </body>
 
 </html>
