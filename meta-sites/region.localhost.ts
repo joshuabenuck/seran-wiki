@@ -78,10 +78,18 @@ async function readDir(path) {
 async function referencedSites(siteName) {
     let sites = new Set()
     let siteDir = `./data/${siteName}`
+    if (!await exists(siteDir)) {
+        console.log(`WARN: Site ${siteDir} doesn't exist`)
+        return sites
+    }
     let files = await readDir(siteDir)
     for (let file of files) {
-        console.log(`${siteDir}/${file.name}`)
-        let contents = await readFileStr(`${siteDir}/${file.name}`)
+        let filename = `${siteDir}/${file.name}`
+        if (!await exists(filename)) {
+            console.log(`WARN: ${filename} doesn't exist`)
+            continue
+        }
+        let contents = await readFileStr(filename)
         let localSites = JSON.parse(contents)
         localSites.forEach((s) => sites.add(s))
     }
