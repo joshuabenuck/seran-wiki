@@ -83,6 +83,8 @@
 
         class Roster extends HTMLElement {
             connectedCallback() {
+                if (this.inited) return
+                this.inited = true
                 let shadow = this.attachShadow({ mode: "open" })
                 let css = `
                     :host {
@@ -122,6 +124,8 @@
 
         class Reference extends HTMLElement {
             connectedCallback() {
+                if (this.inited) return
+                this.inited = true
                 let shadow = this.attachShadow({ mode: "open" })
                 let css = `
                     :host {
@@ -169,6 +173,8 @@
 
         class Paragraph extends HTMLElement {
             connectedCallback() {
+                if (this.inited) return
+                this.inited = true
                 let shadow = this.attachShadow({ mode: "open" })
                 let css = `
                     :host {
@@ -220,6 +226,8 @@
 
         class Neighboorhood extends HTMLElement {
             connectedCallback() {
+                if (this.inited) return
+                this.inited = true
                 this.neighbors = []
                 let shadow = this.attachShadow({ mode: "open" })
                 let css = `
@@ -263,6 +271,9 @@
 
         class Page extends HTMLElement {
             connectedCallback() {
+                if (this.inited) return
+                this.inited = true
+                this.hovered = false
                 this.addEventListener("click", this.activate)
                 let shadow = this.attachShadow({ mode: 'open' })
                 let css = `
@@ -299,6 +310,15 @@
                 let style = document.createElement("style")
                 style.innerHTML = css
                 shadow.appendChild(style)
+
+                this.setAttribute("draggable", true)
+                this.addEventListener("dragstart", this.dragStart)
+                this.addEventListener("dragenter", this.dragEnter)
+                this.addEventListener("dragover", this.dragOver)
+                this.addEventListener("dragend", this.dragEnd)
+                this.addEventListener("drop", this.drop)
+                this.addEventListener("mouseenter", this.mouseEnter)
+                this.addEventListener("mouseleave", this.mouseLeave)
 
                 let site = this.getAttribute("site")
                 if (site) {
@@ -347,6 +367,39 @@
                 paper.appendChild(slot)
             }
 
+            dragStart(event) {
+                console.log("drag start:", event)
+                event.dataTransfer.setData("text/plain", "Looks to be a requirement")
+            }
+
+            dragEnter(event) {
+                console.log("drag enter:", event)
+                event.dataTransfer.dropEffect = "move"
+                return false
+            }
+
+            dragOver(event) {
+                event.preventDefault()
+            }
+
+            dragEnd(event) {
+                console.log("dragEnd", event.dataTransfer.dropEffect, this.parentElement.hoveredPage(), this)
+            }
+
+            drop(event) {
+                console.log("drop:", this.parentElement.hoveredPage(), this.parentElement.pageIndex(this))
+                // TODO: Use drag and drop data instead of hoveredPage.
+                this.parentElement.insertBefore(this.parentElement.hoveredPage(), this)
+            }
+
+            mouseEnter(event) {
+                this.hovered = true
+            }
+
+            mouseLeave(event) {
+                this.hovered = false
+            }
+
             disconnectedCallback() { }
 
             attributeChangedCallback(attrName, oldValue, newValue) {
@@ -392,6 +445,8 @@
 
         class Lineup extends HTMLElement {
             connectedCallback() {
+                if (this.inited) return
+                this.inited = true
                 this.setAttribute("tabindex", -1)
                 this.addEventListener("keydown", (ev) => {
                     let actives = document.getElementsByClassName("active")
@@ -431,6 +486,26 @@
 
             closePageByIndex(index) {
                 this.pages[index].remove()
+            }
+
+            pageIndex(targetPage) {
+                let index = 0
+                for (let page of this.pages) {
+                    if (page == targetPage) {
+                        return index
+                    }
+                    index += 1
+                }
+                return -1
+            }
+
+            hoveredPage() {
+                for (let page of this.pages) {
+                    if (page.hovered) {
+                        return page
+                    }
+                }
+                return null
             }
         }
         customElements.define("wiki-lineup", Lineup);
