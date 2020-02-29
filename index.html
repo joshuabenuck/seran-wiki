@@ -515,6 +515,47 @@
             }
 
             connectedCallback() {
+                this.setAttribute("tabindex", -1)
+                this.addEventListener("keyup", this.handleShortcut)
+
+                let dialog = document.createElement("dialog")
+                dialog.setAttribute("style", "z-index: 1000;")
+                dialog.addEventListener("close", this.open)
+
+                let form = document.createElement("form")
+                form.setAttribute("method", "dialog")
+                form.setAttribute("style", "margin: 0;")
+                dialog.appendChild(form)
+
+                let input = document.createElement("input")
+                input.setAttribute("type", "text")
+                form.appendChild(input)
+
+                this.appendChild(dialog)
+            }
+
+            handleShortcut(event) {
+                if (event.altKey && event.key == "o") {
+                    console.log("open dialog")
+                    let dialog = this.getElementsByTagName("dialog")[0]
+                    dialog.setAttribute("open", "")
+                    let input = dialog.getElementsByTagName("input")[0]
+                    event.preventDefault()
+                    input.focus()
+                }
+            }
+
+            open(event) {
+                console.log("opening:", this)
+                let input = this.getElementsByTagName("input")[0]
+                let path = input.value
+                let site = "localhost:8000"
+                let slug = path
+                if (path.indexOf(":") != -1) {
+                    [site, slug] = path.split(":")
+                }
+                console.log("opening:", site, slug)
+                this.parentElement.loadRemotePage(site, slug)
             }
 
             get lineup() {
