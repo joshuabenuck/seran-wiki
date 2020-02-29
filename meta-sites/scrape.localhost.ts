@@ -10,6 +10,12 @@ function route(url, fn) {
 
 route("/welcome-visitors.json", async (req, site, _system) => {
     site.serveJson(req,
+        site.welcomePage("[[DenoWiki]]", "[[Region Scraper]]")
+    )
+})
+
+route("/region-scraper.json", async (req, site, _system) => {
+    site.serveJson(req,
         site.page("Welcome Visitors", [
             site.paragraph("Here we supervise the ongoing scrape of the wiki federation."),
             site.paragraph("<button>start</button>")
