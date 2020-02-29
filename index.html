@@ -384,7 +384,6 @@
                 console.log("drag enter:", event)
                 event.dataTransfer.dropEffect = "move"
                 this.classList.add("drag-target")
-                this.parentElement.draggedOffPage = false
                 return false
             }
 
@@ -395,12 +394,11 @@
             dragLeave(event) {
                 console.log("drag leave:", event)
                 this.classList.remove("drag-target")
-                this.parentElement.draggedOffPage = true
             }
 
             dragEnd(event) {
                 console.log("drag end:", event)
-                if (this.parentElement.draggedOffPage) {
+                if (event.pageY < 0 && this.parentElement.pages.length > 1) {
                     this.remove()
                 }
             }
