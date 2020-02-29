@@ -85,6 +85,7 @@ for (let metaSitesDir of params["meta-sites-dir"]) {
   }
 }
 
+console.log('listening on port ',port)
 for await (const req of s) {
   if (req.url == "/") {
     let headers = new Headers()
