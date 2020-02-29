@@ -75,6 +75,23 @@
         }
     </style>
     <script type="text/javascript">
+        function asSlug(name) {
+            return name.replace(/\s/g, '-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase()
+        }
+
+        function renderLinks(html, site) {
+            html = html.replace(/\[\[(.*?)\]\]/g, (_full, match) => {
+                if (site) {
+                    return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}")'>${match}</a>`
+                }
+                return `<a href='javascript:wiki.loadPage("${asSlug(match)}")'>${match}</a>`
+            })
+            return html.replace(/\[(.*)\]/g, (_full, match) => {
+                let [url, text] = match.split(" ")
+                return `<a href='${url}' target="_blank">${text}</a>`
+            })
+        }
+
         window.plugins = {}
         function registerPlugin(name, cls) {
             window.plugins[name] = cls
@@ -157,9 +174,12 @@
                 link.appendChild(document.createTextNode(title))
                 p.appendChild(link)
                 let desc = document.createElement('span')
-                desc.textContent = ` - ${text}`
+                desc.innerHTML = ` - ${renderLinks(text, site)}`
                 p.appendChild(desc)
                 shadow.appendChild(p)
+
+                let wiki = document.getElementsByTagName("wiki-wiki")[0]
+                wiki.neighborhood.add(site)
             }
 
             render(json) {
@@ -189,20 +209,12 @@
                 p.appendChild(slot)
                 shadow.appendChild(p)
 
-                function asSlug(name) {
-                    return name.replace(/\s/g, '-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase()
-                }
-                let site = this.parentElement.getAttribute("site")
-                this.innerHTML = this.innerHTML.replace(/\[\[(.*?)\]\]/g, (_full, match) => {
-                    if (site) {
-                        return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}")'>${match}</a>`
-                    }
-                    return `<a href='javascript:wiki.loadPage("${asSlug(match)})"'>${match}</a>`
-                })
-                this.innerHTML = this.innerHTML.replace(/\[(.*)\]/g, (_full, match) => {
-                    let [url, text] = match.split(" ")
-                    return `<a href='${url}' target="_blank">${text}</a>`
-                })
+                let site = this.page().getAttribute("site")
+                this.innerHTML = renderLinks(this.innerHTML, site)
+            }
+
+            page() {
+                return this.parentElement
             }
 
             render(json) {
@@ -228,7 +240,7 @@
             connectedCallback() {
                 if (this.inited) return
                 this.inited = true
-                this.neighbors = []
+                this.neighbors = new Set()
                 let shadow = this.attachShadow({ mode: "open" })
                 let css = `
                     :host {
@@ -257,14 +269,17 @@
                 link.setAttribute("href", "javascript:wiki.showNeighborhood()")
                 link.appendChild(document.createTextNode(">>"))
                 shadow.appendChild(link)
+                // TODO: Remove this hardcoded sitename
                 this.add("localhost:8000")
             }
 
             add(site) {
+                if (this.neighbors.has(site)) return
                 let flag = document.createElement("img")
                 flag.setAttribute("src", `http://${site}/favicon.png`)
+                flag.setAttribute("title", site)
                 this.shadowRoot.appendChild(flag)
-                this.neighbors.push(site)
+                this.neighbors.add(site)
             }
         }
         customElements.define("wiki-neighborhood", Neighboorhood)
@@ -273,7 +288,6 @@
             connectedCallback() {
                 if (this.inited) return
                 this.inited = true
-                this.hovered = false
                 this.addEventListener("click", this.activate)
                 let shadow = this.attachShadow({ mode: 'open' })
                 let css = `
@@ -293,9 +307,15 @@
                         box-shadow: inset 0px 0px 40px 0px rgba(220, 0, 0, .5)
                     }
 
+                    :host(.ghost) {
+                        opacity: 0.6;
+                        border-color: #eef2fe;
+                    }
+
                     .paper {
                         padding: 30px;
-                        overflow: scroll;
+                        overflow-y: auto;
+                        overflow-x: hidden;
                         top: 0;
                         bottom: 0;
                         left: 0;
@@ -306,6 +326,14 @@
                         margin-right: 6px;
                         margin-bottom: -6px;
                     }
+
+                    :host(.drop-target-left) {
+                        border-left: 1px solid blue;
+                    }
+
+                    :host(.drop-target-right) {
+                        border-right: 1px solid blue;
+                    }
                 `
                 let style = document.createElement("style")
                 style.innerHTML = css
@@ -315,10 +343,9 @@
                 this.addEventListener("dragstart", this.dragStart)
                 this.addEventListener("dragenter", this.dragEnter)
                 this.addEventListener("dragover", this.dragOver)
+                this.addEventListener("dragleave", this.dragLeave)
                 this.addEventListener("dragend", this.dragEnd)
                 this.addEventListener("drop", this.drop)
-                this.addEventListener("mouseenter", this.mouseEnter)
-                this.addEventListener("mouseleave", this.mouseLeave)
 
                 let site = this.getAttribute("site")
                 if (site) {
@@ -369,7 +396,7 @@
 
             dragStart(event) {
                 console.log("drag start:", event)
-                event.dataTransfer.setData("text/plain", "Looks to be a requirement")
+                event.dataTransfer.setData("pageIndex", this.parentElement.pageIndex(this))
             }
 
             dragEnter(event) {
@@ -379,25 +406,49 @@
             }
 
             dragOver(event) {
+                if (event.pageX < this.offsetLeft + (this.offsetWidth / 2)) {
+                    this.classList.add("drop-target-left")
+                    this.classList.remove("drop-target-right")
+                }
+                else {
+                    this.classList.remove("drop-target-left")
+                    this.classList.add("drop-target-right")
+                }
                 event.preventDefault()
             }
 
+            dragLeave(event) {
+                console.log("drag leave:", event)
+                this.classList.remove("drop-target-left")
+                this.classList.remove("drop-target-right")
+            }
+
             dragEnd(event) {
-                console.log("dragEnd", event.dataTransfer.dropEffect, this.parentElement.hoveredPage(), this)
+                console.log("drag end:", event)
+                if (event.pageY < 0 && this.parentElement.pages.length > 1) {
+                    this.remove()
+                }
             }
 
             drop(event) {
-                console.log("drop:", this.parentElement.hoveredPage(), this.parentElement.pageIndex(this))
-                // TODO: Use drag and drop data instead of hoveredPage.
-                this.parentElement.insertBefore(this.parentElement.hoveredPage(), this)
-            }
-
-            mouseEnter(event) {
-                this.hovered = true
-            }
-
-            mouseLeave(event) {
-                this.hovered = false
+                console.log("drop:", event)
+                this.classList.remove("drag-target")
+                let pageIndex = event.dataTransfer.getData("pageIndex")
+                let page = this.parentElement.pages[pageIndex]
+                if (this.classList.contains("drop-target-left")) {
+                    this.parentElement.insertBefore(page, this)
+                }
+                else {
+                    let pageIndex = this.parentElement.pageIndex(this)
+                    if (this.parentElement.pages.length == pageIndex) {
+                        this.parentElement.insertBefore(page, null)
+                    }
+                    else {
+                        this.parentElement.insertBefore(page, this.parentElement.pages[pageIndex + 1])
+                    }
+                }
+                this.classList.remove("drop-target-left")
+                this.classList.remove("drop-target-right")
             }
 
             disconnectedCallback() { }
@@ -439,6 +490,10 @@
                     active.classList.remove("active")
                 }
                 this.classList.add("active")
+            }
+
+            ghost() {
+                this.classList.add("ghost")
             }
         }
         customElements.define("wiki-page", Page);
@@ -498,15 +553,6 @@
                 }
                 return -1
             }
-
-            hoveredPage() {
-                for (let page of this.pages) {
-                    if (page.hovered) {
-                        return page
-                    }
-                }
-                return null
-            }
         }
         customElements.define("wiki-lineup", Lineup);
 
@@ -517,6 +563,47 @@
             }
 
             connectedCallback() {
+                this.setAttribute("tabindex", -1)
+                this.addEventListener("keyup", this.handleShortcut)
+
+                let dialog = document.createElement("dialog")
+                dialog.setAttribute("style", "z-index: 1000;")
+                dialog.addEventListener("close", this.open)
+
+                let form = document.createElement("form")
+                form.setAttribute("method", "dialog")
+                form.setAttribute("style", "margin: 0;")
+                dialog.appendChild(form)
+
+                let input = document.createElement("input")
+                input.setAttribute("type", "text")
+                form.appendChild(input)
+
+                this.appendChild(dialog)
+            }
+
+            handleShortcut(event) {
+                if (event.altKey && event.key == "o") {
+                    console.log("open dialog")
+                    let dialog = this.getElementsByTagName("dialog")[0]
+                    dialog.setAttribute("open", "")
+                    let input = dialog.getElementsByTagName("input")[0]
+                    event.preventDefault()
+                    input.focus()
+                }
+            }
+
+            open(event) {
+                console.log("opening:", this)
+                let input = this.getElementsByTagName("input")[0]
+                let path = input.value
+                let site = "localhost:8000"
+                let slug = path
+                if (path.indexOf(":") != -1) {
+                    [site, slug] = path.split(":")
+                }
+                console.log("opening:", site, slug)
+                this.parentElement.loadRemotePage(site, slug)
             }
 
             get lineup() {
@@ -534,13 +621,13 @@
             async loadPage(slug) {
                 let res = await fetch(`/${slug}.json`)
                 let page = await this.renderPage(res)
-                page.scrollIntoViewIfNeeded()
+                page.activate()
             }
 
             async loadRemotePage(site, slug) {
                 let res = await fetch(`http://${site}/${slug}.json`)
                 let page = await this.renderPage(res, site)
-                page.scrollIntoViewIfNeeded()
+                page.activate()
             }
 
             async renderPage(res, site) {
@@ -562,7 +649,9 @@
             }
 
             showNeighborhood() {
+                // Should all pages created with newPage be ghosted?
                 let page = this.lineup.newPage("Neighborhood")
+                page.ghost()
                 for (let neighbor of this.neighborhood.neighbors) {
                     page.addReference(neighbor, "welcome-visitors", "Welcome Visitors", neighbor)
                 }
