@@ -312,8 +312,12 @@
                         margin-bottom: -6px;
                     }
 
-                    :host(.drag-target) {
+                    :host(.drop-target-left) {
                         border-left: 1px solid blue;
+                    }
+
+                    :host(.drop-target-right) {
+                        border-right: 1px solid blue;
                     }
                 `
                 let style = document.createElement("style")
@@ -383,17 +387,25 @@
             dragEnter(event) {
                 console.log("drag enter:", event)
                 event.dataTransfer.dropEffect = "move"
-                this.classList.add("drag-target")
                 return false
             }
 
             dragOver(event) {
+                if (event.pageX < this.offsetLeft + (this.offsetWidth / 2)) {
+                    this.classList.add("drop-target-left")
+                    this.classList.remove("drop-target-right")
+                }
+                else {
+                    this.classList.remove("drop-target-left")
+                    this.classList.add("drop-target-right")
+                }
                 event.preventDefault()
             }
 
             dragLeave(event) {
                 console.log("drag leave:", event)
-                this.classList.remove("drag-target")
+                this.classList.remove("drop-target-left")
+                this.classList.remove("drop-target-right")
             }
 
             dragEnd(event) {
@@ -408,7 +420,20 @@
                 this.classList.remove("drag-target")
                 let pageIndex = event.dataTransfer.getData("pageIndex")
                 let page = this.parentElement.pages[pageIndex]
-                this.parentElement.insertBefore(page, this)
+                if (this.classList.contains("drop-target-left")) {
+                    this.parentElement.insertBefore(page, this)
+                }
+                else {
+                    let pageIndex = this.parentElement.pageIndex(this)
+                    if (this.parentElement.pages.length == pageIndex) {
+                        this.parentElement.insertBefore(page, null)
+                    }
+                    else {
+                        this.parentElement.insertBefore(page, this.parentElement.pages[pageIndex + 1])
+                    }
+                }
+                this.classList.remove("drop-target-left")
+                this.classList.remove("drop-target-right")
             }
 
             disconnectedCallback() { }
