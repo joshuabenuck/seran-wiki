@@ -160,6 +160,9 @@
                 desc.textContent = ` - ${text}`
                 p.appendChild(desc)
                 shadow.appendChild(p)
+
+                let wiki = document.getElementsByTagName("wiki-wiki")[0]
+                wiki.neighborhood.add(site)
             }
 
             render(json) {
@@ -228,7 +231,7 @@
             connectedCallback() {
                 if (this.inited) return
                 this.inited = true
-                this.neighbors = []
+                this.neighbors = new Set()
                 let shadow = this.attachShadow({ mode: "open" })
                 let css = `
                     :host {
@@ -257,14 +260,17 @@
                 link.setAttribute("href", "javascript:wiki.showNeighborhood()")
                 link.appendChild(document.createTextNode(">>"))
                 shadow.appendChild(link)
+                // TODO: Remove this hardcoded sitename
                 this.add("localhost:8000")
             }
 
             add(site) {
+                if (this.neighbors.has(site)) return
                 let flag = document.createElement("img")
                 flag.setAttribute("src", `http://${site}/favicon.png`)
+                flag.setAttribute("title", site)
                 this.shadowRoot.appendChild(flag)
-                this.neighbors.push(site)
+                this.neighbors.add(site)
             }
         }
         customElements.define("wiki-neighborhood", Neighboorhood)
