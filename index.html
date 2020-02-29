@@ -305,7 +305,8 @@
 
                     .paper {
                         padding: 30px;
-                        overflow: scroll;
+                        overflow-y: auto;
+                        overflow-x: hidden;
                         top: 0;
                         bottom: 0;
                         left: 0;
@@ -611,13 +612,13 @@
             async loadPage(slug) {
                 let res = await fetch(`/${slug}.json`)
                 let page = await this.renderPage(res)
-                page.scrollIntoViewIfNeeded()
+                page.activate()
             }
 
             async loadRemotePage(site, slug) {
                 let res = await fetch(`http://${site}/${slug}.json`)
                 let page = await this.renderPage(res, site)
-                page.scrollIntoViewIfNeeded()
+                page.activate()
             }
 
             async renderPage(res, site) {
