@@ -75,6 +75,23 @@
         }
     </style>
     <script type="text/javascript">
+        function asSlug(name) {
+            return name.replace(/\s/g, '-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase()
+        }
+
+        function renderLinks(html, site) {
+            html = html.replace(/\[\[(.*?)\]\]/g, (_full, match) => {
+                if (site) {
+                    return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}")'>${match}</a>`
+                }
+                return `<a href='javascript:wiki.loadPage("${asSlug(match)}")'>${match}</a>`
+            })
+            return html.replace(/\[(.*)\]/g, (_full, match) => {
+                let [url, text] = match.split(" ")
+                return `<a href='${url}' target="_blank">${text}</a>`
+            })
+        }
+
         window.plugins = {}
         function registerPlugin(name, cls) {
             window.plugins[name] = cls
@@ -157,7 +174,7 @@
                 link.appendChild(document.createTextNode(title))
                 p.appendChild(link)
                 let desc = document.createElement('span')
-                desc.textContent = ` - ${text}`
+                desc.innerHTML = ` - ${renderLinks(text, site)}`
                 p.appendChild(desc)
                 shadow.appendChild(p)
 
@@ -192,20 +209,12 @@
                 p.appendChild(slot)
                 shadow.appendChild(p)
 
-                function asSlug(name) {
-                    return name.replace(/\s/g, '-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase()
-                }
-                let site = this.parentElement.getAttribute("site")
-                this.innerHTML = this.innerHTML.replace(/\[\[(.*?)\]\]/g, (_full, match) => {
-                    if (site) {
-                        return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}")'>${match}</a>`
-                    }
-                    return `<a href='javascript:wiki.loadPage("${asSlug(match)})"'>${match}</a>`
-                })
-                this.innerHTML = this.innerHTML.replace(/\[(.*)\]/g, (_full, match) => {
-                    let [url, text] = match.split(" ")
-                    return `<a href='${url}' target="_blank">${text}</a>`
-                })
+                let site = this.page().getAttribute("site")
+                this.innerHTML = renderLinks(this.innerHTML, site)
+            }
+
+            page() {
+                return this.parentElement
             }
 
             render(json) {
