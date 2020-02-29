@@ -1,6 +1,6 @@
 export function hello() {
     return {
-        title: "Welcome Visitors",
+        title: "Hello",
         story: [
             {
                 type: "paragraph",

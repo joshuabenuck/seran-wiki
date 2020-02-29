@@ -4,6 +4,7 @@ import { ServerRequest } from "https://deno.land/std@v0.30.0/http/server.ts";
 let metaPages = {
     "/system/site-index.json": serveSiteIndex,
     "/system/sitemap.json": serveSiteMap,
+    "/denowiki.json": serveMetaAboutUs,
 }
 
 export function baseHeaders() {
@@ -64,6 +65,14 @@ export function serveSiteMap(req, site, system) {
     serveJson(req, system.siteMaps[system.requestedSite])
 }
 
+export function serveMetaAboutUs(req, site, system) {
+    serveJson(req, page("DenoWiki", [
+        paragraph(`Site: ${system.requestedSite}`),
+        paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
+        paragraph(`Source: TODO - Add link to meta-site's source`)
+    ]))
+}
+
 export function serve404(req) {
     console.log(`Unable to handle request: ${req.url}`)
     req.respond({
@@ -118,8 +127,51 @@ export function roster(roster) {
     return item("roster", { text: roster })
 }
 
+export let DO_AND_SHARE_ID = "05e2fa92643677ca"
+export let ABOUT_US_ID = "63ad2e58eecdd9e5"
+
+export function welcomePage(aboutUs, doAndShare) {
+    return {
+        "title": "Welcome Visitors",
+        "story": [
+            {
+                "text": "Welcome to this [[Federated Wiki]] site. From this page you can find who we are and what we do. New sites provide this information and then claim the site as their own. You will need your own site to participate.",
+                "id": "7b56f22a4b9ee974",
+                "type": "paragraph"
+            },
+            {
+                "type": "paragraph",
+                "id": "821827c99b90cfd1",
+                "text": "Pages about us."
+            },
+            {
+                "type": "paragraph",
+                "id": ABOUT_US_ID,
+                "prompt": "Link to a page about yourself here. Type your name enclosed in double square brackets. Then press Command/ALT-S to save.\n\nMake all pages here yours alone with the login below.",
+                "text": aboutUs
+            },
+            {
+                "type": "paragraph",
+                "id": "2bbd646ff3f44b51",
+                "text": "Pages where we do and share."
+            },
+            {
+                "type": "paragraph",
+                "id": DO_AND_SHARE_ID,
+                "prompt": "Create pages about things you do on this wiki. Type a descriptive name of something you will be writing about. Enclose it in square brackets. Then press Command/ALT-S to save.",
+                "text": doAndShare
+            },
+            {
+                "type": "paragraph",
+                "id": "ee416d431ebf4fb4",
+                "text": "You can edit your copy of these pages. Press [+] to add more writing spaces. Read [[How to Wiki]] for more ideas. Follow [[Recent Changes]] here and nearby."
+            }
+        ]
+    }
+}
+
 function randomByte() {
-    return (((1+Math.random())*0x100)|0).toString(16).substring(1)
+    return (((1 + Math.random()) * 0x100) | 0).toString(16).substring(1)
 }
 
 function randomBytes(n) {

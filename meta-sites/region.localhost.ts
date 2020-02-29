@@ -10,7 +10,13 @@ function route(url, fn) {
 
 route("/welcome-visitors.json", async (req, site, _system) => {
     site.serveJson(req,
-        site.page("Welcome Visitors", [
+        site.welcomePage("[[DenoWiki]]", "[[Region]]")
+    )
+})
+
+route("/region.json", async (req, site, _system) => {
+    site.serveJson(req,
+        site.page("Region", [
             site.paragraph("List of [[Sites]]"),
             site.paragraph("Region crawling [[Config]]"),
             site.paragraph("[[One Degree]]"),

@@ -31,7 +31,7 @@ export async function init() {
 
 export async function serve(req: ServerRequest, site, system) {
     if (req.url == "/welcome-visitors.json") {
-        site.serveJson(req, site.page("Welcome Visitors", [ site.paragraph("[[hello]]") ]))
+        site.serveJson(req, site.welcomePage("[[DenoWiki]]", "[[Hello]], [[Deno Sites]]"))
     }
     // These are meta-pages from the meta-pages folder
     else if (metaPages[req.url]) {
@@ -43,7 +43,7 @@ export async function serve(req: ServerRequest, site, system) {
         let filePath = "./index.html"
         site.serveFile(req, "text/html", filePath)
     }
-    // This will serve system urls and class local meta-pages
+    // This will serve system urls
     else {
         site.serve(req, site, system)
     }
