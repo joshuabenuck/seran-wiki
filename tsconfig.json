@@ -1,5 +1,14 @@
 {
-	"compilerOptions": {
-		"strict": false
-	}
+    "compilerOptions": {
+        "strict": false,
+        // Not for the faint of heart: these are the checks that must be enabled to satisfy strict mode.
+        // Reference: https://www.typescriptlang.org/v2/en/tsconfig
+        // "noImplicitAny": true,
+        // "strictNullChecks": false,
+        // "strictFunctionTypes": false,
+        // "strictBindCallApply": false,
+        // "strictPropertyInitialization": false,
+        // "noImplicitThis": false,
+        // "alwaysStrict": false
+    }
 }
