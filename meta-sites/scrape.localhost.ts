@@ -1,6 +1,6 @@
-const { ErrorKind, DenoError, args, stat, open, exit, writeFile } = Deno;
-import { readFileStr, exists } from 'https://deno.land/std@v0.30.0/fs/mod.ts';
-import { isAbsolute, join, basename } from "https://deno.land/std/path/posix.ts";
+const { args, stat, open, exit, writeFile } = Deno;
+import { readFileStr, exists } from 'https://deno.land/std@v0.35.0/fs/mod.ts';
+import { isAbsolute, join, basename } from "https://deno.land/std@v0.35.0/path/posix.ts";
 
 export let metaPages = {}
 

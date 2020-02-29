@@ -1,6 +1,6 @@
-const { ErrorKind, DenoError, args, stat, open, exit } = Deno;
-import { ServerRequest } from "https://deno.land/std@v0.30.0/http/server.ts";
-import { encode, decode } from "https://deno.land/std/encoding/base32.ts";
+const { stat } = Deno;
+import { ServerRequest } from "https://deno.land/std@v0.35.0/http/server.ts";
+import { encode, decode } from "https://deno.land/std@v0.35.0/encoding/base32.ts";
 
 async function readDir(path) {
     let fileInfo = await stat(path)
@@ -30,7 +30,7 @@ export function siteMap() {
 export async function serve(req: ServerRequest, site, system) {
     console.log("du", req.url)
     if (req.url == "/welcome-visitors.json") {
-        site.serveJson(req, site.page("Welcome Visitors", [ site.paragraph(`[[${b32path("/")}]] - /`) ]))
+        site.serveJson(req, site.page("Welcome Visitors", [site.paragraph(`[[${b32path("/")}]] - /`)]))
     }
     else if (req.url.match("/^[a-z0-9]+.json")) {
         let parts = req.url.split(".json")

@@ -1,5 +1,5 @@
-const { ErrorKind, DenoError, args, stat, open, exit } = Deno;
-import { ServerRequest } from "https://deno.land/std@v0.30.0/http/server.ts";
+const { args, stat, open } = Deno;
+import { ServerRequest } from "https://deno.land/std@v0.35.0/http/server.ts";
 
 let metaPages = {
     "/system/site-index.json": serveSiteIndex,

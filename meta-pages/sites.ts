@@ -1,4 +1,4 @@
-const { ErrorKind, DenoError, args, stat, open, exit } = Deno;
+const { stat } = Deno;
 // TODO: Do we allow meta pages to import common routines?
 async function readDir(path) {
     let fileInfo = await stat(path)

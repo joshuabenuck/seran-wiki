@@ -1,5 +1,5 @@
-const { ErrorKind, DenoError, args, stat, readDir, open, exit } = Deno;
-import { serve, ServerRequest } from "https://deno.land/std@v0.30.0/http/server.ts";
+const { stat, open } = Deno;
+import { serve, ServerRequest } from "https://deno.land/std@v0.35.0/http/server.ts";
 export class WikiClient {
     req: ServerRequest
 
