@@ -298,6 +298,11 @@
                         box-shadow: inset 0px 0px 40px 0px rgba(220, 0, 0, .5)
                     }
 
+                    :host(.ghost) {
+                        opacity: 0.6;
+                        border-color: #eef2fe;
+                    }
+
                     .paper {
                         padding: 30px;
                         overflow: scroll;
@@ -476,6 +481,10 @@
                 }
                 this.classList.add("active")
             }
+
+            ghost() {
+                this.classList.add("ghost")
+            }
         }
         customElements.define("wiki-page", Page);
 
@@ -630,7 +639,9 @@
             }
 
             showNeighborhood() {
+                // Should all pages created with newPage be ghosted?
                 let page = this.lineup.newPage("Neighborhood")
+                page.ghost()
                 for (let neighbor of this.neighborhood.neighbors) {
                     page.addReference(neighbor, "welcome-visitors", "Welcome Visitors", neighbor)
                 }
