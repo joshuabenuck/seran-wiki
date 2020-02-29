@@ -273,7 +273,6 @@
             connectedCallback() {
                 if (this.inited) return
                 this.inited = true
-                this.hovered = false
                 this.addEventListener("click", this.activate)
                 let shadow = this.attachShadow({ mode: 'open' })
                 let css = `
@@ -306,6 +305,10 @@
                         margin-right: 6px;
                         margin-bottom: -6px;
                     }
+
+                    :host(.drag-target) {
+                        border-left: 1px solid blue;
+                    }
                 `
                 let style = document.createElement("style")
                 style.innerHTML = css
@@ -315,10 +318,9 @@
                 this.addEventListener("dragstart", this.dragStart)
                 this.addEventListener("dragenter", this.dragEnter)
                 this.addEventListener("dragover", this.dragOver)
+                this.addEventListener("dragleave", this.dragLeave)
                 this.addEventListener("dragend", this.dragEnd)
                 this.addEventListener("drop", this.drop)
-                this.addEventListener("mouseenter", this.mouseEnter)
-                this.addEventListener("mouseleave", this.mouseLeave)
 
                 let site = this.getAttribute("site")
                 if (site) {
@@ -369,12 +371,13 @@
 
             dragStart(event) {
                 console.log("drag start:", event)
-                event.dataTransfer.setData("text/plain", "Looks to be a requirement")
+                event.dataTransfer.setData("pageIndex", this.parentElement.pageIndex(this))
             }
 
             dragEnter(event) {
                 console.log("drag enter:", event)
                 event.dataTransfer.dropEffect = "move"
+                this.classList.add("drag-target")
                 return false
             }
 
@@ -382,22 +385,21 @@
                 event.preventDefault()
             }
 
+            dragLeave(event) {
+                console.log("drag leave:", event)
+                this.classList.remove("drag-target")
+            }
+
             dragEnd(event) {
-                console.log("dragEnd", event.dataTransfer.dropEffect, this.parentElement.hoveredPage(), this)
+                console.log("drag end:", event)
             }
 
             drop(event) {
-                console.log("drop:", this.parentElement.hoveredPage(), this.parentElement.pageIndex(this))
-                // TODO: Use drag and drop data instead of hoveredPage.
-                this.parentElement.insertBefore(this.parentElement.hoveredPage(), this)
-            }
-
-            mouseEnter(event) {
-                this.hovered = true
-            }
-
-            mouseLeave(event) {
-                this.hovered = false
+                console.log("drop:", event)
+                this.classList.remove("drag-target")
+                let pageIndex = event.dataTransfer.getData("pageIndex")
+                let page = this.parentElement.pages[pageIndex]
+                this.parentElement.insertBefore(page, this)
             }
 
             disconnectedCallback() { }
@@ -497,15 +499,6 @@
                     index += 1
                 }
                 return -1
-            }
-
-            hoveredPage() {
-                for (let page of this.pages) {
-                    if (page.hovered) {
-                        return page
-                    }
-                }
-                return null
             }
         }
         customElements.define("wiki-lineup", Lineup);
