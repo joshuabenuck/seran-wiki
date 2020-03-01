@@ -7,22 +7,21 @@ import { WikiClient } from "./client.ts"
 import * as site from "./site.ts"
 
 function convertToArray(param, params) {
-  if (!params[param]) {
-    params[param] = []
-  }
-
   if (!Array.isArray(params[param])) {
     params[param] = [params[param]]
   }
 }
 
-let params = parse(args)
+let params = parse(args, {
+  default: {
+    port: 8000,
+    "meta-site": [],
+    "meta-sites-dir": []
+  }
+})
 console.log(params)
 
-let port = 8000
-if (params.port) {
-  port = params.port
-}
+let port = params.port
 const s = serve({ port });
 
 convertToArray("meta-site", params)
@@ -89,7 +88,7 @@ console.log('listening on port ', port)
 for await (const req of s) {
   if (req.url == "/") {
     let headers = new Headers()
-    headers.set("Location", "http://dev.wiki.randombits.xyz/localhost:8000/deno-sites")
+    headers.set("Location", `http://dev.wiki.randombits.xyz/localhost:${port}/deno-sites`)
     const res = {
       status: 302,
       headers
