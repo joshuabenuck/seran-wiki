@@ -1,5 +1,5 @@
 const { stat } = Deno;
-import { readFileStr, exists } from "https://deno.land/std@v0.35.0/fs/mod.ts";
+import { readFileStr, exists } from "std/fs/mod.ts";
 
 export let metaPages = {};
 

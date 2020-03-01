@@ -10,7 +10,11 @@ git clone git@github.com:joshuabenuck/denowiki.git
 ```
 Build and run from denowiki directory
 ```
-deno -c tsconfig.json --allow-net --allow-read --allow-env index.ts --meta-sites-dir=./meta-sites
+./denowiki.sh --meta-sites-dir=./meta-sites
+```
+or
+```
+.\denowiki.cmd --meta-sites-dir=.\meta-sites
 ```
 
 ## Meta-Sites

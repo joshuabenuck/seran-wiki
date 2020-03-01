@@ -1,5 +1,5 @@
 const { args, stat, open } = Deno;
-import { ServerRequest } from "https://deno.land/std@v0.35.0/http/server.ts";
+import { ServerRequest } from "std/http/server.ts";
 
 let metaPages = {
   "/system/site-index.json": serveSiteIndex,

@@ -1,5 +1,5 @@
 const { stat } = Deno;
-import { ServerRequest } from "https://deno.land/std@v0.35.0/http/server.ts";
+import { ServerRequest } from "std/http/server.ts";
 
 async function readDir(path) {
   let fileInfo = await stat(path);
