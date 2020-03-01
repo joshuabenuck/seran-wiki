@@ -209,11 +209,11 @@
                 p.appendChild(slot)
                 shadow.appendChild(p)
 
-                let site = this.page().getAttribute("site")
+                let site = this.page.getAttribute("site")
                 this.innerHTML = renderLinks(this.innerHTML, site)
             }
 
-            page() {
+            get page() {
                 return this.parentElement
             }
 
