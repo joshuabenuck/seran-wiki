@@ -11,6 +11,7 @@ git clone git@github.com:joshuabenuck/denowiki.git
 Build and run from denowiki directory
 ```
 deno -c tsconfig.json --allow-net --allow-read --allow-env index.ts --meta-sites-dir=./meta-sites
+```
 
 ## Meta-Sites
 
@@ -25,7 +26,7 @@ The command line in the `Install` section will register and run all bundled meta
 
 To only run a specific set of meta-sites use `--meta-site=<path to meta-site>`. This can be specified more than once to run multiple meta-sites.
 
-By default, the hostname requested must exactly match the filename of the meta-site code (minus the extension). To override this use the form `--meta-site=<path to meta-site>@<alternate hostname>.
+By default, the hostname requested must exactly match the filename of the meta-site code (minus the extension). To override this use the form `--meta-site=<path to meta-site>@<alternate hostname>`.
 
 For example, to have `du.localhost.ts` answer to `du.rog`, `--meta-site=./meta-sites/du.localhost.ts@du.rog`.
 
