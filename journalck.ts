@@ -32,10 +32,11 @@ function dump() {
 
 async function scan(site, map) {
   // output.innerHTML = '<pre>' + JSON.stringify(map, null, 2)
-  map.map(info => `
-      <li><a href="http://${site}/${info.slug}.html" target=_blank>${info
-    .title}</a>
-      <span id=${info.slug}></span> </li>`)
+  map.map(info =>
+    `
+      <li><a href="http://${site}/${info.slug}.html" target=_blank>${info.title}</a>
+      <span id=${info.slug}></span> </li>`
+  )
     .join("\n");
   map.map(async info => {
     let start = Date.now();

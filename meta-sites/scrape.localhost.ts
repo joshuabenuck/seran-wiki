@@ -1,7 +1,10 @@
 const { args, stat, open, exit, writeFile } = Deno;
 import { readFileStr, exists } from "https://deno.land/std@v0.35.0/fs/mod.ts";
-import { isAbsolute, join,
-  basename } from "https://deno.land/std@v0.35.0/path/posix.ts";
+import {
+  isAbsolute,
+  join,
+  basename
+} from "https://deno.land/std@v0.35.0/path/posix.ts";
 
 export let metaPages = {};
 
@@ -26,7 +29,7 @@ route("/region-scraper.json", async (req, site, _system) => {
 
 type site = string;
 type slug = string;
-type todo = { site: site; slug?: slug; };
+type todo = { site: site; slug?: slug };
 
 let queue: todo[] = [];
 let doing: site[] = [];

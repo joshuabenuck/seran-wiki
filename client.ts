@@ -1,6 +1,8 @@
 const { stat, open } = Deno;
-import { serve,
-  ServerRequest } from "https://deno.land/std@v0.35.0/http/server.ts";
+import {
+  serve,
+  ServerRequest
+} from "https://deno.land/std@v0.35.0/http/server.ts";
 export class WikiClient {
   req: ServerRequest;
 

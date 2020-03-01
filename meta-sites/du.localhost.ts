@@ -1,7 +1,9 @@
 const { stat } = Deno;
 import { ServerRequest } from "https://deno.land/std@v0.35.0/http/server.ts";
-import { encode,
-  decode } from "https://deno.land/std@v0.35.0/encoding/base32.ts";
+import {
+  encode,
+  decode
+} from "https://deno.land/std@v0.35.0/encoding/base32.ts";
 
 async function readDir(path) {
   let fileInfo = await stat(path);

@@ -1,7 +1,10 @@
 const { args, stat } = Deno;
 import { parse } from "https://deno.land/std@v0.35.0/flags/mod.ts";
-import { isAbsolute, join,
-  basename } from "https://deno.land/std@v0.35.0/path/posix.ts";
+import {
+  isAbsolute,
+  join,
+  basename
+} from "https://deno.land/std@v0.35.0/path/posix.ts";
 import { serve } from "https://deno.land/std@v0.35.0/http/server.ts";
 import { main } from "./journalck.ts";
 import { WikiClient } from "./client.ts";
