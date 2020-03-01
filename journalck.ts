@@ -1,62 +1,60 @@
-
 function params() {
+  function hashed(hash, assign) {
+    let op = assign.split(/=/);
+    if (op[1]) hash[op[0]] = op[1];
+    return hash;
+  }
 
-    function hashed(hash, assign) {
-        let op = assign.split(/=/)
-        if (op[1]) hash[op[0]] = op[1]
-        return hash
-    }
-
-    let query = window.location.href.split(/\?/)[1] || ''
-    let args = query.split(/&/)
-    return args.reduce(hashed, {})
+  let query = window.location.href.split(/\?/)[1] || "";
+  let args = query.split(/&/);
+  return args.reduce(hashed, {});
 }
 
 export async function main() {
-    //let p = params()
-    let site = 'found.ward.bay.wiki.org' // || p.site
-    //sitelink.innerHTML = `<a href="http://${site}" target=_blank>${site}</a>`
-    let res = await fetch(`http://${site}/system/sitemap.json`)
-    let map = await res.json()
-    scan(site, map)
+  // let p = params()
+  let site = "found.ward.bay.wiki.org"; // || p.site
+  // sitelink.innerHTML = `<a href="http://${site}" target=_blank>${site}</a>`
+  let res = await fetch(`http://${site}/system/sitemap.json`);
+  let map = await res.json();
+  scan(site, map);
 }
 
-let times = []
+let times = [];
 function dump() {
-    for (let time of times) {
-        console.log(time)
-    }
-    times = []
+  for (let time of times) {
+    console.log(time);
+  }
+  times = [];
 }
 
 // setInterval(dump, 1000)
 // main()
 
 async function scan(site, map) {
-    // output.innerHTML = '<pre>' + JSON.stringify(map, null, 2)
-    map.map(info => `
-      <li><a href="http://${site}/${info.slug}.html" target=_blank>${info.title}</a>
+  // output.innerHTML = '<pre>' + JSON.stringify(map, null, 2)
+  map.map(info => `
+      <li><a href="http://${site}/${info.slug}.html" target=_blank>${info
+    .title}</a>
       <span id=${info.slug}></span> </li>`)
-        .join("\n")
-    map.map(async info => {
-        let start = Date.now()
-        try {
-            let res = await fetch(`http://${site}/${info.slug}.json`)
-            let page = await res.json()
-            //console.log(page.title)
-            let end = Date.now()
-            times.push({ slug: info.slug, start, end, diff: end - start })
-        }
-        catch (e) {
-            times.push({ slug: info.slug, start, error: true })
-            //console.log("exc", e)
-        }
-    })
-    //.then(page=>check(site, info.slug, page)))
+    .join("\n");
+  map.map(async info => {
+    let start = Date.now();
+    try {
+      let res = await fetch(`http://${site}/${info.slug}.json`);
+      let page = await res.json();
+      // console.log(page.title)
+      let end = Date.now();
+      times.push({ slug: info.slug, start, end, diff: end - start });
+    } catch (e) {
+      times.push({ slug: info.slug, start, error: true });
+      // console.log("exc", e)
+    }
+  });
+  // .then(page=>check(site, info.slug, page)))
 }
 
 function check(site, slug, page) {
-    /*let trouble = nulls() || chron() || rev()
+  /*let trouble = nulls() || chron() || rev()
     document.getElementById(slug).innerHTML = !trouble ? '✓' : `<b><font color=red>${trouble}</font></b>`
   
   
@@ -90,7 +88,6 @@ function check(site, slug, page) {
       */
 }
 
-
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -103,9 +100,8 @@ function check(site, slug, page) {
 // all of a journal.
 
 function apply(page, action) {
-
-    let index;
-    /*const order = () => Array.from(page.story||[]).map((item) => (item != null ? item.id : undefined));
+  let index;
+  /*const order = () => Array.from(page.story||[]).map((item) => (item != null ? item.id : undefined));
   
     const add = function(after, item) {
       const index = order().indexOf(after) + 1;
@@ -154,9 +150,7 @@ function apply(page, action) {
     if (!page.journal) { page.journal = []; }
     return page.journal.push(action);
     */
-};
-
-// const create = function(revIndex, data) {
+} // const create = function(revIndex, data) {
 //   revIndex = +revIndex;
 //   const revJournal = data.journal.slice(0, +revIndex + 1 || undefined);
 //   const revPage = {title: data.title, story: []};

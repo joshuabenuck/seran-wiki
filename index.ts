@@ -1,14 +1,15 @@
 const { args, stat } = Deno;
 import { parse } from "https://deno.land/std@v0.35.0/flags/mod.ts";
-import { isAbsolute, join, basename } from "https://deno.land/std@v0.35.0/path/posix.ts";
+import { isAbsolute, join,
+  basename } from "https://deno.land/std@v0.35.0/path/posix.ts";
 import { serve } from "https://deno.land/std@v0.35.0/http/server.ts";
-import { main } from "./journalck.ts"
-import { WikiClient } from "./client.ts"
-import * as site from "./site.ts"
+import { main } from "./journalck.ts";
+import { WikiClient } from "./client.ts";
+import * as site from "./site.ts";
 
 function convertToArray(param, params) {
   if (!Array.isArray(params[param])) {
-    params[param] = [params[param]]
+    params[param] = [params[param]];
   }
 }
 
@@ -18,17 +19,17 @@ let params = parse(args, {
     "meta-site": [],
     "meta-sites-dir": []
   }
-})
-console.log(params)
+});
+console.log(params);
 
-let port = params.port
+let port = params.port;
 const s = serve({ port });
 
-convertToArray("meta-site", params)
-convertToArray("meta-sites-dir", params)
+convertToArray("meta-site", params);
+convertToArray("meta-sites-dir", params);
 
 async function readDir(path) {
-  let fileInfo = await stat(path)
+  let fileInfo = await stat(path);
   if (!fileInfo.isDirectory()) {
     console.log(`path ${path} is not a directory.`);
     return [];
@@ -38,84 +39,86 @@ async function readDir(path) {
 }
 
 interface System {
-  metaSites: {}
-  siteMaps: {}
-  requestedSite: string
+  metaSites: {};
+  siteMaps: {};
+  requestedSite: string;
 }
 
 let system: System = {
   metaSites: {},
   siteMaps: {},
   requestedSite: undefined
-}
+};
 
 async function importMetaSite(path) {
-  console.log(path)
-  let name = undefined
+  console.log(path);
+  let name = undefined;
   if (path.indexOf("@") != -1) {
-    let parts = path.split("@")
-    path = parts[0]
-    name = parts[1]
+    let parts = path.split("@");
+    path = parts[0];
+    name = parts[1];
   }
-  let metaSite = await import(path)
+  let metaSite = await import(path);
   if (!name) {
-    name = basename(path.replace(/\.[tj]s$/, ""))
+    name = basename(path.replace(/\.[tj]s$/, ""));
   }
   if (metaSite.init) {
-    metaSite.init()
+    metaSite.init();
   }
-  let targetHost = `${name}:${port}`
-  system.metaSites[targetHost] = metaSite
-  system.siteMaps[targetHost] = []
+  let targetHost = `${name}:${port}`;
+  system.metaSites[targetHost] = metaSite;
+  system.siteMaps[targetHost] = [];
   if (metaSite.siteMap) {
-    system.siteMaps[targetHost] = metaSite.siteMap()
+    system.siteMaps[targetHost] = metaSite.siteMap();
   }
 }
 for (let metaSitePath of params["meta-site"]) {
-  await importMetaSite(metaSitePath)
+  await importMetaSite(metaSitePath);
 }
 for (let metaSitesDir of params["meta-sites-dir"]) {
   for (let metaSitePath of await readDir(metaSitesDir)) {
-    let fullPath = join(metaSitesDir, metaSitePath.name)
+    let fullPath = join(metaSitesDir, metaSitePath.name);
     if (!isAbsolute(fullPath)) {
-      fullPath = "./" + fullPath
+      fullPath = "./" + fullPath;
     }
-    await importMetaSite(fullPath)
+    await importMetaSite(fullPath);
   }
 }
 
-console.log('listening on port ', port)
+console.log("listening on port ", port);
 for await (const req of s) {
   if (req.url == "/") {
-    let headers = new Headers()
-    headers.set("Location", `http://dev.wiki.randombits.xyz/localhost:${port}/deno-sites`)
+    let headers = new Headers();
+    headers.set(
+      "Location",
+      `http://dev.wiki.randombits.xyz/localhost:${port}/deno-sites`
+    );
     const res = {
       status: 302,
       headers
     };
-    req.respond(res)
+    req.respond(res);
   }
-  let requestedSite = req.headers.get("host")
-  let metaSite = system.metaSites[requestedSite]
-  console.log("requested-site:", requestedSite)
+  let requestedSite = req.headers.get("host");
+  let metaSite = system.metaSites[requestedSite];
+  console.log("requested-site:", requestedSite);
   if (metaSite) {
-    system.requestedSite = requestedSite
+    system.requestedSite = requestedSite;
     if (metaSite.serve) {
-      console.log("meta-site:", req.url)
-      metaSite.serve(req, site, system)
+      console.log("meta-site:", req.url);
+      metaSite.serve(req, site, system);
     }
     if (metaSite.metaPages) {
-      console.log("meta-page:", req.url)
-      let metaPage = metaSite.metaPages[req.url]
+      console.log("meta-page:", req.url);
+      let metaPage = metaSite.metaPages[req.url];
       if (metaPage) {
-        metaPage(req, site, system)
-      }
-      else {
-        site.serve(req, site, system)
+        metaPage(req, site, system);
+      } else {
+        site.serve(req, site, system);
       }
     }
-    continue
+    continue;
   }
-  console.log("unhandled-request:", req.url)
-  site.serve404(req)
+  console.log("unhandled-request:", req.url);
+  site.serve404(req);
 }
