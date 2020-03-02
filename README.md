@@ -3,9 +3,19 @@ Experiment to create a Deno based implementation of Federated Wiki
 
 ## Install
 
-Get the prerequsites
+Get the prerequsites (derive from the official [instructions](https://deno.land/x/install/))
 ```
-brew install deno
+export DENO_INSTALL=/usr/local
+curl -fsSL https://deno.land/x/install/install.sh | sh -s v0.35.0
+```
+Ensure /usr/local/bin is on your path.
+
+or
+```
+iwr https://deno.land/x/install/install.ps1 -useb -outf install.ps1; .\install.ps1 v0.35.0
+```
+then
+```
 git clone git@github.com:joshuabenuck/denowiki.git
 ```
 Build and run from denowiki directory
