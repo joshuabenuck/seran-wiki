@@ -1,4 +1,5 @@
 const { args, stat } = Deno;
+import { exists, readFileStr } from "std/fs/mod.ts";
 import { parse } from "std/flags/mod.ts";
 import {
   isAbsolute,
@@ -86,6 +87,27 @@ for (let metaSitesDir of params["meta-sites-dir"]) {
     }
     await importMetaSite(fullPath);
   }
+}
+
+if (exists("/etc/hosts")) {
+  let metaSites = Object.keys(system.metaSites);
+  let hosts = (await readFileStr("/etc/hosts")).split("\n");
+  for (let host of hosts) {
+    if (host.indexOf("127.0.0.1") == -1) {
+      continue;
+    }
+    host = host.replace("127.0.0.1", "").trim();
+    metaSites = metaSites.filter((s) => {
+      let metaSite = s.split(":")[0];
+      if (metaSite == host || metaSite.indexOf("localhost") == -1) {
+        return false;
+      }
+      return true;
+    });
+  }
+  metaSites.map((s) =>
+    console.log(`WARN: missing /etc/hosts entry for ${s}.`)
+  );
 }
 
 console.log("listening on port ", port);
