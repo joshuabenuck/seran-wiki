@@ -1,4 +1,4 @@
-const { args, stat } = Deno;
+const { exit, args, stat, permissions } = Deno;
 import { exists, readFileStr } from "std/fs/mod.ts";
 import { parse } from "std/flags/mod.ts";
 import {
@@ -26,8 +26,22 @@ let params = parse(args, {
 });
 console.log(params);
 
+let intf = "0.0.0.0";
 let port = params.port;
-const s = serve({ port });
+let allInterfaces = await permissions.query({ name: "net" });
+if (allInterfaces.state != "granted") {
+  let localhostInterface = await permissions.query(
+    { name: "net", url: "http://127.0.0.1" }
+  );
+  if (localhostInterface.state != "granted") {
+    console.log(
+      "ERROR: Unsupported network permissions. Use --allow-net or --allow-net=127.0.0.1."
+    );
+    exit(1);
+  }
+  intf = "127.0.0.1";
+}
+const s = serve(`${intf}:${port}`);
 
 convertToArray("meta-site", params);
 convertToArray("meta-sites-dir", params);
@@ -99,12 +113,12 @@ for (let metaSitesDir of params["meta-sites-dir"]) {
   }
 }
 
-let etcHosts = null
+let etcHosts = null;
 if (await exists("/etc/hosts")) {
-  etcHosts = "/etc/hosts"
+  etcHosts = "/etc/hosts";
 }
 if (await exists("/Windows/System32/drivers/etc/hosts")) {
-  etcHosts = "/Windows/System32/drivers/etc/hosts"
+  etcHosts = "/Windows/System32/drivers/etc/hosts";
 }
 if (etcHosts) {
   let metaSites = Object.keys(system.metaSites);
