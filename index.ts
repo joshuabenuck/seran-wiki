@@ -100,10 +100,10 @@ for (let metaSitesDir of params["meta-sites-dir"]) {
 }
 
 let etcHosts = null
-if (exists("/etc/hosts")) {
+if (await exists("/etc/hosts")) {
   etcHosts = "/etc/hosts"
 }
-if (exists("/Windows/System32/drivers/etc/hosts")) {
+if (await exists("/Windows/System32/drivers/etc/hosts")) {
   etcHosts = "/Windows/System32/drivers/etc/hosts"
 }
 if (etcHosts) {
