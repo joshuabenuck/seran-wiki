@@ -21,7 +21,8 @@ let params = parse(args, {
   default: {
     port: 8000,
     "meta-site": [],
-    "meta-sites-dir": []
+    "meta-sites-dir": [],
+    "host": null
   }
 });
 console.log(params);
@@ -55,8 +56,11 @@ let system: System = {
 };
 
 async function importMetaSite(path) {
-  console.log(path);
   let name = undefined;
+  if (params.host && path.indexOf("localhost") != -1) {
+    let orig = basename(path.replace(/\.[tj]s$/, ""));
+    name = orig.replace("localhost", params.host);
+  }
   if (path.indexOf("@") != -1) {
     let parts = path.split("@");
     path = parts[0];
@@ -66,6 +70,7 @@ async function importMetaSite(path) {
   if (!name) {
     name = basename(path.replace(/\.[tj]s$/, ""));
   }
+  console.log(`Registering ${path} as ${name}`);
   if (metaSite.init) {
     metaSite.init();
   }
