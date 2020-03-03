@@ -270,7 +270,7 @@
                 link.appendChild(document.createTextNode(">>"))
                 shadow.appendChild(link)
                 // TODO: Remove this hardcoded sitename
-                this.add("localhost:8000")
+                this.add(location.origin.replace("http://", ""))
             }
 
             add(site) {
@@ -597,7 +597,7 @@
                 console.log("opening:", this)
                 let input = this.getElementsByTagName("input")[0]
                 let path = input.value
-                let site = "localhost:8000"
+                let site = location.origin
                 let slug = path
                 if (path.indexOf(":") != -1) {
                     [site, slug] = path.split(":")
