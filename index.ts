@@ -99,9 +99,16 @@ for (let metaSitesDir of params["meta-sites-dir"]) {
   }
 }
 
+let etcHosts = null
 if (exists("/etc/hosts")) {
+  etcHosts = "/etc/hosts"
+}
+if (exists("/Windows/System32/drivers/etc/hosts")) {
+  etcHosts = "/Windows/System32/drivers/etc/hosts"
+}
+if (etcHosts) {
   let metaSites = Object.keys(system.metaSites);
-  let hosts = (await readFileStr("/etc/hosts")).split("\n");
+  let hosts = (await readFileStr(etcHosts)).split("\n");
   for (let host of hosts) {
     if (host.indexOf("127.0.0.1") == -1) {
       continue;
