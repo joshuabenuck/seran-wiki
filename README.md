@@ -20,12 +20,14 @@ git clone git@github.com:joshuabenuck/denowiki.git
 ```
 Build and run from denowiki directory
 ```
-./denowiki.sh --meta-sites-dir=./meta-sites
+./denowiki.sh --meta-sites-dir=./meta-sites@localtest.me
 ```
 or
 ```
-.\denowiki.cmd --meta-sites-dir=.\meta-sites
+.\denowiki.cmd --meta-sites-dir=.\meta-sites@localtest.me
 ```
+
+Navigate to http://localtest.me:8000/ or http://localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.
 
 ## Meta-Sites
 
@@ -42,7 +44,7 @@ To only run a specific set of meta-sites use `--meta-site=<path to meta-site>`. 
 
 By default, the hostname requested must exactly match the filename of the meta-site code (minus the extension). To override this use the form `--meta-site=<path to meta-site>@<alternate hostname>`.
 
-For example, to have `du.localhost.ts` answer to `du.rog`, `--meta-site=./meta-sites/du.localhost.ts@du.rog`.
+For example, to have `du.localhost.ts` answer to `du.localtest.me`, `--meta-site=./meta-sites/du.localhost.ts@du.localtest.me`.
 
 Paths to meta-sites can be for local files or they can be urls to remote modules. Imports within the meta-site are resolved relative to their origin. This means local files will load other local files and remote modules will load other remote files.
 

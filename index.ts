@@ -21,8 +21,7 @@ let params = parse(args, {
   default: {
     port: 8000,
     "meta-site": [],
-    "meta-sites-dir": [],
-    "host": null
+    "meta-sites-dir": []
   }
 });
 console.log(params);
@@ -55,11 +54,11 @@ let system: System = {
   requestedSite: undefined
 };
 
-async function importMetaSite(path) {
+async function importMetaSite(path, host) {
   let name = undefined;
-  if (params.host && path.indexOf("localhost") != -1) {
+  if (host && path.indexOf("localhost") != -1) {
     let orig = basename(path.replace(/\.[tj]s$/, ""));
-    name = orig.replace("localhost", params.host);
+    name = orig.replace("localhost", host);
   }
   if (path.indexOf("@") != -1) {
     let parts = path.split("@");
@@ -82,15 +81,21 @@ async function importMetaSite(path) {
   }
 }
 for (let metaSitePath of params["meta-site"]) {
-  await importMetaSite(metaSitePath);
+  await importMetaSite(metaSitePath, null);
 }
 for (let metaSitesDir of params["meta-sites-dir"]) {
+  let host = null;
+  if (metaSitesDir.indexOf("@") != -1) {
+    let parts = metaSitesDir.split("@");
+    metaSitesDir = parts[0];
+    host = parts[1];
+  }
   for (let metaSitePath of await readDir(metaSitesDir)) {
     let fullPath = join(metaSitesDir, metaSitePath.name);
     if (!isAbsolute(fullPath)) {
       fullPath = "./" + fullPath;
     }
-    await importMetaSite(fullPath);
+    await importMetaSite(fullPath, host);
   }
 }
 
