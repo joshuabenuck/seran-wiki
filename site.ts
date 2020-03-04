@@ -20,7 +20,7 @@ export function baseHeaders() {
 export function serveContents(req, contentType, contents, length) {
   let headers = baseHeaders();
   headers.set("content-length", length);
-  req.headers.set("content-type", contentType);
+  headers.set("content-type", contentType);
 
   const res = {
     status: 200,
@@ -85,7 +85,9 @@ export async function serve(req: ServerRequest, site, system) {
     let data = await metaPage(req, site, system);
     serveJson(req, data);
   } // TODO: Make safe for multi-tenant use
-  else if (req.url.match(/^\/.*\.png$/)) {
+  else if (req.url == "/index.html") {
+    serveFile(req, "text/html", "./index.html");
+  } else if (req.url.match(/^\/.*\.png$/)) {
     let filePath = `.${req.url}`;
     serveFile(req, "image/png", filePath);
   } else {
