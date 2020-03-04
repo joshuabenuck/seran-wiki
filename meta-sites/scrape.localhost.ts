@@ -18,11 +18,11 @@ route("/welcome-visitors.json", async (req, site, _system) => {
 });
 
 route("/region-scraper.json", async (req, site, _system) => {
-  site.serveJson(req, site.page("Welcome Visitors", [
+  site.serveJson(req, site.page("Region Scraper", [
     site.paragraph(
       "Here we supervise the ongoing scrape of the wiki federation."
     ),
-    site.paragraph("<button>start</button>")
+    site.item("process-step", { legend: "A legend", href: "/single-step", }),
   ]));
 });
 

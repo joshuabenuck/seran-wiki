@@ -136,6 +136,11 @@
                 shadow.appendChild(p)
             }
 
+            render(json) {
+                this.setAttribute("href", json.href)
+                this.appendChild(document.createTextNode(json.legend))
+            }
+
             get state() {
                 return this.button.textContent
             }
@@ -570,6 +575,12 @@
                 this.appendChild(ref)
             }
 
+            addProcessStep(legend, href) {
+                let processStep = document.createElement("wiki-process-step")
+                processStep.render({ legend, href })
+                this.appendChild(processStep)
+            }
+
             activate() {
                 this.scrollIntoViewIfNeeded()
                 let actives = document.getElementsByClassName("active")
@@ -756,10 +767,7 @@
                 return
             }
             let wiki = document.getElementsByTagName("wiki-wiki")[0]
-            // let welcome = wiki.lineup.newPage("Web Components API")
-            // welcome.addParagraph("Exploring a possible web components based wiki client side API")
-            // welcome.addReference("wiki.randombits.xyz", "welcome-visitors", "Welcome Visitors", "Link to an external site")
-            wiki.loadPage("deno-sites")
+            wiki.loadPage("welcome-visitors")
         })
     </script>
 </head>
@@ -767,10 +775,6 @@
 <body>
     <wiki-wiki>
         <wiki-lineup>
-            <wiki-page title="Wiki Process Step">
-                <wiki-paragraph>Testing wiki-process-step</wiki-paragraph>
-                <wiki-process-step href="/single-step">A legend</wiki-process-step>
-            </wiki-page>
         </wiki-lineup>
         <footer>
             <wiki-neighborhood></wiki-neighborhood>
