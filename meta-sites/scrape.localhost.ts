@@ -5,7 +5,7 @@ import {
   join,
   basename
 } from "std/path/posix.ts";
-import { delay } from "std/util/async.ts"
+import { delay } from "std/util/async.ts";
 
 export let metaPages = {};
 
@@ -22,19 +22,19 @@ route("/region-scraper.json", async (req, site, _system) => {
     site.paragraph(
       "Here we supervise the ongoing scrape of the wiki federation."
     ),
-    site.item("process-step", { legend: "A legend", href: "/single-step", }),
+    site.item("process-step", { legend: "A legend", href: "/single-step" })
   ]));
 });
 
 async function* run() {
   while (true) {
-    await delay(1000)
+    await delay(1000);
     console.log("step 1");
     yield "step 1";
-    await delay(1000)
+    await delay(1000);
     console.log("step 2");
     yield "step 2";
-    await delay(1000)
+    await delay(1000);
     console.log("step 3");
     yield "step 3";
   }
