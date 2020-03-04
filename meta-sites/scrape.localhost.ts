@@ -25,6 +25,34 @@ route("/region-scraper.json", async (req, site, _system) => {
   ]));
 });
 
+async function* run() {
+  while (true) {
+    console.log("step 1");
+    yield "step 1";
+    console.log("step 2");
+    yield "step 2";
+    console.log("step 3");
+    yield "step 3";
+  }
+}
+
+let generator = run();
+route("/single-step", async (req, site, _system) => {
+  let result = await generator.next();
+  console.log("single step", result);
+  let headers = site.baseHeaders();
+  req.respond({
+    status: 200,
+    body: result.value,
+    headers
+  });
+});
+
+route("/index.html", async (req, site, _system) => {
+  let filePath = "./index.html";
+  site.serveFile(req, "text/html", filePath);
+});
+
 // S C R A P E
 
 type site = string;

@@ -98,6 +98,92 @@
             customElements.define(`wiki-${name}`, cls);
         }
 
+        class ProcessStep extends HTMLElement {
+            connectedCallback() {
+                if (this.inited) return
+                this.inited = true
+                let shadow = this.attachShadow({ mode: "open" })
+                let css = `
+                    :host {
+                        display: block;
+                        background-color: #eee;
+                        padding: 5px;
+                        text-align: center
+                    }
+                    button {
+                        margin: 10px;
+                    }
+                `
+                let style = document.createElement("style")
+                style.innerHTML = css
+                shadow.appendChild(style)
+
+                let p = document.createElement("p")
+                let slot = document.createElement("slot")
+                let legend = document.createElement("div")
+                legend.appendChild(slot)
+                p.appendChild(legend)
+
+                this.button = document.createElement("button")
+                this.state = "start"
+                let site = this.parentElement.getAttribute("site")
+                this.button.addEventListener("click", (_e) => this.click(this.getAttribute("href"), site))
+                p.appendChild(this.button)
+
+                this.statusElement = document.createElement("div")
+                this.statusElement.appendChild(document.createTextNode(""))
+                p.append(this.statusElement)
+                shadow.appendChild(p)
+
+                // TODO: disable button, show waiting while waiting
+            }
+
+            get state() {
+                return this.button.textContent
+            }
+
+            set state(s) {
+                while (this.button.firstChild) {
+                    this.button.removeChild(this.button.firstChild)
+                }
+                this.button.appendChild(document.createTextNode(s))
+            }
+
+            get status() {
+                return this.getAttibute("status")
+            }
+
+            set status(s) {
+                this.setAttribute("status", s)
+            }
+
+            attributeChangedCallback(attrName, oldValue, newValue) {
+                if (attrName == "status") {
+                    while (this.statusElement.firstChild) {
+                        this.statusElement.removeChild(this.statusElement.firstChild)
+                    }
+                    this.statusElement.appendChild(document.createTextNode(newValue))
+                }
+            }
+
+            static get observedAttributes() {
+                return ["status"]
+            }
+
+            async click(href, site) {
+                console.log(href)
+                // TODO: Future expansion possibility
+                if (site && href.indexOf("http:") != -1) {
+                    href = `http://${site}/${href}`
+                }
+                let response = await fetch(href)
+                let status = await response.text()
+                this.status = status
+                console.log(this, status)
+            }
+        }
+        registerPlugin("process-step", ProcessStep)
+
         class Roster extends HTMLElement {
             connectedCallback() {
                 if (this.inited) return
@@ -495,6 +581,10 @@
             ghost() {
                 this.classList.add("ghost")
             }
+
+            get items() {
+                return [...this.childNodes].filter((e) => e.nodeName.indexOf("WIKI-") == 0)
+            }
         }
         customElements.define("wiki-page", Page);
 
@@ -665,9 +755,9 @@
                 return
             }
             let wiki = document.getElementsByTagName("wiki-wiki")[0]
-            let welcome = wiki.lineup.newPage("Web Components API")
-            welcome.addParagraph("Exploring a possible web components based wiki client side API")
-            welcome.addReference("wiki.randombits.xyz", "welcome-visitors", "Welcome Visitors", "Link to an external site")
+            // let welcome = wiki.lineup.newPage("Web Components API")
+            // welcome.addParagraph("Exploring a possible web components based wiki client side API")
+            // welcome.addReference("wiki.randombits.xyz", "welcome-visitors", "Welcome Visitors", "Link to an external site")
             wiki.loadPage("deno-sites")
         })
     </script>
@@ -676,6 +766,10 @@
 <body>
     <wiki-wiki>
         <wiki-lineup>
+            <wiki-page title="Wiki Process Step">
+                <wiki-paragraph>Testing wiki-process-step</wiki-paragraph>
+                <wiki-process-step href="/single-step">A legend</wiki-process-step>
+            </wiki-page>
         </wiki-lineup>
         <footer>
             <wiki-neighborhood></wiki-neighborhood>
