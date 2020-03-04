@@ -134,8 +134,6 @@
                 this.statusElement.appendChild(document.createTextNode(""))
                 p.append(this.statusElement)
                 shadow.appendChild(p)
-
-                // TODO: disable button, show waiting while waiting
             }
 
             get state() {
@@ -176,8 +174,12 @@
                 if (site && href.indexOf("http:") != -1) {
                     href = `http://${site}/${href}`
                 }
+                this.button.disabled = true
+                this.state = "waiting"
                 let response = await fetch(href)
                 let status = await response.text()
+                this.button.disabled = false
+                this.state = "step"
                 this.status = status
                 console.log(this, status)
             }
@@ -355,7 +357,6 @@
                 link.setAttribute("href", "javascript:wiki.showNeighborhood()")
                 link.appendChild(document.createTextNode(">>"))
                 shadow.appendChild(link)
-                // TODO: Remove this hardcoded sitename
                 this.add(location.origin.replace("http://", ""))
             }
 
