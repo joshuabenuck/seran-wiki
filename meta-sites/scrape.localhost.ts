@@ -20,23 +20,29 @@ route("/welcome-visitors.json", async (req, site, _system) => {
 route("/region-scraper.json", async (req, site, _system) => {
   site.serveJson(req, site.page("Region Scraper", [
     site.paragraph(
-      "Here we supervise the ongoing scrape of the wiki federation."
+      `Here we supervise the ongoing scrape of the wiki federation.
+      We invision this as three nested loops where inner loops run
+      dozens or hundreds of times for each outer loop.`
     ),
     site.item("process-step", { legend: "A legend", href: "/single-step", }),
   ]));
 });
 
+let c0 = c1 = c2 = 0;
+let l0 = l1 = l2 = 5;
+
 async function* run() {
-  while (true) {
-    await delay(1000)
-    console.log("step 1");
-    yield "step 1";
-    await delay(1000)
-    console.log("step 2");
-    yield "step 2";
-    await delay(1000)
-    console.log("step 3");
-    yield "step 3";
+  for (c0 = 0, c0<l0, c0++) {
+    yield `outer loop step ${c0} of ${l0}`
+    for (c1 = 0, c1<l1, c1++) {
+      yield `middle loop step ${c1} of ${l1}`
+      for (c2 = 0, c2<l2, c2++) {
+        yield `inner loop step ${c2} of ${l2}`
+        await delay(100);
+      }
+      await delay(1000);
+    }
+    await delay(10000)
   }
 }
 
