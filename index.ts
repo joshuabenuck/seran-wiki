@@ -143,11 +143,14 @@ if (etcHosts) {
 
 console.log("listening on port ", port);
 for await (const req of s) {
+  let requestedSite = req.headers.get("host");
+  let metaSite = system.metaSites[requestedSite];
+  console.log("requested-site:", requestedSite);
   if (req.url == "/") {
     let headers = new Headers();
     headers.set(
       "Location",
-      `http://dev.wiki.randombits.xyz/localhost:${port}/deno-sites`
+      `http://dev.wiki.randombits.xyz/${requestedSite}/deno-sites`
     );
     const res = {
       status: 302,
@@ -155,9 +158,6 @@ for await (const req of s) {
     };
     req.respond(res);
   }
-  let requestedSite = req.headers.get("host");
-  let metaSite = system.metaSites[requestedSite];
-  console.log("requested-site:", requestedSite);
   if (metaSite) {
     system.requestedSite = requestedSite;
     if (metaSite.serve) {
