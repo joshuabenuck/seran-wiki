@@ -44,9 +44,6 @@ export async function serve(req: ServerRequest, site, system) {
     console.log("calling:", metaPages[req.url]);
     let data = await metaPages[req.url](req, site, system);
     site.serveJson(req, data);
-  } else if (req.url.indexOf("/index.html") == 0) {
-    let filePath = "./index.html";
-    site.serveFile(req, "text/html", filePath);
   } // This will serve system urls
   else {
     site.serve(req, site, system);

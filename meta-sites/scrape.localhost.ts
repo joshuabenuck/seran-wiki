@@ -58,11 +58,6 @@ route("/single-step", async (req, site, _system) => {
   });
 });
 
-route("/index.html", async (req, site, _system) => {
-  let filePath = "./index.html";
-  site.serveFile(req, "text/html", filePath);
-});
-
 // S C R A P E
 
 type site = string;
