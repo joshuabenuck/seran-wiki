@@ -1,0 +1,223 @@
+class Page extends HTMLElement {
+    connectedCallback() {
+        if (this.inited) return
+        this.inited = true
+        this.addEventListener("click", this.activate)
+        let shadow = this.attachShadow({ mode: 'open' })
+        let css = `
+            :host(.plugin)>.paper {
+                box-shadow: inset 0px 0px 40px 0px rgba(0, 220, 0, .5);
+            }
+
+            :host(.local)>.paper {
+                box-shadow: inset 0px 0px 40px 0px rgba(220, 180, 0, .7);
+            }
+
+            :host(.remote)>.paper {
+                box-shadow: inset 0px 0px 40px 0px rgba(0, 180, 220, .5);
+            }
+
+            :host(.recycler)>.paper {
+                box-shadow: inset 0px 0px 40px 0px rgba(220, 0, 0, .5)
+            }
+
+            :host(.ghost) {
+                opacity: 0.6;
+                border-color: #eef2fe;
+            }
+
+            .paper {
+                padding: 30px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                position: absolute;
+            }
+            .flag {
+                margin-right: 6px;
+                margin-bottom: -6px;
+            }
+
+            :host(.drop-target-left) {
+                border-left: 1px solid blue;
+            }
+
+            :host(.drop-target-right) {
+                border-right: 1px solid blue;
+            }
+        `
+        let style = document.createElement("style")
+        style.innerHTML = css
+        shadow.appendChild(style)
+
+        this.setAttribute("draggable", true)
+        this.addEventListener("dragstart", this.dragStart)
+        this.addEventListener("dragenter", this.dragEnter)
+        this.addEventListener("dragover", this.dragOver)
+        this.addEventListener("dragleave", this.dragLeave)
+        this.addEventListener("dragend", this.dragEnd)
+        this.addEventListener("drop", this.drop)
+
+        let site = this.getAttribute("site")
+        if (site) {
+            this.classList.add("remote")
+        }
+
+        let title = this.getAttribute("title")
+        if (!title) {
+            title = "empty"
+        }
+
+        // TODO: Style if remote or ghost or local
+        let paper = document.createElement("div")
+        paper.className = "paper"
+        shadow.appendChild(paper)
+
+        // TODO: Put header into its own web component
+        // <wiki-header title="" flag="" url=""/>
+        let header = document.createElement("div")
+        let h1 = document.createElement("h1")
+        h1.title = title
+
+        let span = document.createElement("span")
+
+        let prefix = ""
+        if (site) {
+            // TODO: Descend into madness by detecting http vs https
+            prefix = `http://${site}`
+        }
+        let flagLink = document.createElement("a")
+        flagLink.setAttribute("href", `${prefix}/view/welcome-visitors`)
+        flagLink.setAttribute("target", "")
+
+        let flag = document.createElement("img")
+        flag.classList.add("flag")
+        flag.setAttribute("src", `${prefix}/favicon.png`)
+
+        flagLink.appendChild(flag)
+        span.appendChild(flagLink)
+        span.appendChild(document.createTextNode(title))
+        h1.appendChild(span)
+        header.appendChild(h1)
+        paper.appendChild(header)
+
+        let slot = document.createElement("slot")
+        paper.appendChild(slot)
+    }
+
+    dragStart(event) {
+        console.log("drag start:", event)
+        event.dataTransfer.setData("pageIndex", this.parentElement.pageIndex(this))
+    }
+
+    dragEnter(event) {
+        console.log("drag enter:", event)
+        event.dataTransfer.dropEffect = "move"
+        return false
+    }
+
+    dragOver(event) {
+        if (event.pageX < this.offsetLeft + (this.offsetWidth / 2)) {
+            this.classList.add("drop-target-left")
+            this.classList.remove("drop-target-right")
+        }
+        else {
+            this.classList.remove("drop-target-left")
+            this.classList.add("drop-target-right")
+        }
+        event.preventDefault()
+    }
+
+    dragLeave(event) {
+        console.log("drag leave:", event)
+        this.classList.remove("drop-target-left")
+        this.classList.remove("drop-target-right")
+    }
+
+    dragEnd(event) {
+        console.log("drag end:", event)
+        if (event.pageY < 0 && this.parentElement.pages.length > 1) {
+            this.remove()
+        }
+    }
+
+    drop(event) {
+        console.log("drop:", event)
+        this.classList.remove("drag-target")
+        let pageIndex = event.dataTransfer.getData("pageIndex")
+        let page = this.parentElement.pages[pageIndex]
+        if (this.classList.contains("drop-target-left")) {
+            this.parentElement.insertBefore(page, this)
+        }
+        else {
+            let pageIndex = this.parentElement.pageIndex(this)
+            if (this.parentElement.pages.length == pageIndex) {
+                this.parentElement.insertBefore(page, null)
+            }
+            else {
+                this.parentElement.insertBefore(page, this.parentElement.pages[pageIndex + 1])
+            }
+        }
+        this.classList.remove("drop-target-left")
+        this.classList.remove("drop-target-right")
+    }
+
+    disconnectedCallback() { }
+
+    attributeChangedCallback(attrName, oldValue, newValue) {
+        if (attrName == "TITLE") {
+        }
+    }
+
+    static get observedAttributes() {
+        return ["title"]
+    }
+
+    get title() {
+        this.getElementsByTagName("title")[0]
+    }
+
+    addParagraph(text) {
+        let paragraph = document.createElement("wiki-paragraph")
+        paragraph.textContent = text
+        this.appendChild(paragraph)
+    }
+
+    addReference(site, slug, title, text) {
+        let ref = document.createElement("wiki-reference")
+        ref.setAttribute("site", site)
+        ref.setAttribute("slug", slug)
+        ref.setAttribute("title", title)
+        ref.setAttribute("text", text)
+        // or...
+        // ref.render({ site, slug, title, text})
+        this.appendChild(ref)
+    }
+
+    addProcessStep(legend, href) {
+        let processStep = document.createElement("wiki-process-step")
+        processStep.render({ legend, href })
+        this.appendChild(processStep)
+    }
+
+    activate() {
+        this.scrollIntoViewIfNeeded()
+        let actives = document.getElementsByClassName("active")
+        for (let active of actives) {
+            active.classList.remove("active")
+        }
+        this.classList.add("active")
+    }
+
+    ghost() {
+        this.classList.add("ghost")
+    }
+
+    get items() {
+        return [...this.childNodes].filter((e) => e.nodeName.indexOf("WIKI-") == 0)
+    }
+}
+customElements.define("wiki-page", Page);
