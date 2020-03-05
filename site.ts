@@ -87,6 +87,9 @@ export async function serve(req: ServerRequest, site, system) {
   } // TODO: Make safe for multi-tenant use
   else if (req.url == "/index.html") {
     serveFile(req, "text/html", "./index.html");
+  } else if (req.url.match(/^\/client\/.*\.mjs$/)) {
+    let filePath = `.${req.url}`;
+    serveFile(req, "text/javascript", filePath);
   } else if (req.url.match(/^\/.*\.png$/)) {
     let filePath = `.${req.url}`;
     serveFile(req, "image/png", filePath);

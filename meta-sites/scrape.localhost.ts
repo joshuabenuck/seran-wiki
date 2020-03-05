@@ -5,7 +5,7 @@ import {
   join,
   basename
 } from "std/path/posix.ts";
-import { delay } from "std/util/async.ts"
+import { delay } from "std/util/async.ts";
 
 export let metaPages = {};
 
@@ -24,16 +24,12 @@ route("/region-scraper.json", async (req, site, _system) => {
       We invision this as three nested loops where inner loops run
       dozens or hundreds of times for each outer loop.`
     ),
-    site.item("process-step", { legend: "A legend", href: "/single-step", }),
+    site.item("process-step", { legend: "A legend", href: "/single-step" })
   ]));
 });
 
-let c0 = 0;
-let c1 = 0;
-let c2 = 0;
-let l0 = 5;
-let l1 = 5;
-let l2 = 5;
+let c0, c1, c2 = 0;
+let l0, l1, l2 = 5;
 
 async function* run() {
   for (c0 = 0; c0<l0; c0++) {
