@@ -28,15 +28,19 @@ route("/region-scraper.json", async (req, site, _system) => {
   ]));
 });
 
-let c0 = c1 = c2 = 0;
-let l0 = l1 = l2 = 5;
+let c0 = 0;
+let c1 = 0;
+let c2 = 0;
+let l0 = 5;
+let l1 = 5;
+let l2 = 5;
 
 async function* run() {
-  for (c0 = 0, c0<l0, c0++) {
+  for (c0 = 0; c0<l0; c0++) {
     yield `outer loop step ${c0} of ${l0}`
-    for (c1 = 0, c1<l1, c1++) {
+    for (c1 = 0; c1<l1; c1++) {
       yield `middle loop step ${c1} of ${l1}`
-      for (c2 = 0, c2<l2, c2++) {
+      for (c2 = 0; c2<l2; c2++) {
         yield `inner loop step ${c2} of ${l2}`
         await delay(100);
       }
