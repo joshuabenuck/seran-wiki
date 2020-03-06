@@ -1,5 +1,5 @@
 class ProcessStep extends HTMLElement {
-    connectedCallback() {
+    async connectedCallback() {
         if (this.inited) return
         this.inited = true
         let shadow = this.attachShadow({ mode: "open" })
@@ -25,7 +25,9 @@ class ProcessStep extends HTMLElement {
         p.appendChild(legend)
 
         this.button = document.createElement("button")
-        this.state = "start"
+        // TODO: Read url from properties
+        this.remoteState = await fetch("/button?action=state").then((r) => r.json())
+        this.state = this.remoteState.running ? "stop" : "start"
         let site = this.parentElement.getAttribute("site")
         this.button.addEventListener("click", (_e) => this.click(this.getAttribute("href"), site))
         p.appendChild(this.button)
@@ -33,6 +35,7 @@ class ProcessStep extends HTMLElement {
         this.statusElement = document.createElement("div")
         this.statusElement.appendChild(document.createTextNode(""))
         p.append(this.statusElement)
+        this.status = this.remoteState.status
         shadow.appendChild(p)
     }
 
@@ -79,9 +82,13 @@ class ProcessStep extends HTMLElement {
         if (site && href.indexOf("http:") != -1) {
             href = `http://${site}/${href}`
         }
+        let action = "state"
+        if (this.state == "start") {
+            action = "start"
+        }
         this.button.disabled = true
         this.state = "waiting"
-        let response = await fetch(href)
+        let response = await fetch(`${href}?action=${action}`)
         let status = await response.text()
         this.button.disabled = false
         this.state = "step"

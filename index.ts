@@ -85,6 +85,9 @@ async function importMetaSite(path, host) {
   }
   console.log(`Registering ${path} as ${name}`);
   if (metaSite.init) {
+    // Some sites will init their sitemap here
+    // Others will do lengthy init processing
+    // To wait or not to wait?
     metaSite.init();
   }
   let targetHost = `${name}:${port}`;
@@ -161,11 +164,11 @@ for await (const req of s) {
   if (metaSite) {
     system.requestedSite = requestedSite;
     if (metaSite.serve) {
-      console.log("meta-site:", req.url);
+      console.log("meta-site:", requestedSite, req.url);
       metaSite.serve(req, site, system);
     }
     if (metaSite.metaPages) {
-      console.log("meta-page:", req.url);
+      console.log("meta-page:", requestedSite, req.url);
       let metaPage = metaSite.metaPages[req.url];
       if (metaPage) {
         metaPage(req, site, system);
@@ -175,6 +178,10 @@ for await (const req of s) {
     }
     continue;
   }
-  console.log("unhandled-request:", req.url);
+  console.log(
+    "unknown site, unable to handle request:",
+    requestedSite,
+    req.url
+  );
   site.serve404(req);
 }

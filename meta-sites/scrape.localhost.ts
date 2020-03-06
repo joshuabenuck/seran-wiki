@@ -24,39 +24,49 @@ route("/region-scraper.json", async (req, site, _system) => {
       We invision this as three nested loops where inner loops run
       dozens or hundreds of times for each outer loop.`
     ),
-    site.item("process-step", { legend: "A legend", href: "/single-step" })
+    site.item("process-step", { legend: "A legend", href: "/button" })
   ]));
 });
 
-let c0, c1, c2 = 0;
-let l0, l1, l2 = 5;
+let c0 = 0, c1 = 0, c2 = 0;
+let l0 = 5, l1 = 5, l2 = 5;
 
 async function* run() {
-  for (c0 = 0; c0<l0; c0++) {
-    yield `outer loop step ${c0} of ${l0}`
-    for (c1 = 0; c1<l1; c1++) {
-      yield `middle loop step ${c1} of ${l1}`
-      for (c2 = 0; c2<l2; c2++) {
-        yield `inner loop step ${c2} of ${l2}`
+  running = true;
+  console.log("TRACE: run", c0, c1, c2, l0, l1, l2);
+  for (c0 = 0; c0 < l0; c0++) {
+    // yield `outer loop step ${c0} of ${l0}`;
+    for (c1 = 0; c1 < l1; c1++) {
+      // yield `middle loop step ${c1} of ${l1}`;
+      for (c2 = 0; c2 < l2; c2++) {
+        // yield `inner loop step ${c2} of ${l2}`;
         await delay(100);
       }
       await delay(1000);
     }
-    await delay(10000)
+    await delay(10000);
   }
+  running = false;
+  console.log("TRACE: run end");
 }
 
-let generator = run();
-route("/single-step", async (req, site, _system) => {
-  let result = await generator.next();
-  console.log("single step", result);
+let generator = null;
+let running = false;
+route("/button?action=start", button);
+route("/button?action=stop", button);
+route("/button?action=step", button);
+route("/button?action=state", button);
+async function button(req, site, _system) {
+  console.log(req.url, running);
+  generator = run();
   let headers = site.baseHeaders();
-  req.respond({
-    status: 200,
-    body: result.value,
-    headers
-  });
-});
+  if (req.url.indexOf("start") != -1) {
+    if (!running) {
+      generator = run();
+    }
+  }
+  site.serveJson(req, { running, status: `c0: ${c0} c1: ${c1} c2: ${c2}` });
+}
 
 // S C R A P E
 
