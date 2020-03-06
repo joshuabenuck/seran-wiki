@@ -88,12 +88,11 @@ class ProcessStep extends HTMLElement {
         }
         this.button.disabled = true
         this.state = "waiting"
-        let response = await fetch(`${href}?action=${action}`)
-        let status = await response.text()
+        let response = await fetch(`${href}?action=${action}`).then(res=>res.json())
         this.button.disabled = false
-        this.state = "step"
-        this.status = status
-        console.log(this, status)
+        this.state = response.running ? 'stop' : 'start'
+        this.status = response.status
+        console.log(this, response)
     }
 }
 registerPlugin("process-step", ProcessStep)
