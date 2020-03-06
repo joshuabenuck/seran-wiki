@@ -21,7 +21,8 @@ let params = parse(args, {
   default: {
     port: 8000,
     "meta-site": [],
-    "meta-sites-dir": []
+    "meta-sites-dir": [],
+    "external-client": "dev.wiki.randombits.xyz"
   }
 });
 console.log(params);
@@ -153,7 +154,7 @@ for await (const req of s) {
     let headers = new Headers();
     headers.set(
       "Location",
-      `http://dev.wiki.randombits.xyz/${requestedSite}/welcome-visitors`
+      `http://${params["external-client"]}/${requestedSite}/welcome-visitors`
     );
     const res = {
       status: 302,
