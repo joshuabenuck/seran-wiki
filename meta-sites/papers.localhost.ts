@@ -28,6 +28,7 @@ async function populatePapers() {
     console.log(
       "WARN: papers meta-site missing file (./papers) needed to operate."
     );
+    return;
   }
   let contents = await readFileStr("./papers");
   for (let line of await contents.split("\n")) {
