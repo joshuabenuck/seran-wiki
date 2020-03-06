@@ -153,7 +153,7 @@ for await (const req of s) {
     let headers = new Headers();
     headers.set(
       "Location",
-      `http://dev.wiki.randombits.xyz/${requestedSite}/deno-sites`
+      `http://dev.wiki.randombits.xyz/${requestedSite}/welcome-visitors`
     );
     const res = {
       status: 302,
