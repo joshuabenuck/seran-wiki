@@ -18,7 +18,7 @@ route("/welcome-visitors.json", async (req, site, _system) => {
 });
 
 function asSlug(name) {
-    return name.replace(/\s/g, '-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase()
+  return name.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase();
 }
 
 let papers = [];
@@ -62,11 +62,23 @@ async function populatePapers() {
 }
 
 function serveTag(tag, req, site, system) {
-  site.serveJson(req, site.page(tag, []));
+  site.serveJson(
+    req,
+    site.page(tag, papersByTag[tag].map((p) => site.paragraph(`[[${p.name}]]`)))
+  );
 }
 
-function servePaper(paper, req, site, system) {
-  site.serveJson(req, site.page(paper, []));
+function servePaper(p, req, site, system) {
+  for (let paper of papers) {
+    if (paper.name != p) continue;
+    site.serveJson(req, site.page(paper.name, [
+      site.paragraph(`${paper.name} [${paper.url} ref]`),
+      site.paragraph(`Tags:`)
+    ].concat(
+      paper.tags.map((t) => site.paragraph(`[[${t}]]`))
+    )));
+    break;
+  }
 }
 
 route("/papers.json", async (req, site, _system) => {
