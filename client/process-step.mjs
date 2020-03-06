@@ -25,17 +25,18 @@ class ProcessStep extends HTMLElement {
         p.appendChild(legend)
 
         this.button = document.createElement("button")
-        // TODO: Read url from properties
-        this.remoteState = await fetch("/button?action=state").then((r) => r.json())
-        this.state = this.remoteState.running ? "stop" : "start"
+        let href = this.getAttribute("href")
+        let remoteState = await fetch(`${href}?action=state`).then((r) => r.json())
+        console.log(remoteState)
+        this.state = remoteState.running ? "stop" : "start"
         let site = this.parentElement.getAttribute("site")
-        this.button.addEventListener("click", (_e) => this.click(this.getAttribute("href"), site))
+        this.button.addEventListener("click", (_e) => this.click(href, site))
         p.appendChild(this.button)
 
         this.statusElement = document.createElement("div")
         this.statusElement.appendChild(document.createTextNode(""))
         p.append(this.statusElement)
-        this.status = this.remoteState.status
+        this.status = remoteState.status
         shadow.appendChild(p)
     }
 
@@ -85,6 +86,9 @@ class ProcessStep extends HTMLElement {
         let action = "state"
         if (this.state == "start") {
             action = "start"
+        }
+        if (this.state == "stop") {
+            action = "stop"
         }
         this.button.disabled = true
         this.state = "waiting"
