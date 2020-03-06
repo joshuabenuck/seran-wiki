@@ -24,48 +24,95 @@ route("/region-scraper.json", async (req, site, _system) => {
       We invision this as three nested loops where inner loops run
       dozens or hundreds of times for each outer loop.`
     ),
-    site.item("process-step", { legend: "A legend", href: "/button" })
+    site.item("process-step", { legend: "Tripple Nested Loop", href: "/button" })
   ]));
 });
 
-let c0 = 0, c1 = 0, c2 = 0;
+let c0 = 1, c1 = 1, c2 = 1;
 let l0 = 5, l1 = 5, l2 = 5;
 
-async function* run() {
-  running = true;
-  console.log("TRACE: run", c0, c1, c2, l0, l1, l2);
-  for (c0 = 0; c0 < l0; c0++) {
-    // yield `outer loop step ${c0} of ${l0}`;
-    for (c1 = 0; c1 < l1; c1++) {
-      // yield `middle loop step ${c1} of ${l1}`;
-      for (c2 = 0; c2 < l2; c2++) {
-        // yield `inner loop step ${c2} of ${l2}`;
-        await delay(100);
-      }
-      await delay(1000);
-    }
-    await delay(10000);
-  }
-  running = false;
-  console.log("TRACE: run end");
+function counters () {
+  return `${c0}/${l0}, ${c1}/${l1}, ${c2}/${l2}`
 }
 
-let generator = null;
+async function run() {
+  while(true) {
+    for (c0 = 1; c0 < l0; c0++) {
+      await step('outer')
+      await delay(100);
+      for (c1 = 1; c1 < l1; c1++) {
+        await step('middle')
+        await delay(100);
+        for (c2 = 1; c2 < l2; c2++) {
+          await step('inner')
+          await delay(100);
+        }
+      }
+    }
+  }
+}
+
 let running = false;
+let status = 'beginning';
+let waiting = null;
+let resume = null;
+
+
+// async function sleep(ms) {
+//   return new Promise(resolve => {
+//     setTimeout(resolve, ms);
+//   });
+// }
+
+async function step(where) {
+  status = `${where} from ${counters()}`
+  console.log('step', {status, running, waiting:!!waiting})
+  if (!running) {
+    return waiting = new Promise(resolve => {
+      resume = resolve
+    })
+  } else {
+    return null
+  }
+}
+
 route("/button?action=start", button);
 route("/button?action=stop", button);
 route("/button?action=step", button);
 route("/button?action=state", button);
+
 async function button(req, site, _system) {
-  console.log(req.url, running);
-  generator = run();
   let headers = site.baseHeaders();
+
   if (req.url.indexOf("start") != -1) {
     if (!running) {
-      generator = run();
+      running = true
+      run();
+    } else if (waiting) {
+      waiting = null;
+      resume()
     }
   }
-  site.serveJson(req, { running, status: `c0: ${c0} c1: ${c1} c2: ${c2}` });
+
+  if (req.url.indexOf("step") != -1) {
+    if (running) {
+      running = false;
+    } else if (waiting) {
+      waiting = null;
+      resume()
+    }
+  }
+
+  if (req.url.indexOf("stop") != -1) {
+    if (running) {
+      running = false;
+    }
+  }
+
+  site.serveJson(req, {
+    running: (running || !!waiting),
+    status: status
+  });
 }
 
 // S C R A P E
