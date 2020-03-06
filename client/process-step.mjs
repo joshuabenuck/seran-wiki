@@ -30,7 +30,8 @@ class ProcessStep extends HTMLElement {
         console.log(remoteState)
         this.state = remoteState.running ? "stop" : "start"
         let site = this.parentElement.getAttribute("site")
-        this.button.addEventListener("click", (_e) => this.click(href, site))
+        // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/shiftKey
+        this.button.addEventListener("click", (e) => this.click(href, site, e.shiftKey))
         p.appendChild(this.button)
 
         this.statusElement = document.createElement("div")
@@ -77,7 +78,7 @@ class ProcessStep extends HTMLElement {
         return ["status"]
     }
 
-    async click(href, site) {
+    async click(href, site, shift) {
         console.log(href)
         // TODO: Future expansion possibility
         if (site && href.indexOf("http:") != -1) {
@@ -85,7 +86,7 @@ class ProcessStep extends HTMLElement {
         }
         let action = "state"
         if (this.state == "start") {
-            action = "start"
+            action = shift ? "step" : "start"
         }
         if (this.state == "stop") {
             action = "stop"
