@@ -29,11 +29,17 @@ class Lineup extends HTMLElement {
         return this.getElementsByTagName("wiki-page")
     }
 
-    newPage(title, site) {
+    addPageBefore(page, refPage) {
+        this.insertBefore(page, refPage)
+        this.parentElement.updateURL()
+    }
+
+    newPage(slug, title, site) {
         let page = document.createElement("wiki-page")
         if (site) {
             page.setAttribute("site", site)
         }
+        page.setAttribute("slug", slug)
         page.setAttribute("title", title)
         this.appendChild(page)
         return page
@@ -52,6 +58,10 @@ class Lineup extends HTMLElement {
             index += 1
         }
         return -1
+    }
+
+    get wiki() {
+        return this.parentElement
     }
 }
 customElements.define("wiki-lineup", Lineup);

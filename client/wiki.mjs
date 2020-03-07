@@ -61,21 +61,22 @@ class Wiki extends HTMLElement {
     }
 
     async loadPage(slug) {
-        let res = await fetch(`/${slug}.json`)
-        let page = await this.renderPage(res)
+        let res = fetch(`/${slug}.json`)
+        let page = await this.renderPage(res, slug)
         page.activate()
     }
 
     async loadRemotePage(site, slug) {
-        let res = await fetch(`http://${site}/${slug}.json`)
-        let page = await this.renderPage(res, site)
+        let res = fetch(`http://${site}/${slug}.json`)
+        let page = await this.renderPage(res, slug, site)
         page.activate()
     }
 
-    async renderPage(res, site) {
+    async renderPage(res, slug, site) {
+        let page = this.lineup.newPage(slug, slug, site)
+        res = await res
         let json = await res.json()
-        console.log(json)
-        let page = this.lineup.newPage(json.title, site)
+        page.title = json.title
         for (let pageContent of json.story) {
             let plugin = window.plugins[pageContent.type]
             if (plugin) {
@@ -98,6 +99,20 @@ class Wiki extends HTMLElement {
             page.addReference(neighbor, "welcome-visitors", "Welcome Visitors", neighbor)
         }
         page.activate()
+    }
+
+    updateURL() {
+        let url = new URL(window.location.origin + "/index.html")
+        for (let page of this.lineup.pages) {
+            let site = page.site
+            let slug = page.slug
+            console.log("lineup page", site, slug)
+            if (site != undefined && site != location.origin) {
+                slug = `${site}:${slug}`
+            }
+            url.searchParams.append("page", slug)
+        }
+        history.pushState({}, "", url.toString())
     }
 }
 customElements.define("wiki-wiki", Wiki);

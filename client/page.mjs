@@ -79,8 +79,8 @@ class Page extends HTMLElement {
         // TODO: Put header into its own web component
         // <wiki-header title="" flag="" url=""/>
         let header = document.createElement("div")
-        let h1 = document.createElement("h1")
-        h1.title = title
+        this.h1 = document.createElement("h1")
+        this.h1.title = title
 
         let span = document.createElement("span")
 
@@ -99,9 +99,10 @@ class Page extends HTMLElement {
 
         flagLink.appendChild(flag)
         span.appendChild(flagLink)
-        span.appendChild(document.createTextNode(title))
-        h1.appendChild(span)
-        header.appendChild(h1)
+        this.titleText = document.createTextNode(title)
+        span.appendChild(this.titleText)
+        this.h1.appendChild(span)
+        header.appendChild(this.h1)
         paper.appendChild(header)
 
         let slot = document.createElement("slot")
@@ -140,7 +141,9 @@ class Page extends HTMLElement {
     dragEnd(event) {
         console.log("drag end:", event)
         if (event.pageY < 0 && this.parentElement.pages.length > 1) {
+            let wiki = this.lineup.wiki
             this.remove()
+            wiki.updateURL()
         }
     }
 
@@ -150,25 +153,38 @@ class Page extends HTMLElement {
         let pageIndex = event.dataTransfer.getData("pageIndex")
         let page = this.parentElement.pages[pageIndex]
         if (this.classList.contains("drop-target-left")) {
-            this.parentElement.insertBefore(page, this)
+            this.addPageBefore(page)
         }
         else {
-            let pageIndex = this.parentElement.pageIndex(this)
-            if (this.parentElement.pages.length == pageIndex) {
-                this.parentElement.insertBefore(page, null)
-            }
-            else {
-                this.parentElement.insertBefore(page, this.parentElement.pages[pageIndex + 1])
-            }
+            this.addPageAfter(page)
         }
         this.classList.remove("drop-target-left")
         this.classList.remove("drop-target-right")
     }
 
+    addPageBefore(page) {
+        this.lineup.addPageBefore(page, this)
+    }
+
+    addPageAfter(page) {
+        let pageIndex = this.lineup.pageIndex(this)
+        if (this.lineup.pages.length == pageIndex) {
+            this.lineup.addPageBefore(page, null)
+        }
+        else {
+            this.lineup.addPageBefore(page, this.lineup.pages[pageIndex + 1])
+        }
+    }
+
     disconnectedCallback() { }
 
     attributeChangedCallback(attrName, oldValue, newValue) {
-        if (attrName == "TITLE") {
+        if (!this.inited) {
+            return;
+        }
+        if (attrName == "title") {
+            this.h1.title = newValue
+            this.titleText.textContent = newValue
         }
     }
 
@@ -177,7 +193,23 @@ class Page extends HTMLElement {
     }
 
     get title() {
-        this.getElementsByTagName("title")[0]
+        return this.getAttribute("title")
+    }
+
+    set title(t) {
+        this.setAttribute("title", t)
+    }
+
+    get site() {
+        return this.getAttribute("site")
+    }
+
+    get slug() {
+        return this.getAttribute("slug")
+    }
+
+    get lineup() {
+        return this.parentElement
     }
 
     addParagraph(text) {
