@@ -149,7 +149,6 @@ console.log("listening on port ", port);
 for await (const req of s) {
   let requestedSite = req.headers.get("host");
   let metaSite = system.metaSites[requestedSite];
-  console.log("requested-site:", requestedSite);
   if (req.url == "/") {
     let headers = new Headers();
     headers.set(
