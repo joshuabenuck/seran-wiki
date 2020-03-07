@@ -110,7 +110,8 @@ async function button(req, site, _system) {
   }
 
   site.serveJson(req, {
-    running: (running || !!waiting),
+    running,
+    waiting: !!waiting,
     status: status
   });
 }
