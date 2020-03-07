@@ -82,9 +82,9 @@
         function renderLinks(html, site) {
             html = html.replace(/\[\[(.*?)\]\]/g, (_full, match) => {
                 if (site) {
-                    return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}")'>${match}</a>`
+                    return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}");wiki.updateURL()'>${match}</a>`
                 }
-                return `<a href='javascript:wiki.loadPage("${asSlug(match)}")'>${match}</a>`
+                return `<a href='javascript:wiki.loadPage("${asSlug(match)}");wiki.updateURL()'>${match}</a>`
             })
             return html.replace(/\[(.*)\]/g, (_full, match) => {
                 let [url, text] = match.split(" ")
