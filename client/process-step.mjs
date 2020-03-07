@@ -25,17 +25,19 @@ class ProcessStep extends HTMLElement {
         p.appendChild(legend)
 
         this.button = document.createElement("button")
-        // TODO: Read url from properties
-        this.remoteState = await fetch("/button?action=state").then((r) => r.json())
-        this.state = this.remoteState.running ? "stop" : "start"
+        let href = this.getAttribute("href")
+        let remoteState = await fetch(`${href}?action=state`).then((r) => r.json())
+        console.log(remoteState)
+        this.state = remoteState.running ? "stop" : "start"
         let site = this.parentElement.getAttribute("site")
-        this.button.addEventListener("click", (_e) => this.click(this.getAttribute("href"), site))
+        // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/shiftKey
+        this.button.addEventListener("click", (e) => this.click(href, site, e.shiftKey))
         p.appendChild(this.button)
 
         this.statusElement = document.createElement("div")
         this.statusElement.appendChild(document.createTextNode(""))
         p.append(this.statusElement)
-        this.status = this.remoteState.status
+        this.status = remoteState.status
         shadow.appendChild(p)
     }
 
@@ -76,7 +78,7 @@ class ProcessStep extends HTMLElement {
         return ["status"]
     }
 
-    async click(href, site) {
+    async click(href, site, shift) {
         console.log(href)
         // TODO: Future expansion possibility
         if (site && href.indexOf("http:") != -1) {
@@ -84,16 +86,18 @@ class ProcessStep extends HTMLElement {
         }
         let action = "state"
         if (this.state == "start") {
-            action = "start"
+            action = shift ? "step" : "start"
+        }
+        if (this.state == "stop") {
+            action = "stop"
         }
         this.button.disabled = true
         this.state = "waiting"
-        let response = await fetch(`${href}?action=${action}`)
-        let status = await response.text()
+        let response = await fetch(`${href}?action=${action}`).then(res=>res.json())
         this.button.disabled = false
-        this.state = "step"
-        this.status = status
-        console.log(this, status)
+        this.state = response.running ? 'stop' : 'start'
+        this.status = response.status
+        console.log(this, response)
     }
 }
 registerPlugin("process-step", ProcessStep)
