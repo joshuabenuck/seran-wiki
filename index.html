@@ -135,9 +135,6 @@
                 }
             }
             loadPages()
-            let url = new URL(document.URL)
-            url.searchParams.append("page", "welcome-visitors")
-            history.pushState({}, "", url.toString())
             window.onpopstate = (event) => {
                 console.log("pop!", event, window.location, window.URL);
                 [...wiki.lineup.pages].forEach((p) => p.remove())
