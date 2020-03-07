@@ -117,7 +117,20 @@
                 return
             }
             let wiki = document.getElementsByTagName("wiki-wiki")[0]
-            wiki.loadPage("welcome-visitors")
+            if (document.URL.indexOf("?") == -1) {
+                wiki.loadPage("welcome-visitors")
+            }
+            for (let [name, value] of new URL(document.URL).searchParams.entries()) {
+                if (name != "page") {
+                    continue;
+                }
+                if (value.indexOf(":") != -1) {
+                    let [site, slug] = value.split(":")
+                    wiki.loadRemotePage(site, slug)
+                    continue;
+                }
+                wiki.loadPage(value)
+            }
         })
     </script>
 </head>

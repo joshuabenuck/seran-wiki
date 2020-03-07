@@ -85,7 +85,7 @@ export async function serve(req: ServerRequest, site, system) {
     let data = await metaPage(req, site, system);
     serveJson(req, data);
   } // TODO: Make safe for multi-tenant use
-  else if (req.url == "/index.html") {
+  else if (req.url.indexOf("/index.html") == 0) {
     serveFile(req, "text/html", "./index.html");
   } else if (req.url.match(/^\/client\/.*\.mjs$/)) {
     let filePath = `.${req.url}`;
