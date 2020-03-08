@@ -101,18 +101,18 @@ class Wiki extends HTMLElement {
         page.activate()
     }
 
+    get baseURL() {
+        return new URL(window.location.origin + "/index.html")
+    }
+
+    get URL() {
+        let url = this.baseURL;
+        [...this.lineup.pages].forEach((p) => url.searchParams.append("page", p.fullSlug))
+        return url
+    }
+
     updateURL() {
-        let url = new URL(window.location.origin + "/index.html")
-        for (let page of this.lineup.pages) {
-            let site = page.site
-            let slug = page.slug
-            console.log("lineup page", site, slug)
-            if (site != undefined && site != location.origin) {
-                slug = `${site}:${slug}`
-            }
-            url.searchParams.append("page", slug)
-        }
-        history.pushState({}, "", url.toString())
+        history.pushState({}, "", this.URL.toString())
     }
 }
 customElements.define("wiki-wiki", Wiki);

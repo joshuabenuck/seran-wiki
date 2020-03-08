@@ -212,6 +212,19 @@ class Page extends HTMLElement {
         return this.parentElement
     }
 
+    get fullSlug() {
+        let site = this.site
+        let slug = this.slug
+        if (site != undefined && site != location.origin) {
+            slug = `${site}:${slug}`
+        }
+        return slug
+    }
+
+    get URL() {
+        return this.lineup.URLTo(this)
+    }
+
     addParagraph(text) {
         let paragraph = document.createElement("wiki-paragraph")
         paragraph.textContent = text

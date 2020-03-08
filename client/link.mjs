@@ -17,5 +17,31 @@ export class Link extends HTMLElement {
         anchor.setAttribute("href", `/index.html?page=${slug}`)
         anchor.appendChild(document.createTextNode(text))
     }
+
+    get page() {
+        let parent = this.parentElement
+        while(parent) {
+            if (parent.nodeType == "WIKI-PAGE") {
+                return parent
+            }
+            parent = parent.parentElement
+        }
+        return null
+    }
+
+    get lineup() {
+        let parent = this.parentElement
+        while(parent) {
+            if (parent.nodeType == "WIKI-LINEUP") {
+                return parent
+            }
+            parent = parent.parentElement
+        }
+        return null
+    }
+
+    get wiki() {
+        return this.lineup.wiki()
+    }
 }
 customElements.define("wiki-link", Link)
