@@ -110,12 +110,10 @@ class Page extends HTMLElement {
     }
 
     dragStart(event) {
-        console.log("drag start:", event)
         event.dataTransfer.setData("pageIndex", this.parentElement.pageIndex(this))
     }
 
     dragEnter(event) {
-        console.log("drag enter:", event)
         event.dataTransfer.dropEffect = "move"
         return false
     }
@@ -133,13 +131,11 @@ class Page extends HTMLElement {
     }
 
     dragLeave(event) {
-        console.log("drag leave:", event)
         this.classList.remove("drop-target-left")
         this.classList.remove("drop-target-right")
     }
 
     dragEnd(event) {
-        console.log("drag end:", event)
         if (event.pageY < 0 && this.parentElement.pages.length > 1) {
             let wiki = this.lineup.wiki
             this.remove()
@@ -148,7 +144,6 @@ class Page extends HTMLElement {
     }
 
     drop(event) {
-        console.log("drop:", event)
         this.classList.remove("drag-target")
         let pageIndex = event.dataTransfer.getData("pageIndex")
         let page = this.parentElement.pages[pageIndex]
