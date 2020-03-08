@@ -255,6 +255,7 @@ class Page extends HTMLElement {
             active.classList.remove("active")
         }
         this.classList.add("active")
+        this.lineup.focus()
     }
 
     ghost() {
