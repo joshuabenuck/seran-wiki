@@ -82,9 +82,11 @@
         function renderLinks(html, site) {
             html = html.replace(/\[\[(.*?)\]\]/g, (_full, match) => {
                 if (site) {
-                    return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}");wiki.updateURL()'>${match}</a>`
+                    // return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}");wiki.updateURL()'>${match}</a>`
+                    return `<wiki-link site="${site}" slug="${asSlug(match)}">${match}</wiki-link>`
                 }
-                return `<a href='javascript:wiki.loadPage("${asSlug(match)}");wiki.updateURL()'>${match}</a>`
+                // return `<a href='javascript:wiki.loadPage("${asSlug(match)}");wiki.updateURL()'>${match}</a>`
+                return `<wiki-link slug="${asSlug(match)}">${match}</wiki-link>`
             })
             return html.replace(/\[(.*)\]/g, (_full, match) => {
                 let [url, text] = match.split(" ")
@@ -108,6 +110,7 @@
     <!-- Wiki APIs / Custom Elements -->
     <script type="module" src="/client/neighborhood.mjs"></script>
     <script type="module" src="/client/page.mjs"></script>
+    <script type="module" src="/client/link.mjs"></script>
     <script type="module" src="/client/lineup.mjs"></script>
     <script type="module" src="/client/wiki.mjs"></script>
 
