@@ -18,6 +18,8 @@ class Reference extends HTMLElement {
         style.innerHTML = css
         shadow.appendChild(style)
         let p = document.createElement("p")
+        // Hack to allow wiki-link to find its page and lineup
+        p.light = this
         let link = document.createElement("a")
         let site = this.getAttribute("site")
         let slug = this.getAttribute("slug")
@@ -32,12 +34,10 @@ class Reference extends HTMLElement {
         }
         link.appendChild(document.createTextNode(title))
         p.appendChild(link)
-        p.appendChild(document.createElement("slot"))
-        shadow.appendChild(p)
         let desc = document.createElement('span')
         desc.innerHTML = ` - ${renderLinks(text, site)}`
-        this.appendChild(desc)
-
+        p.appendChild(desc)
+        shadow.appendChild(p)
         let wiki = document.getElementsByTagName("wiki-wiki")[0]
         wiki.neighborhood.add(site)
     }

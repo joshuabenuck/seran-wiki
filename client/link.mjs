@@ -53,26 +53,26 @@ export class Link extends HTMLElement {
     }
 
     get page() {
-        let parent = this.parentElement
-        while(parent) {
-            if (parent.nodeName == "WIKI-PAGE") {
-                return parent
-            }
-            parent = parent.parentElement
-        }
-        console.log("WARN: Unable to find page for", this)
-        return null
+        return this._findParent("WIKI-PAGE")
     }
 
     get lineup() {
+        return this._findParent("WIKI-LINEUP")
+    }
+
+    _findParent(name) {
         let parent = this.parentElement
         while(parent) {
-            if (parent.nodeName == "WIKI-LINEUP") {
+            if (parent.nodeName == name) {
                 return parent
+            }
+            if (!parent.parentElement && parent.light) {
+                parent = parent.light
+                continue
             }
             parent = parent.parentElement
         }
-        console.log("WARN: Unable to find lineup for", this)
+        console.log(`WARN: Unable to find ${name} for`, this)
         return null
     }
 
