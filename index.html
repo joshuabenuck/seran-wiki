@@ -88,9 +88,10 @@
                 // return `<a href='javascript:wiki.loadPage("${asSlug(match)}");wiki.updateURL()'>${match}</a>`
                 return `<wiki-link slug="${asSlug(match)}">${match}</wiki-link>`
             })
-            return html.replace(/\[(.*)\]/g, (_full, match) => {
-                let [url, text] = match.split(" ")
-                return `<a href='${url}' target="_blank">${text}</a>`
+            return html.replace(/\[([^+]*)\]/g, (_full, match) => {
+                let url = match.substring(0, match.indexOf(" "))
+                let text = match.substring(match.indexOf(" "))
+                return `<wiki-link href='${url}' target="_blank">${text}</wiki-link>`
             })
         }
 
