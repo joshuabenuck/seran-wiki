@@ -90,7 +90,7 @@ class Page extends HTMLElement {
             prefix = `http://${site}`
         }
         let flagLink = document.createElement("a")
-        flagLink.setAttribute("href", `${prefix}/index.html?page=${this.slug}`)
+        flagLink.setAttribute("href", `${prefix}/view/${this.slug}`)
         flagLink.setAttribute("target", "")
 
         let flag = document.createElement("img")
