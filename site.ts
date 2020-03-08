@@ -137,7 +137,7 @@ export function welcomePage(aboutUs, doAndShare) {
     "story": [
       {
         "text":
-          "Welcome to this [[Federated Wiki]] site. From this page you can find who we are and what we do. New sites provide this information and then claim the site as their own. You will need your own site to participate.",
+          "Welcome to this [http://fed.wiki.org/view/federated-wiki Federated Wiki] site. From this page you can find who we are and what we do. New sites provide this information and then claim the site as their own. You will need your own site to participate.",
         "id": "7b56f22a4b9ee974",
         "type": "paragraph"
       },
@@ -169,7 +169,7 @@ export function welcomePage(aboutUs, doAndShare) {
         "type": "paragraph",
         "id": "ee416d431ebf4fb4",
         "text":
-          "You can edit your copy of these pages. Press [+] to add more writing spaces. Read [[How to Wiki]] for more ideas. Follow [[Recent Changes]] here and nearby."
+          "You can edit your copy of these pages. Press [+] to add more writing spaces. Read [http://fed.wiki.org/view/how-to-wiki How to Wiki] for more ideas. Follow [[Recent Changes]] here and nearby."
       }
     ]
   };
