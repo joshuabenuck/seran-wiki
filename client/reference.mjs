@@ -32,10 +32,11 @@ class Reference extends HTMLElement {
         }
         link.appendChild(document.createTextNode(title))
         p.appendChild(link)
+        p.appendChild(document.createElement("slot"))
+        shadow.appendChild(p)
         let desc = document.createElement('span')
         desc.innerHTML = ` - ${renderLinks(text, site)}`
-        p.appendChild(desc)
-        shadow.appendChild(p)
+        this.appendChild(desc)
 
         let wiki = document.getElementsByTagName("wiki-wiki")[0]
         wiki.neighborhood.add(site)

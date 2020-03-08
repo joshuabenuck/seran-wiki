@@ -38,7 +38,7 @@ export class Link extends HTMLElement {
         let site = this.getAttribute("site")
         let slug = this.getAttribute("slug")
         if (site) {
-            slug = `${site}:${slug}`
+            slug = `${site};${slug}`
         }
         url.searchParams.append("page", slug)
         this.anchor.setAttribute("href", url.toString())
@@ -72,6 +72,7 @@ export class Link extends HTMLElement {
             }
             parent = parent.parentElement
         }
+        console.log("WARN: Unable to find lineup for", this)
         return null
     }
 

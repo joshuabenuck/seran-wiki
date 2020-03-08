@@ -41,8 +41,8 @@ class Wiki extends HTMLElement {
         let path = input.value
         let site = location.origin
         let slug = path
-        if (path.indexOf(":") != -1) {
-            [site, slug] = path.split(":")
+        if (path.indexOf(";") != -1) {
+            [site, slug] = path.split(";")
         }
         console.log("opening:", site, slug)
         this.parentElement.loadRemotePage(site, slug)

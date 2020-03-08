@@ -216,7 +216,7 @@ class Page extends HTMLElement {
         let site = this.site
         let slug = this.slug
         if (site != undefined && site != location.origin) {
-            slug = `${site}:${slug}`
+            slug = `${site};${slug}`
         }
         return slug
     }

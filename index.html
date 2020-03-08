@@ -129,8 +129,8 @@
                     if (name != "page") {
                         continue;
                     }
-                    if (value.indexOf(":") != -1) {
-                        let [site, slug] = value.split(":")
+                    if (value.indexOf(";") != -1) {
+                        let [site, slug] = value.split(";")
                         wiki.loadRemotePage(site, slug)
                         continue;
                     }
