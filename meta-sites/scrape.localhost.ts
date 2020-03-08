@@ -28,29 +28,35 @@ route("/region-scraper.json", async (req, site, _system) => {
   ]));
 });
 
+
+// M O C K   C O M P U T A T I O N
+
 let c0 = 1, c1 = 1, c2 = 1;
 let l0 = 5, l1 = 5, l2 = 5;
 
-function counters () {
-  return `${c0}/${l0}, ${c1}/${l1}, ${c2}/${l2}`
+function counters (where) {
+  return `${where} at ${c0} ${c1} ${c2}`
 }
 
 async function run() {
-  while(true) {
-    for (c0 = 1; c0 < l0; c0++) {
-      await step('outer')
+  let t0 = Date.now()
+  for (c0 = 1; c0 < l0; c0++) {
+    await step(counters('outer'))
+    await delay(100);
+    for (c1 = 1; c1 < l1; c1++) {
+      await step(counters('middle'))
       await delay(100);
-      for (c1 = 1; c1 < l1; c1++) {
-        await step('middle')
+      for (c2 = 1; c2 < l2; c2++) {
+        await step(counters('inner'))
         await delay(100);
-        for (c2 = 1; c2 < l2; c2++) {
-          await step('inner')
-          await delay(100);
-        }
       }
     }
   }
+  return (Date.now()-t0)/1000
 }
+
+
+// I N S T R U M E N T A T I O N
 
 let running = false;
 let status = 'beginning';
@@ -64,8 +70,8 @@ let resume = null;
 //   });
 // }
 
-async function step(where) {
-  status = `${where} from ${counters()}`
+async function step(now) {
+  status = now
   console.log('step', {status, running, waiting:!!waiting})
   if (!running) {
     return waiting = new Promise(resolve => {
@@ -76,6 +82,9 @@ async function step(where) {
   }
 }
 
+
+// R E M O T E   C O N T R O L
+
 route("/button?action=start", button);
 route("/button?action=stop", button);
 route("/button?action=step", button);
@@ -85,11 +94,15 @@ async function button(req, site, _system) {
   let headers = site.baseHeaders();
 
   if (req.url.indexOf("start") != -1) {
-    if (!running) {
+    if (!running && !waiting) {
       running = true
-      run();
+      run().then((dt) => {
+        running=false;
+        status=`complete in ${dt} seconds`
+      });
     } else if (waiting) {
       waiting = null;
+      running = true
       resume()
     }
   }
@@ -99,6 +112,7 @@ async function button(req, site, _system) {
       running = false;
     } else if (waiting) {
       waiting = null;
+      await sleep(30)
       resume()
     }
   }
