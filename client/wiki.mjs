@@ -63,17 +63,16 @@ class Wiki extends HTMLElement {
     async loadPage(slug) {
         let res = fetch(`/${slug}.json`)
         let page = await this.renderPage(res, slug)
-        page.activate()
     }
 
     async loadRemotePage(site, slug) {
         let res = fetch(`http://${site}/${slug}.json`)
         let page = await this.renderPage(res, slug, site)
-        page.activate()
     }
 
     async renderPage(res, slug, site) {
         let page = this.lineup.newPage(slug, slug, site)
+        page.activate()
         res = await res
         let json = await res.json()
         page.title = json.title
