@@ -35,7 +35,7 @@ route("/region-scraper.json", async (req, site, _system) => {
       `[[Mock Computation]]`
     ),
     site.paragraph(
-      `[[Tripple Controls]]`
+      `[[Triple Controls]]`
     ),
   ]));
 });
@@ -43,16 +43,16 @@ route("/region-scraper.json", async (req, site, _system) => {
 route("/mock-computation.json", async (req, site, _system) => {
   site.serveJson(req, site.page("Mock Computation", [
     site.paragraph(
-      `Here we start, stop and step a tripple nested loop that counts iterations
+      `Here we start, stop and step a triple nested loop that counts iterations
       until five of each, for 5 * 5 * 5 total iterations have completed.
-      See also [[Tripple Controls]] of the same loop`
+      See also [[Triple Controls]] of the same loop`
     ),
     site.item("process-step", { legend: "Simple Nested Loop", href: "/simple" })
   ]));
 });
 
-route("/tripple-controls.json", async (req, site, _system) => {
-  site.serveJson(req, site.page("Tripple Controls", [
+route("/triple-controls.json", async (req, site, _system) => {
+  site.serveJson(req, site.page("Triple Controls", [
     site.paragraph(
       `Here we start, stop and step with distinct controls for each nesting level.`
     ),
