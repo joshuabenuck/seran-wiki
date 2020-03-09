@@ -18,6 +18,9 @@ export class Paragraph extends HTMLElement {
 
         let site = this.page.getAttribute("site")
         this.innerHTML = renderLinks(this.innerHTML, site)
+        if (!this.page.dynamic) {
+            this.setAttribute("editable", true)
+        }
     }
 
     get page() {

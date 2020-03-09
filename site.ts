@@ -37,6 +37,7 @@ export async function serveFile(req, contentType, filePath) {
 
 export function serveJson(req, data) {
   let headers = baseHeaders();
+  data.dynamic = true;
   req.respond({
     status: 200,
     body: JSON.stringify(data, null, 2),
