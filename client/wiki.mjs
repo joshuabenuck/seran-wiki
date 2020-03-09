@@ -75,18 +75,7 @@ class Wiki extends HTMLElement {
         page.activate()
         res = await res
         let json = await res.json()
-        page.title = json.title
-        for (let pageContent of json.story) {
-            let plugin = window.plugins[pageContent.type]
-            if (plugin) {
-                let element = new plugin()
-                element.render(pageContent)
-                page.appendChild(element)
-            }
-            else {
-                page.addParagraph(`Unknown type: ${pageContent.type}`)
-            }
-        }
+        page.render(json)
         return page
     }
 

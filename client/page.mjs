@@ -260,5 +260,23 @@ class Page extends HTMLElement {
     get items() {
         return [...this.childNodes].filter((e) => e.nodeName.indexOf("WIKI-") == 0)
     }
+
+    render(json) {
+        if (json.dynamic) {
+            this.setAttribute("dynamic", true)
+        }
+        this.title = json.title
+        for (let pageContent of json.story) {
+            let plugin = window.plugins[pageContent.type]
+            if (plugin) {
+                let element = new plugin()
+                element.render(pageContent)
+                this.appendChild(element)
+            }
+            else {
+                this.addParagraph(`Unknown type: ${pageContent.type}`)
+            }
+        }
+    }
 }
 customElements.define("wiki-page", Page);
