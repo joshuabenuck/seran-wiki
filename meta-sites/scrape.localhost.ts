@@ -63,7 +63,7 @@ route("/tripple-controls.json", async (req, site, _system) => {
 });
 
 
-// M O C K   C O M P U T A T I O N
+// S I M P L E   M O C K   C O M P U T A T I O N
 
 let c0 = 1, c1 = 1, c2 = 1;
 let l0 = 5, l1 = 5, l2 = 5;
@@ -91,6 +91,9 @@ async function run1() {
   }
   return (Date.now()-t0)/1000
 }
+
+
+// T R I P P L E   M O C K   C O M P U T A T I O N
 
 let outer = instrument('outer', false)
 let middle = instrument('middle', true)
