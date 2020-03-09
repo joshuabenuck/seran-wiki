@@ -16,13 +16,13 @@ function dirFromSite(siteName) {
 
 export async function serve(req, site, system) {
     let root = dirFromSite(system.requestedSite)
-    if (req.url == "/favicon.png" && exists(join(root, "status", "favicon.png"))) {
+    if (req.url == "/favicon.png" && await exists(join(root, "status", "favicon.png"))) {
         site.serveFile(req, "image/png", join(root, "status", "favicon.png"))
         return
     }
     let match = req.url.match(/^\/([a-z0-9-]+).json$/)
     if (!match) {
-        site.serve(req)
+        site.serve(req, site, system)
         return
     }
     let page = match[1]
