@@ -85,17 +85,17 @@ async function importMetaSite(path, host) {
     name = basename(path.replace(/\.[tj]s$/, ""));
   }
   console.log(`Registering ${path} as ${name}`);
+  let targetHost = `${name}:${port}`;
   if (metaSite.init) {
     // Some sites will init their sitemap here
     // Others will do lengthy init processing
     // To wait or not to wait?
-    metaSite.init();
+    metaSite.init(targetHost, system);
   }
-  let targetHost = `${name}:${port}`;
   system.metaSites[targetHost] = metaSite;
   system.siteMaps[targetHost] = [];
   if (metaSite.siteMap) {
-    system.siteMaps[targetHost] = metaSite.siteMap();
+    system.siteMaps[targetHost] = metaSite.siteMap(targetHost);
   }
 }
 for (let metaSitePath of params["meta-site"]) {
