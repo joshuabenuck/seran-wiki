@@ -21,10 +21,44 @@ route("/region-scraper.json", async (req, site, _system) => {
   site.serveJson(req, site.page("Region Scraper", [
     site.paragraph(
       `Here we supervise the ongoing scrape of the wiki federation.
-      We invision this as three nested loops where inner loops run
-      dozens or hundreds of times for each outer loop.`
+      We invision this as cooperating loops where sitemap fetches lead
+      to page fetches and these lead to more sitemap fetches.`
     ),
-    site.item("process-step", { legend: "Tripple Nested Loop", href: "/button" })
+    site.paragraph(
+      `See [[Stepping the Async Scrape]]`
+    ),
+    site.paragraph(
+      `While developing this technology we focus first on a nested loop.
+      We have several versions of this where we explore different instrumentation strategies.`
+    ),
+    site.paragraph(
+      `[[Mock Computation]]`
+    ),
+    site.paragraph(
+      `[[Tripple Controls]]`
+    ),
+  ]));
+});
+
+route("/mock-computation.json", async (req, site, _system) => {
+  site.serveJson(req, site.page("Mock Computation", [
+    site.paragraph(
+      `Here we start, stop and step a tripple nested loop that counts iterations
+      until five of each, for 5 * 5 * 5 total iterations have completed.
+      See also [[Tripple Controls]] of the same loop`
+    ),
+    site.item("process-step", { legend: "Simple Nested Loop", href: "/simple" })
+  ]));
+});
+
+route("/tripple-controls.json", async (req, site, _system) => {
+  site.serveJson(req, site.page("Tripple Controls", [
+    site.paragraph(
+      `Here we start, stop and step with distinct controls for each nesting level.`
+    ),
+    site.item("process-step", { legend: "Outer Nested Loop", href: "/outer" }),
+    site.item("process-step", { legend: "Middle Nested Loop", href: "/middle" }),
+    site.item("process-step", { legend: "Inner Nested Loop", href: "/inner" })
   ]));
 });
 
@@ -38,16 +72,43 @@ function counters (where) {
   return `${where} at ${c0} ${c1} ${c2}`
 }
 
-async function run() {
+let simple = instrument('simple', false)
+control(simple, run1)
+
+async function run1() {
   let t0 = Date.now()
   for (c0 = 1; c0 < l0; c0++) {
-    await step(counters('outer'))
+    await simple.step(counters('outer'))
     await delay(100);
     for (c1 = 1; c1 < l1; c1++) {
-      await step(counters('middle'))
+      await simple.step(counters('middle'))
       await delay(100);
       for (c2 = 1; c2 < l2; c2++) {
-        await step(counters('inner'))
+        await simple.step(counters('inner'))
+        await delay(100);
+      }
+    }
+  }
+  return (Date.now()-t0)/1000
+}
+
+let outer = instrument('outer', false)
+let middle = instrument('middle', true)
+let inner = instrument('inner', true)
+control(outer, run3)
+control(middle, run3)
+control(inner, run3)
+
+async function run3() {
+  let t0 = Date.now()
+  for (c0 = 1; c0 < l0; c0++) {
+    await outer.step(counters('outer'))
+    await delay(100);
+    for (c1 = 1; c1 < l1; c1++) {
+      await middle.step(counters('middle'))
+      await delay(100);
+      for (c2 = 1; c2 < l2; c2++) {
+        await inner.step(counters('inner'))
         await delay(100);
       }
     }
@@ -58,77 +119,93 @@ async function run() {
 
 // I N S T R U M E N T A T I O N
 
-let running = false;
-let status = 'beginning';
-let waiting = null;
-let resume = null;
+function instrument (name, startrunning) {
+
+  let status = 'beginning';
+  let running = startrunning;
+  let waiting = null;
+  let resume = null;
+  let item = {name, running, status, waiting, resume, step}
 
 
-// async function sleep(ms) {
-//   return new Promise(resolve => {
-//     setTimeout(resolve, ms);
-//   });
-// }
+  // async function sleep(ms) {
+  //   return new Promise(resolve => {
+  //     setTimeout(resolve, ms);
+  //   });
+  // }
 
-async function step(now) {
-  status = now
-  console.log('step', {status, running, waiting:!!waiting})
-  if (!running) {
-    return waiting = new Promise(resolve => {
-      resume = resolve
-    })
-  } else {
-    return null
+  async function step(now) {
+    item.status = now
+    console.log(name, now)
+    if (!item.running) {
+      return item.waiting = new Promise(resolve => {
+        item.resume = resolve
+      })
+    } else {
+      return null
+    }
   }
+
+  return item
 }
 
 
 // R E M O T E   C O N T R O L
 
-route("/button?action=start", button);
-route("/button?action=stop", button);
-route("/button?action=step", button);
-route("/button?action=state", button);
+function control(item, run) {
 
-async function button(req, site, _system) {
-  let headers = site.baseHeaders();
+  route(`/${item.name}?action=start`, button);
+  route(`/${item.name}?action=stop`, button);
+  route(`/${item.name}?action=step`, button);
+  route(`/${item.name}?action=state`, button);
 
-  if (req.url.indexOf("start") != -1) {
-    if (!running && !waiting) {
-      running = true
-      run().then((dt) => {
-        running=false;
-        status=`complete in ${dt} seconds`
-      });
-    } else if (waiting) {
-      waiting = null;
-      running = true
-      resume()
+  async function button(req, site, _system) {
+    let headers = site.baseHeaders();
+
+    if (req.url.indexOf("start") != -1) {
+      console.log('start')
+      if (!item.running && !item.waiting) {
+        item.running = true
+        console.log('run',run)
+        run().then((dt) => {
+          console.log('done', dt)
+          item.running=false;
+          item.status=`complete in ${dt} seconds`
+        });
+      } else if (item.waiting) {
+        item.waiting = null;
+        item.running = true
+        console.log('resume')
+        item.resume()
+      }
     }
-  }
 
-  if (req.url.indexOf("step") != -1) {
-    if (running) {
-      running = false;
-    } else if (waiting) {
-      waiting = null;
-      await sleep(30)
-      resume()
+    if (req.url.indexOf("step") != -1) {
+      console.log('step')
+      if (item.running) {
+        item.running = false;
+      } else if (item.waiting) {
+        item.waiting = null;
+        await sleep(30)
+        item.resume()
+      }
     }
-  }
 
-  if (req.url.indexOf("stop") != -1) {
-    if (running) {
-      running = false;
+    if (req.url.indexOf("stop") != -1) {
+      console.log('stop')
+      if (item.running) {
+        item.running = false;
+      }
     }
-  }
 
-  site.serveJson(req, {
-    running,
-    waiting: !!waiting,
-    status: status
-  });
+    site.serveJson(req, {
+      running: item.running,
+      waiting: !!item.waiting,
+      status: item.status
+    });
+  }
 }
+
 
 // S C R A P E
 
