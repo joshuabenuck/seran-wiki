@@ -261,11 +261,16 @@ class Page extends HTMLElement {
         return [...this.childNodes].filter((e) => e.nodeName.indexOf("WIKI-") == 0)
     }
 
-    render(json) {
+    async render(json) {
         if (json.dynamic) {
             this.setAttribute("dynamic", true)
         }
         this.title = json.title
+        if (json.href) {
+            let module = await import(json.href)
+            module.render(this)
+            return
+        }
         for (let pageContent of json.story) {
             let plugin = window.plugins[pageContent.type]
             if (plugin) {
