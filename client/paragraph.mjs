@@ -18,19 +18,44 @@ export class Paragraph extends HTMLElement {
         style.innerHTML = css
         shadow.appendChild(style)
         this.p = document.createElement("p")
+        this.p.light = this
         let slot = document.createElement("slot")
-        this.p.appendChild(slot)
+        this.renderLinks()
         shadow.appendChild(this.p)
 
-        let site = this.page.getAttribute("site")
-        this.innerHTML = renderLinks(this.innerHTML, site)
         if (!this.page.dynamic) {
             this.addEventListener("dblclick", this.edit)
             this.addEventListener("click", (e) => e.stopPropagation())
             this.editor = document.createElement("textarea")
             this.editor.style.display = "none"
+            this.editor.addEventListener("keydown", (e) => this.keyhandler(e))
             shadow.appendChild(this.editor)
             this.setAttribute("editable", true)
+        }
+    }
+
+    renderLinks() {
+        let site = this.page.getAttribute("site")
+        this.p.innerHTML = renderLinks(this.textContent, site)
+    }
+
+    showEditor() {
+        this.p.style.display = "none"
+        this.editor.style.display = ""
+        this.editor.value = this.textContent
+    }
+
+    hideEditor() {
+        this.p.style.display = ""
+        this.editor.style.display = "none"
+        this.textContent = this.editor.value
+        this.renderLinks()
+    }
+
+    keyhandler(event) {
+        if (event.key == "Escape" || (event.ctrlKey && event.key == "s")) {
+            this.hideEditor()
+            event.preventDefault()
         }
     }
 
@@ -39,10 +64,8 @@ export class Paragraph extends HTMLElement {
         if (this.editor.style.display == "") {
             return
         }
-        this.p.style.display = "none"
-        this.editor.style.display = ""
-        this.editor.value = this.textContent
-        console.log("edit", event, this.editor)
+        this.showEditor()
+        this.editor.setSelectionRange(this.editor.value.length, this.editor.value.length)
         this.editor.focus()
     }
 
