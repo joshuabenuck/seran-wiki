@@ -90,6 +90,20 @@ export class Paragraph extends HTMLElement {
             para.editor.focus()
             event.preventDefault()
         }
+        else if (event.key == "Backspace") {
+            let prefix = this.editor.value.substring(0, this.editor.selectionStart)
+            if (prefix == "") {
+                let suffix = this.editor.value.substring(this.editor.selectionEnd)
+                let prev = this.previousSibling
+                let index = prev.textContent.length
+                prev.textContent += suffix
+                prev.showEditor()
+                prev.editor.setSelectionRange(index, index)
+                prev.editor.focus()
+                this.remove()
+                event.preventDefault()
+            }
+        }
     }
 
     edit(event) {
