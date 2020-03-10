@@ -23,7 +23,7 @@ export class Paragraph extends HTMLElement {
         this.renderLinks()
         shadow.appendChild(this.p)
 
-        if (!this.page.dynamic) {
+        if (this.page.getAttribute("dynamic") != "true") {
             this.addEventListener("dblclick", this.edit)
             this.addEventListener("click", (e) => e.stopPropagation())
             this.editor = document.createElement("textarea")
