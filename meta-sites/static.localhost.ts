@@ -14,7 +14,29 @@ function dirFromSite(siteName) {
     return join(wikiRoot, siteName)
 }
 
+function aboutStatic(site) {
+    return site.page("About Static", [
+        site.paragraph("This meta-site serves pages from existing wikis."),
+        site.paragraph("In order to use it, register the meta-site with the name of an existing wiki"),
+        site.paragraph("For example:"),
+        site.paragraph("./denowiki.sh --meta-site=static.localhost.ts@fed.wiki.org"),
+        site.paragraph("This will serve the wiki pages from ~/.wiki/fed.wiki.org/pages/"),
+        site.paragraph("For this example to work:"),
+        site.paragraph("* The name fed.wiki.org must resolve to the host running denowiki."),
+        site.paragraph("* ~/.wiki/fed.wiki.org/pages/ must exist.")
+    ])
+}
+
 export async function serve(req, site, system) {
+    if (system.requestedSite.indexOf("static.") != -1 &&
+        req.url == "/welcome-visitors.json") {
+            site.serveJson(req, site.welcomePage("[[DenoWiki]]", "[[About static]]"))
+            return
+    }
+    if (req.url == "/about-static.json") {
+        site.serveJson(req, aboutStatic(site))
+        return
+    }
     let root = dirFromSite(system.requestedSite)
     if (req.url == "/favicon.png" && await exists(join(root, "status", "favicon.png"))) {
         site.serveFile(req, "image/png", join(root, "status", "favicon.png"))
