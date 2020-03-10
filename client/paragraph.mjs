@@ -57,6 +57,39 @@ export class Paragraph extends HTMLElement {
             this.hideEditor()
             event.preventDefault()
         }
+        else if (event.key == "Enter") {
+            let prefix = this.editor.value.substring(0, this.editor.selectionStart)
+            let suffix = this.editor.value.substring(this.editor.selectionEnd)
+            // Remove empty editor
+            if (prefix == suffix && suffix == "") {
+                this.remove()
+                event.preventDefault()
+                return
+            }
+            // Insert new editor before
+            if (prefix == "") {
+                this.editor.value = suffix
+                this.hideEditor()
+                let para = document.createElement("wiki-paragraph")
+                para.textContent = prefix
+                this.insertAdjacentElement("beforebegin", para)
+                para.showEditor()
+                para.editor.setSelectionRange(0, 0)
+                para.editor.focus()
+                event.preventDefault()
+                return
+            }
+            // Insert new editor after
+            this.editor.value = prefix
+            this.hideEditor()
+            let para = document.createElement("wiki-paragraph")
+            para.textContent = suffix
+            this.insertAdjacentElement("afterend", para)
+            para.showEditor()
+            para.editor.setSelectionRange(0, 0)
+            para.editor.focus()
+            event.preventDefault()
+        }
     }
 
     edit(event) {
