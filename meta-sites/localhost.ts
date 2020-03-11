@@ -40,7 +40,14 @@ export async function serve(req: ServerRequest, site, system) {
       site.welcomePage("[[DenoWiki]]", "[[Hello]], [[Deno Sites]]")
     );
   } // These are meta-pages from the meta-pages folder
-  else if (metaPages[req.url]) {
+  else if (req.url == "/wander.json") {
+    let page = site.page("Wander", [site.paragraph("Only viewable by denowiki")])
+    page.href = "/client/wander.mjs"
+    site.serveJson(
+      req,
+      page
+    );
+  } else if (metaPages[req.url]) {
     console.log("calling:", metaPages[req.url]);
     let data = await metaPages[req.url](req, site, system);
     site.serveJson(req, data);
