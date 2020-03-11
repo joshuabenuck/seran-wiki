@@ -37,7 +37,7 @@ export async function serveFile(req, contentType, filePath) {
 
 export function serveJson(req, data) {
   let headers = baseHeaders();
-  if (data.dynamic == undefined) {
+  if (data && data.dynamic == undefined) {
     data.dynamic = true;
   }
   req.respond({
