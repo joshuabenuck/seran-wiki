@@ -37,7 +37,7 @@ export async function serve(req: ServerRequest, site, system) {
   if (req.url == "/welcome-visitors.json") {
     site.serveJson(
       req,
-      site.welcomePage("[[DenoWiki]]", "[[Hello]], [[Deno Sites]]")
+      site.welcomePage("[[DenoWiki]]", "[[Wander]], [[Deno Sites]]")
     );
   } // These are meta-pages from the meta-pages folder
   else if (req.url == "/wander.json") {
