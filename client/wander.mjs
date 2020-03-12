@@ -521,7 +521,7 @@ let turtlespace = {
         });
         $(shadow).find('.controls .link-turtle-clear').click(function (event) {
             event.preventDefault();
-            var canvas = $('.tracks .turtle').get(0);
+            var canvas = $(shadow).find('.tracks .turtle').get(0);
             var context = canvas.getContext('2d');
             turtlespace.change(turtlespace.named.turtle, {
                 x: turtlespace.named.origin.x,
