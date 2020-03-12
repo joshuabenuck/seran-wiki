@@ -266,11 +266,6 @@ class Page extends HTMLElement {
             this.setAttribute("dynamic", true)
         }
         this.title = json.title
-        if (json.href) {
-            let module = await import(json.href)
-            module.render(this)
-            return
-        }
         for (let pageContent of json.story) {
             let plugin = window.plugins[pageContent.type]
             if (plugin) {
