@@ -60,12 +60,14 @@ async function readDir(path) {
 interface System {
   metaSites: {};
   siteMaps: {};
+  plugins: {};
   requestedSite: string;
 }
 
 let system: System = {
   metaSites: {},
   siteMaps: {},
+  plugins: {},
   requestedSite: undefined
 };
 
@@ -96,6 +98,9 @@ async function importMetaSite(path, host) {
   system.siteMaps[targetHost] = [];
   if (metaSite.siteMap) {
     system.siteMaps[targetHost] = metaSite.siteMap(targetHost);
+  }
+  if (metaSite.plugins) {
+    system.plugins[targetHost] = metaSite.plugins;
   }
 }
 for (let metaSitePath of params["meta-site"]) {

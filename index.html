@@ -125,17 +125,17 @@
                 console.log("loading default page")
                 wiki.loadPage("welcome-visitors")
             }
-            function loadPages() {
+            async function loadPages() {
                 for (let [name, value] of new URL(document.URL).searchParams.entries()) {
                     if (name != "page") {
                         continue;
                     }
                     if (value.indexOf(";") != -1) {
                         let [site, slug] = value.split(";")
-                        wiki.loadRemotePage(site, slug)
+                        await wiki.loadRemotePage(site, slug)
                         continue;
                     }
-                    wiki.loadPage(value)
+                    await wiki.loadPage(value)
                 }
             }
             loadPages()

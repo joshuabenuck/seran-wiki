@@ -2,6 +2,7 @@ class Wiki extends HTMLElement {
     constructor() {
         super()
         window.wiki = this
+        this.pluginsLoadedFor = new Set()
     }
 
     connectedCallback() {
@@ -60,19 +61,40 @@ class Wiki extends HTMLElement {
         return this.getElementsByTagName("footer")[0].getElementsByTagName("wiki-neighborhood")[0]
     }
 
+    async loadPlugins(origin) {
+        if (!origin) {
+            origin = location.origin
+        }
+        if (!this.pluginsLoadedFor.has(origin)) {
+            this.pluginsLoadedFor.add(origin)
+            try {
+                let content = await fetch(`${origin}/system/plugins.json`)
+                let plugins = await content.json()
+                for (let plugin of plugins) {
+                    console.log("Loading plugin:", plugin)
+                    let module = await import(plugin)
+                }
+            }
+            catch (e) {
+                console.log("Unable to load plugins for:", origin)
+            }
+        }
+    }
+
     async loadPage(slug) {
         let res = fetch(`/${slug}.json`)
         let page = await this.renderPage(res, slug)
     }
 
     async loadRemotePage(site, slug) {
-        let res = fetch(`http://${site}/${slug}.json`)
+        let res = fetch(`${origin}/${slug}.json`)
         let page = await this.renderPage(res, slug, site)
     }
 
     async renderPage(res, slug, site) {
         let page = this.lineup.newPage(slug, slug, site)
         page.activate()
+        await this.loadPlugins(site)
         res = await res
         let json = await res.json()
         page.render(json)

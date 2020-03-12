@@ -1,53 +1,59 @@
 // Copyright Eric Dobbs
 // Check with him for licensing restrictions
 
-export async function render(page) {
-    page.addParagraph("Dynamically added on the client side")
-    let div = document.createElement("div")
-    div.innerHTML = `
-<style type="text/css">
-body {min-height: 400px;}
-canvas {border: 1px solid black;}
-.tracks {margin-bottom: 5px;}
-.controls a {margin-right: 4px;}
-</style>
-<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-</head>
-<body>
-<div class="tracks"><canvas width="300" height="250" class="turtle"></canvas></div>
-<div class="controls"><!--
+export class TurtleWander extends HTMLElement {
+    connectedCallback() {
+        if (this.inited) return
+        this.inited = true
+        let shadow = this.attachShadow({ mode: "open" })
+        shadow.innerHTML = `
+    <style type="text/css">
+            :host {
+                display: block;
+            }
 
---><a href="" class="link-turtle-turn-left"><canvas width="32" height="32" class="turtle-turn-left"></canvas></a><!--
+            body {min-height: 400px;}
+            canvas {border: 1px solid black;}
+            .tracks {margin-bottom: 5px;}
+            .controls a {margin-right: 4px;}
+    </style>
+    <div class="tracks"><canvas width="300" height="250" class="turtle"></canvas></div>
+    <div class="controls"><!--
 
---><a href="" class="link-turtle-move"><canvas width="32" height="32" class="turtle-move"></canvas></a><!--
+    --><a href="" class="link-turtle-turn-left"><canvas width="32" height="32" class="turtle-turn-left"></canvas></a><!--
 
---><a href="" class="link-turtle-turn-right"><canvas width="32" height="32" class="turtle-turn-right"></canvas></a><!--
+    --><a href="" class="link-turtle-move"><canvas width="32" height="32" class="turtle-move"></canvas></a><!--
 
---><a href="" class="link-turtle-setmovesize"><canvas width="32" height="32" class="turtle-setmovesize"></canvas></a><!--
+    --><a href="" class="link-turtle-turn-right"><canvas width="32" height="32" class="turtle-turn-right"></canvas></a><!--
 
---><a href="" class="link-turtle-setturnsize-numerator"><canvas width="32" height="32" class="turtle-setturnsize-numerator"></canvas></a><!--
+    --><a href="" class="link-turtle-setmovesize"><canvas width="32" height="32" class="turtle-setmovesize"></canvas></a><!--
 
---><a href="" class="link-turtle-setturnsize-denominator"><canvas width="32" height="32" class="turtle-setturnsize-denominator"></canvas></a><!--
+    --><a href="" class="link-turtle-setturnsize-numerator"><canvas width="32" height="32" class="turtle-setturnsize-numerator"></canvas></a><!--
 
---><a href="" class="link-turtle-clear"><canvas width="32" height="32" class="turtle-clear"></canvas></a><!--
+    --><a href="" class="link-turtle-setturnsize-denominator"><canvas width="32" height="32" class="turtle-setturnsize-denominator"></canvas></a><!--
 
---><a href="" class="link-turtle-save-history"><canvas width="32" height="32" class="turtle-save-history"></canvas></a><!--
+    --><a href="" class="link-turtle-clear"><canvas width="32" height="32" class="turtle-clear"></canvas></a><!--
 
---></div>
-<div class="history controls">
-</div>
-    `
-    page.appendChild(div)
-    console.log("jq")
-    let jq = document.createElement("script")
-    jq.setAttribute("src", "http://code.jquery.com/jquery-1.7.1.min.js")
-    jq.onload = () => {
-        turtlespace.initialize_ui();
-        turtlespace.update_ui();
+    --><a href="" class="link-turtle-save-history"><canvas width="32" height="32" class="turtle-save-history"></canvas></a><!--
+
+    --></div>
+    <div class="history controls">
+    </div>
+        `
+        let jq = document.createElement("script")
+        jq.setAttribute("src", "https://code.jquery.com/jquery-3.4.1.min.js")
+        jq.onload = () => {
+            turtlespace.initialize_ui(shadow);
+            turtlespace.update_ui(shadow);
+        }
+        shadow.appendChild(jq)
     }
-    page.appendChild(jq)
+
+    render(json) {
+
+    }
 }
+registerPlugin("turtle-wander", TurtleWander)
 
 let turtlespace = {
     named: {
@@ -265,7 +271,7 @@ let turtlespace = {
         });
     },
 
-    update_ui: function update_ui() {
+    update_ui: function update_ui(shadow) {
         var controls = turtlespace.controls();
         function drawTurtleShape(context, turtle_name) {
             var position = turtlespace.history[turtle_name][0];
@@ -400,11 +406,11 @@ let turtlespace = {
                 drawTurtlePathIcon(context, turtle_name);
                 $history.append(moment);
             }
-            $('a.turtle-play').click(function(event) {
+            $(shadow).find('a.turtle-play').click(function(event) {
                 event.preventDefault();
                 turtlespace.saveAnd(turtlespace.repeat_history, turtlespace.named.turtle,
                                     [$(event.target).parent().data('turtle-name'), 0]);
-                turtlespace.update_ui();
+                turtlespace.update_ui(shadow);
                 return false;
             });
         }
@@ -415,24 +421,24 @@ let turtlespace = {
             drawTurtlePathIcon(context, 'turtleMoveControl');
         }
 
-        drawMove($('.controls canvas.turtle-move').get(0).getContext('2d'));
+        drawMove($(shadow).find('.controls canvas.turtle-move').get(0).getContext('2d'));
 
-        var right = $('.controls canvas.turtle-turn-right').get(0);
+        var right = $(shadow).find('.controls canvas.turtle-turn-right').get(0);
         withTurnTransform(right.getContext('2d'), 0, drawTurnsize);
 
-        var left = $('.controls canvas.turtle-turn-left').get(0);
+        var left = $(shadow).find('.controls canvas.turtle-turn-left').get(0);
         withTurnTransform(left.getContext('2d'), left.width, drawTurnsize, true);
 
-        var numerator = $('.controls canvas.turtle-setturnsize-numerator').get(0);
+        var numerator = $(shadow).find('.controls canvas.turtle-setturnsize-numerator').get(0);
         withTurnTransform(numerator.getContext('2d'), 8, drawTurnsizeNumerator);
 
-        var denominator = $('.controls canvas.turtle-setturnsize-denominator').get(0);
+        var denominator = $(shadow).find('.controls canvas.turtle-setturnsize-denominator').get(0);
         withTurnTransform(denominator.getContext('2d'), 8, drawTurnsizeDenominator);
 
-        var playground = $('.tracks .turtle').get(0);
+        var playground = $(shadow).find('.tracks .turtle').get(0);
         drawTurtlePath(playground.getContext('2d'));
 
-        drawHistories($('.history'));
+        drawHistories($(shadow).find('.history'));
 
         function textButton(text, context) {
             context.clearRect(0, 0, context.canvas.width, context.canvas.height);
@@ -441,13 +447,13 @@ let turtlespace = {
         }
 
         textButton(turtlespace.named.controls.movesize,
-                    $('.controls canvas.turtle-setmovesize').get(0).getContext('2d'));
-        textButton('clear', $('.controls canvas.turtle-clear').get(0).getContext('2d'));
-        drawTurtlePathIcon($('.controls canvas.turtle-save-history').get(0).getContext('2d'),
+                    $(shadow).find('.controls canvas.turtle-setmovesize').get(0).getContext('2d'));
+        textButton('clear', $(shadow).find('.controls canvas.turtle-clear').get(0).getContext('2d'));
+        drawTurtlePathIcon($(shadow).find('.controls canvas.turtle-save-history').get(0).getContext('2d'),
                             'turtle');
     },
 
-    initialize_ui: function initialize_ui() {
+    initialize_ui: function initialize_ui(shadow) {
         var turtle = turtlespace.turtle({name: 'turtle'});
         turtlespace.named[COMMAND_BUFFER] = $.extend({
         }, turtlespace.named.origin, {
@@ -477,43 +483,43 @@ let turtlespace = {
             turtlespace.history[COMMAND_BUFFER] = cbh;
         }
         var controls = turtlespace.controls();
-        $('.controls .link-turtle-move').click(function (event) {
+        $(shadow).find('.controls .link-turtle-move').click(function (event) {
             event.preventDefault();
             turtle.move(controls.movesize);
-            turtlespace.update_ui();
+            turtlespace.update_ui(shadow);
             return false;
         });
-        $('.controls .link-turtle-turn-left').click(function (event) {
+        $(shadow).find('.controls .link-turtle-turn-left').click(function (event) {
             event.preventDefault();
             turtle.turn(-controls.turnsize);
-            turtlespace.update_ui();
+            turtlespace.update_ui(shadow);
             return false;
         });
-        $('.controls .link-turtle-turn-right').click(function (event) {
+        $(shadow).find('.controls .link-turtle-turn-right').click(function (event) {
             event.preventDefault();
             turtle.turn(controls.turnsize);
-            turtlespace.update_ui();
+            turtlespace.update_ui(shadow);
             return false;
         });
-        $('.controls .link-turtle-setmovesize').click(function (event) {
+        $(shadow).find('.controls .link-turtle-setmovesize').click(function (event) {
             event.preventDefault();
             controls.next_movesize();
-            turtlespace.update_ui();
+            turtlespace.update_ui(shadow);
             return false;
         });
-        $('.controls .link-turtle-setturnsize-numerator').click(function (event) {
+        $(shadow).find('.controls .link-turtle-setturnsize-numerator').click(function (event) {
             event.preventDefault();
             controls.next_turnsize_numerator();
-            turtlespace.update_ui();
+            turtlespace.update_ui(shadow);
             return false;
         });
-        $('.controls .link-turtle-setturnsize-denominator').click(function (event) {
+        $(shadow).find('.controls .link-turtle-setturnsize-denominator').click(function (event) {
             event.preventDefault();
             controls.next_turnsize_denominator();
-            turtlespace.update_ui();
+            turtlespace.update_ui(shadow);
             return false;
         });
-        $('.controls .link-turtle-clear').click(function (event) {
+        $(shadow).find('.controls .link-turtle-clear').click(function (event) {
             event.preventDefault();
             var canvas = $('.tracks .turtle').get(0);
             var context = canvas.getContext('2d');
@@ -524,14 +530,14 @@ let turtlespace = {
             });
             turtlespace.history.turtle = [];
             turtlespace.history[COMMAND_BUFFER] = [];
-            turtlespace.update_ui();
+            turtlespace.update_ui(shadow);
             return false;
         });
-        $('.controls .link-turtle-save-history').click(function (event) {
+        $(shadow).find('.controls .link-turtle-save-history').click(function (event) {
             event.preventDefault();
             var count = Object.keys(turtlespace.history).length;
             turtlespace.save_history({name:COMMAND_BUFFER}, 'turtle_'+count);
-            turtlespace.update_ui();
+            turtlespace.update_ui(shadow);
             return false;
         });
     }

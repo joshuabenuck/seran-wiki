@@ -1,6 +1,8 @@
 const { stat } = Deno;
 import { ServerRequest } from "std/http/server.ts";
 
+export let plugins = ["/client/wander.mjs"]
+
 async function readDir(path) {
   let fileInfo = await stat(path);
   if (!fileInfo.isDirectory()) {
@@ -41,11 +43,9 @@ export async function serve(req: ServerRequest, site, system) {
     );
   } // These are meta-pages from the meta-pages folder
   else if (req.url == "/wander.json") {
-    let page = site.page("Wander", [site.paragraph("Only viewable by denowiki")])
-    page.href = "/client/wander.mjs"
     site.serveJson(
       req,
-      page
+      site.page("Wander", [site.item("turtle-wander", {})])
     );
   } else if (metaPages[req.url]) {
     console.log("calling:", metaPages[req.url]);

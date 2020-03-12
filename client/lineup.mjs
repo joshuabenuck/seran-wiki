@@ -64,6 +64,18 @@ class Lineup extends HTMLElement {
         return this.parentElement
     }
 
+    get sites() {
+        let sites = new Set()
+        for (let page of this.pages) {
+            let site = page.site
+            if (!site) {
+                site = location.origin
+            }
+            sites.add(site)
+        }
+        return sites
+    }
+
     URLTo(page) {
         let url = this.wiki.baseURL
         let pageIndex = this.pageIndex(page);

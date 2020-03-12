@@ -4,6 +4,7 @@ import { ServerRequest } from "std/http/server.ts";
 let metaPages = {
   "/system/site-index.json": serveSiteIndex,
   "/system/sitemap.json": serveSiteMap,
+  "/system/plugins.json": servePlugins,
   "/denowiki.json": serveMetaAboutUs
 };
 
@@ -64,6 +65,10 @@ export function serveSiteIndex(req) {
 
 export function serveSiteMap(req, site, system) {
   serveJson(req, system.siteMaps[system.requestedSite]);
+}
+
+export function servePlugins(req, site, system) {
+  serveJson(req, system.plugins[system.requestedSite]);
 }
 
 export function serveMetaAboutUs(req, site, system) {
