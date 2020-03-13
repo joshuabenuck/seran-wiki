@@ -8,8 +8,19 @@ export let metaPages = {};
 let metaText = `
 Welcome Visitors
 
-  who: "[[DenoWiki]]",
-  what: "[[Region Scraper]]"
+  Welcome to this [[DenoWiki]] Federated Wiki site.
+  From this page you can find who we are and what we do.
+  New sites provide this information and then claim the site as their own.
+  You will need your own site to participate.
+
+  Pages about us.
+
+  [[Ward Cunningham]]
+
+  Pages where we do and share.
+
+  [[Region Scraper]]
+
 
 Region Scraper
 
@@ -65,17 +76,17 @@ function parse(sep, text, fn) {
 
 parse(/\n([A-Z][A-Za-z ]*)/g, metaText, (title, body) => {
   let page = {title,story:[]}
-  parse(/(\n\n)/g, body, (blank, text) => {
+  parse(/(\n\n\s*)/g, body, (blank, text) => {
     let id = Math.floor(Math.random()*2**58).toString(36)
-    let m = text.match(/\s+([a-z-]+):/)
-    // if (m) {
-      // let p = JSON.parse(`{${text.replace(/\s+([a-z-]+):/,'')}}`)
-      // page.story.push(Object.assign({type:m[1],id},p))
-    // } else {
+    let m = text.match(/([a-z-]+):/)
+    if (m) {
+      let args = eval(`({${text.replace(/([a-z-]+):/,'')}})`)
+      page.story.push(Object.assign({type:m[1],id},args))
+    } else {
       page.story.push({type:'paragraph',text,id})
-    // }
+    }
   })
-  metaPages[`/${asSlug(title)}.json`] = async (req, site, _system) => {console.log(page); site.serveJson(req, page)}
+  metaPages[`/${asSlug(title)}.json`] = async (req, site, _system) => {site.serveJson(req, page)}
 })
 
 
