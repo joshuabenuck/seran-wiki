@@ -244,7 +244,7 @@ class Page extends HTMLElement {
     }
 
     activate() {
-        this.scrollIntoViewIfNeeded()
+        this.scrollIntoView()
         let actives = document.getElementsByClassName("active")
         for (let active of actives) {
             active.classList.remove("active")
