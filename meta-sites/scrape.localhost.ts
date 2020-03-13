@@ -7,6 +7,7 @@ import {
 } from "std/path/posix.ts";
 import { delay } from "std/util/async.ts";
 
+export let plugins = [ "/client/process-step.mjs" ]
 export let metaPages = {};
 
 function route(url, fn) {
