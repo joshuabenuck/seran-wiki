@@ -2,6 +2,7 @@ class Wiki extends HTMLElement {
     constructor() {
         super()
         window.wiki = this
+        this.pluginsLoadedFor = new Set()
     }
 
     connectedCallback() {
@@ -41,8 +42,8 @@ class Wiki extends HTMLElement {
         let path = input.value
         let site = location.origin
         let slug = path
-        if (path.indexOf(":") != -1) {
-            [site, slug] = path.split(":")
+        if (path.indexOf(";") != -1) {
+            [site, slug] = path.split(";")
         }
         console.log("opening:", site, slug)
         this.parentElement.loadRemotePage(site, slug)
@@ -60,34 +61,43 @@ class Wiki extends HTMLElement {
         return this.getElementsByTagName("footer")[0].getElementsByTagName("wiki-neighborhood")[0]
     }
 
+    async loadPlugins(origin) {
+        if (!origin) {
+            origin = location.origin
+        }
+        if (!this.pluginsLoadedFor.has(origin)) {
+            this.pluginsLoadedFor.add(origin)
+            try {
+                let content = await fetch(`${origin}/system/plugins.json`)
+                let plugins = await content.json()
+                for (let plugin of plugins) {
+                    console.log("Loading plugin:", plugin)
+                    let module = await import(plugin)
+                }
+            }
+            catch (e) {
+                console.log("Unable to load plugins for:", origin)
+            }
+        }
+    }
+
     async loadPage(slug) {
         let res = fetch(`/${slug}.json`)
         let page = await this.renderPage(res, slug)
-        page.activate()
     }
 
     async loadRemotePage(site, slug) {
-        let res = fetch(`http://${site}/${slug}.json`)
+        let res = fetch(`${origin}/${slug}.json`)
         let page = await this.renderPage(res, slug, site)
-        page.activate()
     }
 
     async renderPage(res, slug, site) {
         let page = this.lineup.newPage(slug, slug, site)
+        page.activate()
+        await this.loadPlugins(site)
         res = await res
         let json = await res.json()
-        page.title = json.title
-        for (let pageContent of json.story) {
-            let plugin = window.plugins[pageContent.type]
-            if (plugin) {
-                let element = new plugin()
-                element.render(pageContent)
-                page.appendChild(element)
-            }
-            else {
-                page.addParagraph(`Unknown type: ${pageContent.type}`)
-            }
-        }
+        page.render(json)
         return page
     }
 
@@ -101,18 +111,18 @@ class Wiki extends HTMLElement {
         page.activate()
     }
 
+    get baseURL() {
+        return new URL(window.location.origin + "/index.html")
+    }
+
+    get URL() {
+        let url = this.baseURL;
+        [...this.lineup.pages].forEach((p) => url.searchParams.append("page", p.fullSlug))
+        return url
+    }
+
     updateURL() {
-        let url = new URL(window.location.origin + "/index.html")
-        for (let page of this.lineup.pages) {
-            let site = page.site
-            let slug = page.slug
-            console.log("lineup page", site, slug)
-            if (site != undefined && site != location.origin) {
-                slug = `${site}:${slug}`
-            }
-            url.searchParams.append("page", slug)
-        }
-        history.pushState({}, "", url.toString())
+        history.pushState({}, "", this.URL.toString())
     }
 }
 customElements.define("wiki-wiki", Wiki);

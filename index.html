@@ -1,6 +1,7 @@
 <html>
 
 <head>
+    <meta charset="utf-8">
     <style>
         body {
             background: #eeeeee url("/crosses.png");
@@ -82,13 +83,16 @@
         function renderLinks(html, site) {
             html = html.replace(/\[\[(.*?)\]\]/g, (_full, match) => {
                 if (site) {
-                    return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}");wiki.updateURL()'>${match}</a>`
+                    // return `<a href='javascript:wiki.loadRemotePage("${site}", "${asSlug(match)}");wiki.updateURL()'>${match}</a>`
+                    return `<wiki-link site="${site}" slug="${asSlug(match)}">${match}</wiki-link>`
                 }
-                return `<a href='javascript:wiki.loadPage("${asSlug(match)}");wiki.updateURL()'>${match}</a>`
+                // return `<a href='javascript:wiki.loadPage("${asSlug(match)}");wiki.updateURL()'>${match}</a>`
+                return `<wiki-link slug="${asSlug(match)}">${match}</wiki-link>`
             })
-            return html.replace(/\[(.*)\]/g, (_full, match) => {
-                let [url, text] = match.split(" ")
-                return `<a href='${url}' target="_blank">${text}</a>`
+            return html.replace(/\[([^+]*)\]/g, (_full, match) => {
+                let url = match.substring(0, match.indexOf(" "))
+                let text = match.substring(match.indexOf(" "))
+                return `<wiki-link href='${url}' target="_blank">${text}</wiki-link>`
             })
         }
 
@@ -101,12 +105,13 @@
 
     <!-- Plugins -->
     <script type="module" src="/client/paragraph.mjs"></script>
-    <script type="module" src="/client/process-step.mjs"></script>
     <script type="module" src="/client/reference.mjs"></script>
     <script type="module" src="/client/roster.mjs"></script>
 
     <!-- Wiki APIs / Custom Elements -->
+    <script type="module" src="/client/auth.mjs"></script>
     <script type="module" src="/client/neighborhood.mjs"></script>
+    <script type="module" src="/client/link.mjs"></script>
     <script type="module" src="/client/page.mjs"></script>
     <script type="module" src="/client/lineup.mjs"></script>
     <script type="module" src="/client/wiki.mjs"></script>
@@ -121,17 +126,17 @@
                 console.log("loading default page")
                 wiki.loadPage("welcome-visitors")
             }
-            function loadPages() {
+            async function loadPages() {
                 for (let [name, value] of new URL(document.URL).searchParams.entries()) {
                     if (name != "page") {
                         continue;
                     }
-                    if (value.indexOf(":") != -1) {
-                        let [site, slug] = value.split(":")
-                        wiki.loadRemotePage(site, slug)
+                    if (value.indexOf(";") != -1) {
+                        let [site, slug] = value.split(";")
+                        await wiki.loadRemotePage(site, slug)
                         continue;
                     }
-                    wiki.loadPage(value)
+                    await wiki.loadPage(value)
                 }
             }
             loadPages()
@@ -149,6 +154,7 @@
         <wiki-lineup>
         </wiki-lineup>
         <footer>
+            <wiki-auth></wiki-auth>
             <wiki-neighborhood></wiki-neighborhood>
         </footer>
     </wiki-wiki>

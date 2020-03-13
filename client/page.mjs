@@ -90,7 +90,7 @@ class Page extends HTMLElement {
             prefix = `http://${site}`
         }
         let flagLink = document.createElement("a")
-        flagLink.setAttribute("href", `${prefix}/view/welcome-visitors`)
+        flagLink.setAttribute("href", `${prefix}/view/${this.slug}`)
         flagLink.setAttribute("target", "")
 
         let flag = document.createElement("img")
@@ -110,12 +110,10 @@ class Page extends HTMLElement {
     }
 
     dragStart(event) {
-        console.log("drag start:", event)
         event.dataTransfer.setData("pageIndex", this.parentElement.pageIndex(this))
     }
 
     dragEnter(event) {
-        console.log("drag enter:", event)
         event.dataTransfer.dropEffect = "move"
         return false
     }
@@ -133,13 +131,11 @@ class Page extends HTMLElement {
     }
 
     dragLeave(event) {
-        console.log("drag leave:", event)
         this.classList.remove("drop-target-left")
         this.classList.remove("drop-target-right")
     }
 
     dragEnd(event) {
-        console.log("drag end:", event)
         if (event.pageY < 0 && this.parentElement.pages.length > 1) {
             let wiki = this.lineup.wiki
             this.remove()
@@ -148,7 +144,6 @@ class Page extends HTMLElement {
     }
 
     drop(event) {
-        console.log("drop:", event)
         this.classList.remove("drag-target")
         let pageIndex = event.dataTransfer.getData("pageIndex")
         let page = this.parentElement.pages[pageIndex]
@@ -212,6 +207,19 @@ class Page extends HTMLElement {
         return this.parentElement
     }
 
+    get fullSlug() {
+        let site = this.site
+        let slug = this.slug
+        if (site != undefined && site != location.origin) {
+            slug = `${site};${slug}`
+        }
+        return slug
+    }
+
+    get URL() {
+        return this.lineup.URLTo(this)
+    }
+
     addParagraph(text) {
         let paragraph = document.createElement("wiki-paragraph")
         paragraph.textContent = text
@@ -236,12 +244,13 @@ class Page extends HTMLElement {
     }
 
     activate() {
-        this.scrollIntoViewIfNeeded()
+        this.scrollIntoView()
         let actives = document.getElementsByClassName("active")
         for (let active of actives) {
             active.classList.remove("active")
         }
         this.classList.add("active")
+        this.lineup.focus()
     }
 
     ghost() {
@@ -250,6 +259,24 @@ class Page extends HTMLElement {
 
     get items() {
         return [...this.childNodes].filter((e) => e.nodeName.indexOf("WIKI-") == 0)
+    }
+
+    async render(json) {
+        if (json.dynamic) {
+            this.setAttribute("dynamic", true)
+        }
+        this.title = json.title
+        for (let pageContent of json.story) {
+            let plugin = window.plugins[pageContent.type]
+            if (plugin) {
+                let element = new plugin()
+                element.render(pageContent)
+                this.appendChild(element)
+            }
+            else {
+                this.addParagraph(`Unknown type: ${pageContent.type}`)
+            }
+        }
     }
 }
 customElements.define("wiki-page", Page);

@@ -60,12 +60,14 @@ async function readDir(path) {
 interface System {
   metaSites: {};
   siteMaps: {};
+  plugins: {};
   requestedSite: string;
 }
 
 let system: System = {
   metaSites: {},
   siteMaps: {},
+  plugins: {},
   requestedSite: undefined
 };
 
@@ -85,17 +87,20 @@ async function importMetaSite(path, host) {
     name = basename(path.replace(/\.[tj]s$/, ""));
   }
   console.log(`Registering ${path} as ${name}`);
+  let targetHost = `${name}:${port}`;
   if (metaSite.init) {
     // Some sites will init their sitemap here
     // Others will do lengthy init processing
     // To wait or not to wait?
-    metaSite.init({site});
+    metaSite.init(targetHost, system);
   }
-  let targetHost = `${name}:${port}`;
   system.metaSites[targetHost] = metaSite;
   system.siteMaps[targetHost] = [];
   if (metaSite.siteMap) {
-    system.siteMaps[targetHost] = metaSite.siteMap();
+    system.siteMaps[targetHost] = metaSite.siteMap(targetHost);
+  }
+  if (metaSite.plugins) {
+    system.plugins[targetHost] = metaSite.plugins;
   }
 }
 for (let metaSitePath of params["meta-site"]) {

@@ -32,6 +32,7 @@ class Neighboorhood extends HTMLElement {
         link.appendChild(document.createTextNode(">>"))
         shadow.appendChild(link)
         this.add(location.origin.replace("http://", ""))
+        this.add("fed.wiki.org")
     }
 
     add(site) {
@@ -41,6 +42,15 @@ class Neighboorhood extends HTMLElement {
         flag.setAttribute("title", site)
         this.shadowRoot.appendChild(flag)
         this.neighbors.add(site)
+    }
+
+    has(site) {
+        for (let neighbor of this.neighbors) {
+            if (site == neighbor) {
+                return true
+            }
+        }
+        return false
     }
 }
 customElements.define("wiki-neighborhood", Neighboorhood)

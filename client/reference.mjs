@@ -18,7 +18,9 @@ class Reference extends HTMLElement {
         style.innerHTML = css
         shadow.appendChild(style)
         let p = document.createElement("p")
-        let link = document.createElement("a")
+        // Hack to allow wiki-link to find its page and lineup
+        p.light = this
+        let link = document.createElement("wiki-link")
         let site = this.getAttribute("site")
         let slug = this.getAttribute("slug")
         let title = this.getAttribute("title")
@@ -26,7 +28,8 @@ class Reference extends HTMLElement {
         let flag = document.createElement("img")
         flag.setAttribute("src", `http://${site}/favicon.png`)
         p.appendChild(flag)
-        link.setAttribute("href", `javascript:wiki.loadRemotePage("${site}", "${slug}")`)
+        link.setAttribute("site", site)
+        link.setAttribute("slug", slug)
         function asTitle(slug) {
             return slug.replace(/-/g, ' ')
         }
@@ -36,7 +39,6 @@ class Reference extends HTMLElement {
         desc.innerHTML = ` - ${renderLinks(text, site)}`
         p.appendChild(desc)
         shadow.appendChild(p)
-
         let wiki = document.getElementsByTagName("wiki-wiki")[0]
         wiki.neighborhood.add(site)
     }

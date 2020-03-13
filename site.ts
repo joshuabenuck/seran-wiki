@@ -4,6 +4,7 @@ import { ServerRequest } from "std/http/server.ts";
 let metaPages = {
   "/system/site-index.json": serveSiteIndex,
   "/system/sitemap.json": serveSiteMap,
+  "/system/plugins.json": servePlugins,
   "/denowiki.json": serveMetaAboutUs
 };
 
@@ -37,6 +38,9 @@ export async function serveFile(req, contentType, filePath) {
 
 export function serveJson(req, data) {
   let headers = baseHeaders();
+  if (data && data.dynamic == undefined) {
+    data.dynamic = true;
+  }
   req.respond({
     status: 200,
     body: JSON.stringify(data, null, 2),
@@ -63,6 +67,10 @@ export function serveSiteMap(req, site, system) {
   serveJson(req, system.siteMaps[system.requestedSite]);
 }
 
+export function servePlugins(req, site, system) {
+  serveJson(req, system.plugins[system.requestedSite]);
+}
+
 export function serveMetaAboutUs(req, site, system) {
   serveJson(req, page("DenoWiki", [
     paragraph(`Site: ${system.requestedSite}`),
@@ -80,6 +88,17 @@ export function serve404(req) {
 }
 
 export async function serve(req: ServerRequest, site, system) {
+  let nodeStyle = req.url.match(/^\/view\/([a-z0-9-]+)$/)
+  if (nodeStyle) {
+    let headers = baseHeaders()
+    headers.set("Refresh", `0; url=/index.html?page=${nodeStyle[1]}`)
+    req.respond({
+      status: 200,
+      body: `<html><body>Redirecting to: <a href="/index.html?page=${nodeStyle[1]}">new style url</a>.</body></html>`,
+      headers
+    });
+    return
+  }
   let metaPage = metaPages[req.url];
   if (metaPage) {
     let data = await metaPage(req, site, system);
@@ -166,7 +185,7 @@ export function welcomePage(aboutUs, doAndShare) {
     "story": [
       {
         "text":
-          "Welcome to this [[Federated Wiki]] site. From this page you can find who we are and what we do. New sites provide this information and then claim the site as their own. You will need your own site to participate.",
+          "Welcome to this [http://fed.wiki.org/view/federated-wiki Federated Wiki] site. From this page you can find who we are and what we do. New sites provide this information and then claim the site as their own. You will need your own site to participate.",
         "id": "7b56f22a4b9ee974",
         "type": "paragraph"
       },
@@ -198,7 +217,7 @@ export function welcomePage(aboutUs, doAndShare) {
         "type": "paragraph",
         "id": "ee416d431ebf4fb4",
         "text":
-          "You can edit your copy of these pages. Press [+] to add more writing spaces. Read [[How to Wiki]] for more ideas. Follow [[Recent Changes]] here and nearby."
+          "You can edit your copy of these pages. Press [+] to add more writing spaces. Read [http://fed.wiki.org/view/how-to-wiki How to Wiki] for more ideas. Follow [[Recent Changes]] here and nearby."
       }
     ]
   };

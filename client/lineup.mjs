@@ -63,5 +63,24 @@ class Lineup extends HTMLElement {
     get wiki() {
         return this.parentElement
     }
+
+    get sites() {
+        let sites = new Set()
+        for (let page of this.pages) {
+            let site = page.site
+            if (!site) {
+                site = location.origin
+            }
+            sites.add(site)
+        }
+        return sites
+    }
+
+    URLTo(page) {
+        let url = this.wiki.baseURL
+        let pageIndex = this.pageIndex(page);
+        [...this.wiki.pages].slice(0, pageIndex + 1).forEach((p) => url.searchParams.append("page", p.fullSlug))
+        return url
+    }
 }
 customElements.define("wiki-lineup", Lineup);
