@@ -61,7 +61,8 @@ export function siteMap() {
     return _siteMap
 }
 
-export async function init(siteName, system) {
+export async function init(opts) {
+    const {siteName, system} = opts
     // Uncomment to register all existing wikis
     return
     if (siteName.indexOf("static.localhost") == -1) {

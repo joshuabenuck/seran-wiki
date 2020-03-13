@@ -117,6 +117,35 @@ export async function serve(req: ServerRequest, site, system) {
   }
 }
 
+export function pages(metaText) {
+
+  function asSlug(title) {
+    return title.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase();
+  }
+
+  function parse(sep, text, fn) {
+    let v = text.split(sep)
+    for(let i = 1; i<v.length; i+=2)
+      fn(v[i], v[i+1])
+  }
+
+  parse(/\n([A-Z][A-Za-z ]*)/g, metaText, (title, body) => {
+    let page = {title,story:[]}
+    parse(/(\n\n\s*)/g, body, (blank, text) => {
+      let id = itemId()
+      let m = text.match(/([a-z-]+):/)
+      if (m) {
+        let args = eval(`({${text.replace(/([a-z-]+):/,'')}})`)
+        page.story.push(Object.assign({type:m[1],id},args))
+      } else {
+        page.story.push({type:'paragraph',text,id})
+      }
+    })
+    metaPages[`/${asSlug(title)}.json`] = async (req, site, _system) => {site.serveJson(req, page)}
+  })
+
+}
+
 export function page(title, items) {
   return {
     title,
