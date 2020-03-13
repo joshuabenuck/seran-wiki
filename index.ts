@@ -89,7 +89,7 @@ async function importMetaSite(path, host) {
     // Some sites will init their sitemap here
     // Others will do lengthy init processing
     // To wait or not to wait?
-    metaSite.init();
+    metaSite.init({site});
   }
   let targetHost = `${name}:${port}`;
   system.metaSites[targetHost] = metaSite;

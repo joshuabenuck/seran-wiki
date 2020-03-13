@@ -1,11 +1,8 @@
 const { stat } = Deno;
 export let metaPages = {};
 
-// function route(url:string, fn) {
-//   metaPages[url] = fn;
-// }
-
-let metaText = `
+export async function init(opts) {
+    opts.site.pages(`
 Welcome Visitors
 
   Welcome to this [[DenoWiki]] Federated Wiki site.
@@ -63,30 +60,5 @@ Triple Controls
     legend: "Inner Nested Loop",
     href: "/inner"`
 
-
-function asSlug(title) {
-  return title.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase();
-}
-
-function parse(sep, text, fn) {
-  let v = text.split(sep)
-  for(let i = 1; i<v.length; i+=2)
-    fn(v[i], v[i+1])
-}
-
-parse(/\n([A-Z][A-Za-z ]*)/g, metaText, (title, body) => {
-  let page = {title,story:[]}
-  parse(/(\n\n\s*)/g, body, (blank, text) => {
-    let id = Math.floor(Math.random()*2**58).toString(36)
-    let m = text.match(/([a-z-]+):/)
-    if (m) {
-      let args = eval(`({${text.replace(/([a-z-]+):/,'')}})`)
-      page.story.push(Object.assign({type:m[1],id},args))
-    } else {
-      page.story.push({type:'paragraph',text,id})
-    }
-  })
-  metaPages[`/${asSlug(title)}.json`] = async (req, site, _system) => {site.serveJson(req, page)}
-})
-
+)}
 
