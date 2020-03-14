@@ -481,30 +481,26 @@ let turtlespace = {
     }
 
     drawMove(
-      $(shadow).find(".controls canvas.turtle-move").get(0).getContext("2d")
+      shadow.querySelector(".controls canvas.turtle-move").getContext("2d")
     );
 
-    var right = $(shadow).find(".controls canvas.turtle-turn-right").get(0);
+    var right = shadow.querySelector(".controls canvas.turtle-turn-right");
     withTurnTransform(right.getContext("2d"), 0, drawTurnsize);
 
-    var left = $(shadow).find(".controls canvas.turtle-turn-left").get(0);
+    var left = shadow.querySelector(".controls canvas.turtle-turn-left");
     withTurnTransform(left.getContext("2d"), left.width, drawTurnsize, true);
 
-    var numerator = $(shadow).find(
-      ".controls canvas.turtle-setturnsize-numerator"
-    ).get(0);
+    var numerator = shadow.querySelector(".controls canvas.turtle-setturnsize-numerator");
     withTurnTransform(numerator.getContext("2d"), 8, drawTurnsizeNumerator);
 
-    var denominator = $(shadow).find(
-      ".controls canvas.turtle-setturnsize-denominator"
-    ).get(0);
+    var denominator = shadow.querySelector(".controls canvas.turtle-setturnsize-denominator");
     withTurnTransform(
       denominator.getContext("2d"),
       8,
       drawTurnsizeDenominator
     );
 
-    var playground = $(shadow).find(".tracks .turtle").get(0);
+    var playground = shadow.querySelector(".tracks .turtle");
     drawTurtlePath(playground.getContext("2d"));
 
     drawHistories($(shadow).find(".history"));
@@ -517,16 +513,16 @@ let turtlespace = {
 
     textButton(
       turtlespace.named.controls.movesize,
-      $(shadow).find(".controls canvas.turtle-setmovesize").get(0).getContext(
+      shadow.querySelector(".controls canvas.turtle-setmovesize").getContext(
         "2d"
       )
     );
     textButton(
       "clear",
-      $(shadow).find(".controls canvas.turtle-clear").get(0).getContext("2d")
+      shadow.querySelector(".controls canvas.turtle-clear").getContext("2d")
     );
     drawTurtlePathIcon(
-      $(shadow).find(".controls canvas.turtle-save-history").get(0).getContext(
+      shadow.querySelector(".controls canvas.turtle-save-history").getContext(
         "2d"
       ),
       "turtle"
@@ -654,7 +650,7 @@ let turtlespace = {
     );
     $(shadow).find(".controls .link-turtle-clear").click(function(event) {
       event.preventDefault();
-      var canvas = $(shadow).find(".tracks .turtle").get(0);
+      var canvas = shadow.querySelector(".tracks .turtle");
       var context = canvas.getContext("2d");
       turtlespace.change(turtlespace.named.turtle, {
         x: turtlespace.named.origin.x,
