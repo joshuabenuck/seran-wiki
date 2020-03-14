@@ -447,9 +447,9 @@ let turtlespace = {
       fn(context);
       context.restore();
     }
-    function drawHistories($history) {
+    function drawHistories(history) {
       var turtle = turtlespace.named.turtle;
-      $history.empty();
+      history.innerHTML = "";
       for (var turtle_name in turtlespace.history) {
         if (turtlespace.named[turtle_name] &&
           turtlespace.named[turtle_name].exclude_from_draw_histories)
@@ -457,21 +457,21 @@ let turtlespace = {
           continue;
         }
         var moment = document.createElement("a");
-        $(moment)
-          .attr("href", "")
-          .addClass("turtle-play " + turtle_name)
-          .data("turtle-name", turtle_name)
-          .append('<canvas width="32" height="32">');
-        var context = $("canvas", moment).get(0).getContext("2d");
+        moment.setAttribute("href", "");
+        moment.setAttribute("class", `turtle-play ${turtle_name}`);
+        moment.setAttribute("data-turtle-name", turtle_name);
+        moment.innerHTML = '<canvas width="32" height="32"></canvas>'
+        var context = moment.querySelector("canvas").getContext("2d");
         drawTurtlePathIcon(context, turtle_name);
-        $history.append(moment);
+        history.appendChild(moment);
       }
       handleClick(shadow, "a.turtle-play", event => {
         event.preventDefault();
+        let {turtleName} = event.target.parentElement.dataset
         turtlespace.saveAnd(
           turtlespace.repeat_history,
           turtlespace.named.turtle,
-          [$(event.target).parent().data("turtle-name"), 0]
+          [turtleName, 0]
         );
         turtlespace.update_ui(shadow);
         return false;
@@ -507,7 +507,7 @@ let turtlespace = {
     var playground = shadow.querySelector(".tracks .turtle");
     drawTurtlePath(playground.getContext("2d"));
 
-    drawHistories($(shadow).find(".history"));
+    drawHistories(shadow.querySelector(".history"));
 
     function textButton(text, context) {
       context.clearRect(0, 0, context.canvas.width, context.canvas.height);
