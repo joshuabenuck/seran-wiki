@@ -135,12 +135,14 @@ export function pages(metaText) {
       let id = itemId()
       let m = text.match(/([a-z-]+):/)
       if (m) {
-        let args = eval(`({${text.replace(/([a-z-]+):/,'')}})`)
+        let expr = `({${text.replace(/([a-z-]+):/,'')}})`
+        let args = eval(expr)
         page.story.push(Object.assign({type:m[1],id},args))
       } else {
         page.story.push({type:'paragraph',text,id})
       }
     })
+    console.log(JSON.stringify(page,null,2))
     metaPages[`/${asSlug(title)}.json`] = async (req, site, _system) => {site.serveJson(req, page)}
   })
 
