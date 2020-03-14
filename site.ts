@@ -5,8 +5,51 @@ let metaPages = {
   "/system/site-index.json": serveSiteIndex,
   "/system/sitemap.json": serveSiteMap,
   "/system/plugins.json": servePlugins,
-  "/denowiki.json": serveMetaAboutUs
+  "/denowiki.json": serveMetaAboutUs,
+  "/login": login,
+  "/logout": logout
 };
+
+function login(req, site, system) {
+  console.log("login")
+  let headers = baseHeaders()
+  let obj = cookie(req.headers.get("cookie"))
+  let session = obj["wiki-session"]
+  if (!session) {
+    session = itemId()
+    console.log("Generating session id:", session)
+    headers.set("Set-Cookie", `wiki-session=${session}`)
+  }
+  const res = {
+    status: 200,
+    body: JSON.stringify({success: true}),
+    headers
+  };
+  req.respond(res);
+}
+
+function logout(req, site, system) {
+  console.log("logout")
+  let headers = baseHeaders()
+  headers.set("Set-Cookie", `wiki-session=logout; expires=${new Date()}`)
+  const res = {
+    status: 200,
+    body: "OK",
+    headers
+  };
+  req.respond(res);
+}
+
+export function cookie(data) {
+  if (!data) {
+    return {}
+  }
+  return data.split(';').map(p => p.split('='))
+    .reduce((obj, p) => {
+      obj[decodeURIComponent(p[0].trim())] = decodeURIComponent(p[1].trim());
+      return obj;
+    }, {});
+}
 
 export function baseHeaders() {
   let headers = new Headers();
@@ -15,6 +58,7 @@ export function baseHeaders() {
     "access-control-allow-headers",
     "Origin, X-Requested-With, Content-Type, Accept, Range"
   );
+  // let cookieStr = Object.keys(obj).map((k) => `${k}=${obj[k]}`).join(";")
   return headers;
 }
 
