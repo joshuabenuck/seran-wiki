@@ -1,21 +1,12 @@
-const { args, stat, open, exit, writeFile } = Deno;
-import { readFileStr, exists } from "std/fs/mod.ts";
-import {
-  isAbsolute,
-  join,
-  basename
-} from "std/path/posix.ts";
+
 import { delay } from "std/util/async.ts";
+import { ProcessStep } from "../step.ts";
 
 export let plugins = [ "/client/process-step.mjs" ]
 export let metaPages = {};
 
-function route(url, fn) {
-  metaPages[url] = fn;
-}
+export async function init(opts) { opts.site.pages(`
 
-export async function init(opts) {
-    opts.site.pages(`
 Welcome Visitors
 
   Welcome to this [[DenoWiki]] Federated Wiki site.
@@ -85,8 +76,7 @@ function counters (where) {
   return `${where} at ${c0} ${c1} ${c2}`
 }
 
-let simple = instrument('simple', false)
-control(simple, run1)
+let simple = new ProcessStep('simple', false, run1).control(metaPages)
 
 async function run1() {
   let t0 = Date.now()
@@ -108,12 +98,9 @@ async function run1() {
 
 // T R I P P L E   M O C K   C O M P U T A T I O N
 
-let outer = instrument('outer', false)
-let middle = instrument('middle', true)
-let inner = instrument('inner', true)
-control(outer, run3)
-control(middle, run3)
-control(inner, run3)
+let outer = new ProcessStep('outer', false, run3).control(metaPages)
+let middle = new ProcessStep('middle', true, run3).control(metaPages)
+let inner = new ProcessStep('inner', true, run3).control(metaPages)
 
 async function run3() {
   let t0 = Date.now()
@@ -130,96 +117,6 @@ async function run3() {
     }
   }
   return (Date.now()-t0)/1000
-}
-
-
-// I N S T R U M E N T A T I O N
-
-function instrument (name, startrunning) {
-
-  let status = 'beginning';
-  let running = startrunning;
-  let waiting = null;
-  let resume = null;
-  let item = {name, running, status, waiting, resume, step}
-
-
-  // async function sleep(ms) {
-  //   return new Promise(resolve => {
-  //     setTimeout(resolve, ms);
-  //   });
-  // }
-
-  async function step(now) {
-    item.status = now
-    console.log(name, now)
-    if (!item.running) {
-      return item.waiting = new Promise(resolve => {
-        item.resume = resolve
-      })
-    } else {
-      return null
-    }
-  }
-
-  return item
-}
-
-
-// R E M O T E   C O N T R O L
-
-function control(item, run) {
-
-  route(`/${item.name}?action=start`, button);
-  route(`/${item.name}?action=stop`, button);
-  route(`/${item.name}?action=step`, button);
-  route(`/${item.name}?action=state`, button);
-
-  async function button(req, site, _system) {
-    let headers = site.baseHeaders();
-
-    if (req.url.indexOf("start") != -1) {
-      console.log('start')
-      if (!item.running && !item.waiting) {
-        item.running = true
-        console.log('run',run)
-        run().then((dt) => {
-          console.log('done', dt)
-          item.running=false;
-          item.status=`complete in ${dt} seconds`
-        });
-      } else if (item.waiting) {
-        item.waiting = null;
-        item.running = true
-        console.log('resume')
-        item.resume()
-      }
-    }
-
-    if (req.url.indexOf("step") != -1) {
-      console.log('step')
-      if (item.running) {
-        item.running = false;
-      } else if (item.waiting) {
-        item.waiting = null;
-        await sleep(30)
-        item.resume()
-      }
-    }
-
-    if (req.url.indexOf("stop") != -1) {
-      console.log('stop')
-      if (item.running) {
-        item.running = false;
-      }
-    }
-
-    site.serveJson(req, {
-      running: item.running,
-      waiting: !!item.waiting,
-      status: item.status
-    });
-  }
 }
 
 
