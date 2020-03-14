@@ -103,7 +103,7 @@ let turtlespace = {
     },
 
     saveAnd: function saveAnd(fn, that, args) {
-        var before = $.extend({}, that);
+        var before = Object.assign({}, that);
         args = $.isArray(args) ? args : [args]
         fn.apply(undefined, [that].concat(args));
         var moment = {
@@ -186,13 +186,13 @@ let turtlespace = {
             options = {};
         if (!options.name)
             options.name = 'c_turtle_'+(Object.keys(turtlespace.named).length + 1);
-        var that = turtlespace.named[options.name] || $.extend({}, turtlespace.named.origin);
-        $.extend(that, options);
+        var that = turtlespace.named[options.name] || Object.assign({}, turtlespace.named.origin);
+        Object.assign(that, options);
         if (turtlespace.named[that.name] === undefined)
             turtlespace.named[that.name] = that;
         if (turtlespace.history[that.name] === undefined)
             turtlespace.history[that.name] = [];
-        $.extend(that, {
+        Object.assign(that, {
             change: function change(fields) {
                 turtlespace.saveAnd(turtlespace.change, that, fields);
             },
@@ -213,10 +213,10 @@ let turtlespace = {
             options = {};
         if (!options.name)
             options.name = 'controls';
-        var that = $.extend({}, turtlespace.named[options.name] || {}, options);
+        var that = Object.assign({}, turtlespace.named[options.name] || {}, options);
         if (turtlespace.named[that.name] === undefined)
-            turtlespace.named[that.name] = $.extend({}, that);
-        $.extend(that, {
+            turtlespace.named[that.name] = Object.assign({}, that);
+        Object.assign(that, {
             change: function change(fields) {turtlespace.change_controls(that, fields)},
             next_movesize: function next_movesize() {
                 var current = that.movesize;
@@ -295,7 +295,7 @@ let turtlespace = {
         function turtlePathBoundingBox(turtle_name) {
             var MAXINT = Math.pow(2,52); //intentionally half the max allowed by ECMAscript
             var Xmin = 0, Ymin = 0, Xmax = 0, Ymax = 0;
-            var visitor = $.extend({}, turtlespace.named.origin, {
+            var visitor = Object.assign({}, turtlespace.named.origin, {
                 name: 'turtlePathBoundingBoxVisitor',
                 after_move: function after_move(that) {
                     Xmin = Math.min(Math.ceil(that.x), Xmin);
@@ -324,7 +324,7 @@ let turtlespace = {
             context.beginPath();
             context.lineWidth = 1/scale;
             context.moveTo(0, 0);
-            var pen = $.extend({}, turtlespace.named.origin, {
+            var pen = Object.assign({}, turtlespace.named.origin, {
                 name: 'turtle_icon_pen',
                 after_move: function after_move(that) {context.lineTo(that.x, that.y);},
             });
@@ -342,7 +342,7 @@ let turtlespace = {
             context.translate(canvas.width/2, canvas.height/2);
             context.beginPath();
             context.moveTo(0, 0);
-            var pen = $.extend({}, turtlespace.named.origin, {
+            var pen = Object.assign({}, turtlespace.named.origin, {
                 name: 'turtle_pen',
                 after_move: function after_move(that) {context.lineTo(that.x, that.y);},
             });
@@ -455,7 +455,7 @@ let turtlespace = {
 
     initialize_ui: function initialize_ui(shadow) {
         var turtle = turtlespace.turtle({name: 'turtle'});
-        turtlespace.named[COMMAND_BUFFER] = $.extend({
+        turtlespace.named[COMMAND_BUFFER] = Object.assign({
         }, turtlespace.named.origin, {
             name: COMMAND_BUFFER,
             exclude_from_draw_histories: true
