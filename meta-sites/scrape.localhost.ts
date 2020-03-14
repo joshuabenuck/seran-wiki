@@ -51,11 +51,20 @@ Mock Computation
 Start or Stop the Scrape
 
   An inital scrape can take the better part of a day.
-  Press 'start' to begin. Shift-'start' to do one site or slug. 
+  Press 'start' to begin.
+  Shift-'start' to do one site or slug at a time.
+
+  We fetch sitemaps for one site and then discover more.
 
   process-step:
-    legend: "Process Next Site or Slug",
-    href: "/next"
+    legend: "Process Next Site",
+    href: "/nextsite"
+
+  We fetch page json to index and inspect for more sites.
+
+  process-step:
+    legend: "Process Next Page",
+    href: "/nextslug"
 `
 )}
 
@@ -95,12 +104,15 @@ type site = string;
 type slug = string;
 type todo = { site: site; slug?: slug };
 
-let queue: todo[] = [];
+let siteq: todo[] = [];
+let slugq: todo[] = [];
+
 let doing: site[] = [];
 let done: site[] = [];
 
-let next = new ProcessStep('next', false, work).control(metaPages)
-console.log('metaPages',metaPages)
+let nextsite = new ProcessStep('nextsite', false, siteloop).control(metaPages)
+let nextslug = new ProcessStep('nextslug', false, slugloop).control(metaPages)
+
 
 // Note: the current implementation performs an initial scrape.
 // Remove any previous scrape data before uncommenting the following.
@@ -109,39 +121,35 @@ console.log('metaPages',metaPages)
 Deno.mkdir('data')
 scrape(['sites.asia.wiki.org'])
 
-function scrape(sites: site[]) {
-  for (let maybe of sites) {
-    if (!doing.includes(maybe) && !done.includes(maybe)) {
-      queue.push({ site: maybe });
-      doing.push(maybe);
-    }
-  }
-}
-
-async function work() {
-  let count = 0
-  while (true) {
-    if (queue.length) {
-      let job:any = queue.shift();
-      job.fetch = count++
-      await next.step(JSON.stringify(job,null,2))
-      if (job.slug) {
-        doslug(job.site, job.slug);
-      } else {
-        dosite(job.site);
-      }
-    }
-    await sleep(1000)
-  }
-}
-
 async function sleep(ms) {
   return new Promise(resolve => {
     setTimeout(resolve, ms);
   });
 }
 
+
 // E A C H   S I T E
+
+function scrape(sites: site[]) {
+  for (let maybe of sites) {
+    if (!doing.includes(maybe) && !done.includes(maybe)) {
+      siteq.push({ site: maybe });
+      doing.push(maybe);
+    }
+  }
+}
+
+async function siteloop() {
+  let count = 0
+  while (true) {
+    if (siteq.length) {
+      let job = siteq.shift();
+      await nextsite.step(`#${count++} ${job.site}`)
+      dosite(job.site);
+    }
+    await sleep(1000)
+  }
+}
 
 async function dosite(site: site) {
   let url = `http://${site}/system/sitemap.json`;
@@ -162,17 +170,29 @@ async function dosite(site: site) {
     try {
       let stat = await Deno.lstat(`data/${site}/${slug}.json`);
       if (date > stat.modified * 1000) {
-        queue.push({ site, slug }); // revised page
+        slugq.push({ site, slug }); // revised page
         await sleep(300);
       }
     } catch (e) {
-      queue.push({ site, slug }); // new page
+      slugq.push({ site, slug }); // new page
       await sleep(300);
     }
   }
 }
 
 // E A C H   S L U G
+
+async function slugloop() {
+  let count = 0
+  while (true) {
+    if (slugq.length) {
+      let job = slugq.shift();
+      await nextslug.step(`#${count++} ${job.slug}`)
+      doslug(job.site, job.slug);
+    }
+    await sleep(1000)
+  }
+}
 
 async function doslug(site: site, slug: slug) {
   let url = `http://${site}/${slug}.json`;
