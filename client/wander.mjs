@@ -104,7 +104,7 @@ let turtlespace = {
 
     saveAnd: function saveAnd(fn, that, args) {
         var before = Object.assign({}, that);
-        args = $.isArray(args) ? args : [args]
+        args = Array.isArray(args) ? args : [args]
         fn.apply(undefined, [that].concat(args));
         var moment = {
             fn: fn, 
