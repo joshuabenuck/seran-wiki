@@ -20,10 +20,10 @@ Welcome Visitors
 
   Pages where we do and share.
 
-  [[Region Scraper]]
+  [[Federation Scraper]]
 
 
-Region Scraper
+Federation Scraper
 
   Here we supervise the ongoing scrape of the wiki federation.
   We invision this as cooperating loops where sitemap fetches lead
@@ -36,7 +36,7 @@ Region Scraper
 
   [[Mock Computation]]
 
-  [[Triple Controls]]
+  [[Start or Stop the Scrape]]
 
 Mock Computation
 
@@ -48,22 +48,15 @@ Mock Computation
     legend: "Simple Nested Loop",
     href: "/simple"
 
-Triple Controls
+Start or Stop the Scrape
 
-  Here we start, stop and step with distinct controls for each nesting level.
-
-  process-step:
-    legend: "Outer Nested Loop",
-    href: "/outer"
+  An inital scrape can take the better part of a day.
+  Press 'start' to begin. Shift-'start' to do one site or slug. 
 
   process-step:
-    legend: "Middle Nested Loop",
-    href: "/middle"
-
-  process-step:
-    legend: "Inner Nested Loop",
-    href: "/inner"`
-
+    legend: "Process Next Site or Slug",
+    href: "/next"
+`
 )}
 
 
@@ -96,30 +89,6 @@ async function run1() {
 }
 
 
-// T R I P P L E   M O C K   C O M P U T A T I O N
-
-let outer = new ProcessStep('outer', false, run3).control(metaPages)
-let middle = new ProcessStep('middle', true, run3).control(metaPages)
-let inner = new ProcessStep('inner', true, run3).control(metaPages)
-
-async function run3() {
-  let t0 = Date.now()
-  for (c0 = 1; c0 < l0; c0++) {
-    await outer.step(counters('outer'))
-    await delay(100);
-    for (c1 = 1; c1 < l1; c1++) {
-      await middle.step(counters('middle'))
-      await delay(100);
-      for (c2 = 1; c2 < l2; c2++) {
-        await inner.step(counters('inner'))
-        await delay(100);
-      }
-    }
-  }
-  return (Date.now()-t0)/1000
-}
-
-
 // S C R A P E
 
 type site = string;
@@ -130,14 +99,15 @@ let queue: todo[] = [];
 let doing: site[] = [];
 let done: site[] = [];
 
-let clock = setInterval(work, 1000);
+let next = new ProcessStep('next', false, work).control(metaPages)
+console.log('metaPages',metaPages)
 
 // Note: the current implementation performs an initial scrape.
 // Remove any previous scrape data before uncommenting the following.
 // Future revisions will incrementatlly update the data.
 
-// Deno.mkdir('data')
-// scrape(['sites.asis.wiki.org'])
+Deno.mkdir('data')
+scrape(['sites.asia.wiki.org'])
 
 function scrape(sites: site[]) {
   for (let maybe of sites) {
@@ -149,13 +119,19 @@ function scrape(sites: site[]) {
 }
 
 async function work() {
-  if (queue.length) {
-    let job = queue.shift();
-    if (job.slug) {
-      doslug(job.site, job.slug);
-    } else {
-      dosite(job.site);
+  let count = 0
+  while (true) {
+    if (queue.length) {
+      let job:any = queue.shift();
+      job.fetch = count++
+      await next.step(JSON.stringify(job,null,2))
+      if (job.slug) {
+        doslug(job.site, job.slug);
+      } else {
+        dosite(job.site);
+      }
     }
+    await sleep(1000)
   }
 }
 
