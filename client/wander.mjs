@@ -44,13 +44,8 @@ export class TurtleWander extends HTMLElement {
     <div class="history controls">
     </div>
         `;
-    let jq = document.createElement("script");
-    jq.setAttribute("src", "https://code.jquery.com/jquery-3.4.1.min.js");
-    jq.onload = () => {
-      turtlespace.initialize_ui(shadow);
-      turtlespace.update_ui(shadow);
-    };
-    shadow.appendChild(jq);
+    turtlespace.initialize_ui(shadow);
+    turtlespace.update_ui(shadow);
   }
 
   render(json) {
@@ -58,7 +53,7 @@ export class TurtleWander extends HTMLElement {
 }
 registerPlugin("turtle-wander", TurtleWander);
 
-let turtlespace = {
+var turtlespace = {
   named: {
     origin: {
       name: "origin",
