@@ -22,7 +22,20 @@ export class Auth extends HTMLElement {
         this.addEventListener("click", this.loginOrLogout)
     }
 
+    _cookie(data) {
+        if (!data) {
+            return {}
+        }
+        return data.split(';').map(p => p.split('='))
+            .reduce((obj, p) => {
+                obj[decodeURIComponent(p[0].trim())] = decodeURIComponent(p[1].trim());
+                return obj;
+            }, {});
+    }
+
     update() {
+        this.cookie = this._cookie(document.cookie)
+        this.loggedIn = this.cookie["wiki-session"] ? true : false;
         if (this.loggedIn) {
             this.icon.textContent = "\u{1f511}"
             return
@@ -41,13 +54,17 @@ export class Auth extends HTMLElement {
     }
 
     login() {
-        this.loggedIn = true
-        this.update()
+        fetch("/login").then((res) => {
+            this.loggedIn = true
+            this.update()
+        })
     }
 
     logout() {
-        this.loggedIn = false
-        this.update()
+        fetch("/logout").then((res) => {
+            this.loggedIn = false
+            this.update()
+        })
     }
 }
 customElements.define("wiki-auth", Auth)
