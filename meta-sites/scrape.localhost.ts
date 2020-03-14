@@ -119,18 +119,19 @@ function scrape(sites: site[]) {
 }
 
 async function work() {
+  let count = 0
   while (true) {
     if (queue.length) {
-      let job = queue.shift();
-      console.log(JSON.stringify(job))
-      await next.step(JSON.stringify(job))
+      let job:any = queue.shift();
+      job.fetch = count++
+      await next.step(JSON.stringify(job,null,2))
       if (job.slug) {
         doslug(job.site, job.slug);
       } else {
         dosite(job.site);
       }
     }
-    sleep(1000)
+    await sleep(1000)
   }
 }
 
