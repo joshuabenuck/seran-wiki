@@ -6,6 +6,7 @@ import {
   basename
 } from "std/path/posix.ts";
 import { delay } from "std/util/async.ts";
+import { ProcessStep } from "../step.ts";
 
 export let plugins = [ "/client/process-step.mjs" ]
 export let metaPages = {};
@@ -85,8 +86,10 @@ function counters (where) {
   return `${where} at ${c0} ${c1} ${c2}`
 }
 
-let simple = instrument('simple', false)
-control(simple, run1)
+let simple = new ProcessStep('simple', false, run1)
+simple.control(metaPages)
+
+console.log('metaPages', metaPages)
 
 async function run1() {
   let t0 = Date.now()

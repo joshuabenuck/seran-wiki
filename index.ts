@@ -92,7 +92,7 @@ async function importMetaSite(path, host) {
     // Some sites will init their sitemap here
     // Others will do lengthy init processing
     // To wait or not to wait?
-    metaSite.init(targetHost, system);
+    metaSite.init({targetHost, system, site});
   }
   system.metaSites[targetHost] = metaSite;
   system.siteMaps[targetHost] = [];
