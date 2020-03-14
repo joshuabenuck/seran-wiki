@@ -1,6 +1,10 @@
 // Copyright Eric Dobbs
 // Check with him for licensing restrictions
 
+function handleClick(dom, selector, fn) {
+  dom.querySelectorAll(selector).forEach(el => el.addEventListener('click', fn))
+}
+
 export class TurtleWander extends HTMLElement {
   connectedCallback() {
     if (this.inited) return;
@@ -462,7 +466,7 @@ let turtlespace = {
         drawTurtlePathIcon(context, turtle_name);
         $history.append(moment);
       }
-      $(shadow).find("a.turtle-play").click(function(event) {
+      handleClick(shadow, "a.turtle-play", event => {
         event.preventDefault();
         turtlespace.saveAnd(
           turtlespace.repeat_history,
@@ -606,49 +610,43 @@ let turtlespace = {
       turtlespace.history[COMMAND_BUFFER] = cbh;
     }
     var controls = turtlespace.controls();
-    $(shadow).find(".controls .link-turtle-move").click(function(event) {
+    handleClick(shadow, ".controls .link-turtle-move", event => {
       event.preventDefault();
       turtle.move(controls.movesize);
       turtlespace.update_ui(shadow);
       return false;
     });
-    $(shadow).find(".controls .link-turtle-turn-left").click(function(event) {
+    handleClick(shadow, ".controls .link-turtle-turn-left", event => {
       event.preventDefault();
       turtle.turn(-controls.turnsize);
       turtlespace.update_ui(shadow);
       return false;
     });
-    $(shadow).find(".controls .link-turtle-turn-right").click(function(event) {
+    handleClick(shadow, ".controls .link-turtle-turn-right", event => {
       event.preventDefault();
       turtle.turn(controls.turnsize);
       turtlespace.update_ui(shadow);
       return false;
     });
-    $(shadow).find(".controls .link-turtle-setmovesize").click(
-      function(event) {
-        event.preventDefault();
-        controls.next_movesize();
-        turtlespace.update_ui(shadow);
-        return false;
-      }
-    );
-    $(shadow).find(".controls .link-turtle-setturnsize-numerator").click(
-      function(event) {
-        event.preventDefault();
-        controls.next_turnsize_numerator();
-        turtlespace.update_ui(shadow);
-        return false;
-      }
-    );
-    $(shadow).find(".controls .link-turtle-setturnsize-denominator").click(
-      function(event) {
-        event.preventDefault();
-        controls.next_turnsize_denominator();
-        turtlespace.update_ui(shadow);
-        return false;
-      }
-    );
-    $(shadow).find(".controls .link-turtle-clear").click(function(event) {
+    handleClick(shadow, ".controls .link-turtle-setmovesize", event => {
+      event.preventDefault();
+      controls.next_movesize();
+      turtlespace.update_ui(shadow);
+      return false;
+    });
+    handleClick(shadow, ".controls .link-turtle-setturnsize-numerator", event => {
+      event.preventDefault();
+      controls.next_turnsize_numerator();
+      turtlespace.update_ui(shadow);
+      return false;
+    });
+    handleClick(shadow, ".controls .link-turtle-setturnsize-denominator", event =>{
+      event.preventDefault();
+      controls.next_turnsize_denominator();
+      turtlespace.update_ui(shadow);
+      return false;
+    });
+    handleClick(shadow, ".controls .link-turtle-clear", event => {
       event.preventDefault();
       var canvas = shadow.querySelector(".tracks .turtle");
       var context = canvas.getContext("2d");
@@ -662,15 +660,13 @@ let turtlespace = {
       turtlespace.update_ui(shadow);
       return false;
     });
-    $(shadow).find(".controls .link-turtle-save-history").click(
-      function(event) {
-        event.preventDefault();
-        var count = Object.keys(turtlespace.history).length;
-        turtlespace.save_history({ name: COMMAND_BUFFER }, "turtle_" + count);
-        turtlespace.update_ui(shadow);
-        return false;
-      }
-    );
+    handleClick(shadow, ".controls .link-turtle-save-history", event => {
+      event.preventDefault();
+      var count = Object.keys(turtlespace.history).length;
+      turtlespace.save_history({ name: COMMAND_BUFFER }, "turtle_" + count);
+      turtlespace.update_ui(shadow);
+      return false;
+    });
   }
 };
 
