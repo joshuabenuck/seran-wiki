@@ -144,7 +144,7 @@ let turtlespace = {
         if (fields.turnsize)
             that.turnsize = parseFloat(fields.turnsize);
         for(var key in turtlespace.named.origin) {
-            if ($.isFunction(that[key]))
+            if (that[key] instanceof Function)
                 continue;
             turtlespace.named[that.name][key] = that[key];
         }
