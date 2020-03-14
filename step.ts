@@ -93,6 +93,7 @@ export class ProcessStep {
     route(`/${this.name}?action=step`, (a,b,c) => this.button(a,b,c));
     route(`/${this.name}?action=state`, (a,b,c) => this.button(a,b,c));
 
+    return this
   }
 }
 
