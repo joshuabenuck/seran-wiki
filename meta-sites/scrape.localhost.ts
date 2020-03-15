@@ -102,7 +102,7 @@ async function run1() {
 
 type site = string;
 type slug = string;
-type todo = { site: site; slug?: slug };
+type todo = { site: site; slug?: slug; date?: number };
 
 let siteq: todo[] = [];
 let slugq: todo[] = [];
@@ -113,13 +113,18 @@ let done: site[] = [];
 let nextsite = new ProcessStep('nextsite', false, siteloop).control(metaPages)
 let nextslug = new ProcessStep('nextslug', false, slugloop).control(metaPages)
 
+preload('sites.asia.wiki.org')
 
-// Note: the current implementation performs an initial scrape.
-// Remove any previous scrape data before uncommenting the following.
-// Future revisions will incrementatlly update the data.
-
-Deno.mkdir('data')
-scrape(['sites.asia.wiki.org'])
+async function preload(root:site) {
+  let data = await Deno.stat('data')
+  if (data.isDirectory) {
+    let files = await Deno.readDir('data')
+    scrape(files.map(i=>i.name))
+  } else {
+    Deno.mkdir('data')
+    scrape([root])
+  }
+}
 
 async function sleep(ms) {
   return new Promise(resolve => {
@@ -145,7 +150,7 @@ async function siteloop() {
     if (siteq.length) {
       let job = siteq.shift();
       await nextsite.step(`#${count++} ${job.site}`)
-      dosite(job.site);
+      await dosite(job.site);
     }
     await sleep(1000)
   }
@@ -153,10 +158,13 @@ async function siteloop() {
 
 async function dosite(site: site) {
   let url = `http://${site}/system/sitemap.json`;
+  let dir = `data/${site}`
   try {
     let sitemap = await fetch(url).then(res => res.json());
     if (sitemap.length == 0) throw "empty sitemap";
-    await Deno.mkdir(`data/${site}`); // new site
+    if (!(await Deno.stat(dir)).isDirectory) {
+      await Deno.mkdir(dir); // new site
+    }
     for (let info of sitemap) {
       await update(info.slug, info.date);
     }
@@ -167,16 +175,15 @@ async function dosite(site: site) {
   doing.splice(doing.indexOf(site), 1);
 
   async function update(slug: slug, date) {
-    try {
-      let stat = await Deno.lstat(`data/${site}/${slug}.json`);
-      if (date > stat.modified * 1000) {
-        slugq.push({ site, slug }); // revised page
-        await sleep(300);
-      }
-    } catch (e) {
-      slugq.push({ site, slug }); // new page
-      await sleep(300);
+    console.log('update',dir, slug, `${dir}/${slug}.json`)
+    let stat = await Deno.stat(`${dir}/${slug}.json`);
+    if (!stat.isFile || date > stat.modified * 1000) {
+      slugq.push({ site, slug, date })
+      await sleep(100)
+    } else {
+      console.log('skipping',site,slug,new Date(date))
     }
+
   }
 }
 
@@ -188,13 +195,13 @@ async function slugloop() {
     if (slugq.length) {
       let job = slugq.shift();
       await nextslug.step(`#${count++} ${job.slug}`)
-      doslug(job.site, job.slug);
+      await doslug(job.site, job.slug, job.date);
     }
-    await sleep(1000)
+    await sleep(100)
   }
 }
 
-async function doslug(site: site, slug: slug) {
+async function doslug(site: site, slug: slug, date: number) {
   let url = `http://${site}/${slug}.json`;
   try {
     let page = await fetch(url).then(res => res.json());
@@ -209,15 +216,18 @@ async function doslug(site: site, slug: slug) {
         sites.push(action.site);
       }
     }
-    await save(site, slug, sites);
+    await save(sites);
     scrape(sites);
   } catch (e) {
     console.log("slug trouble", site, slug, e);
   }
 
-  async function save(site: site, slug: slug, sites: site[]) {
+  async function save(sites: site[]) {
+    const epoch = (number) => Math.floor(number/1000)
+    let path = `data/${site}/${slug}.json`
     let json = JSON.stringify(sites, null, 2);
     let text = new TextEncoder().encode(json);
-    await Deno.writeFile(`data/${site}/${slug}.json`, text);
+    await Deno.writeFile(path, text);
+    await Deno.utime(path, epoch(Date.now()), epoch(date))
   }
 }
