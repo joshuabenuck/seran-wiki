@@ -5,7 +5,6 @@ export class Auth extends HTMLElement {
         let shadow = this.attachShadow({ mode: "open" })
         let css = `
             :host {
-                display: inline-block;
             }
 
             dialog {
@@ -18,9 +17,10 @@ export class Auth extends HTMLElement {
             span {
                 cursor: default;
                 user-select: none;
+                display: inline-block;
             }
 
-            :host(.failed) {
+            .failed {
                 transform: rotate(15deg);
             }
         `
@@ -35,7 +35,12 @@ export class Auth extends HTMLElement {
 
         this.dialog = document.createElement("dialog")
         this.dialog.setAttribute("style", "z-index: 1000;")
-        this.dialog.addEventListener("close", this.login)
+        this.dialog.addEventListener("close", () => {
+            let input = this.dialog.querySelector("input")
+            let password = input.value
+            input.value = ""
+            this.login(password)
+        })
         this.dialog.addEventListener("focusout", () => this.dialog.removeAttribute("open"))
 
         let form = document.createElement("form")
@@ -82,7 +87,6 @@ export class Auth extends HTMLElement {
         else {
             this.showLoginDialog()
         }
-        this.update()
     }
 
     showLoginDialog() {
@@ -90,18 +94,15 @@ export class Auth extends HTMLElement {
         this.dialog.querySelector("input").focus()
     }
 
-    login(event) {
-        let input = this.querySelector("input")
-        let password = input.value
-        input.value = ""
-        this.classList.remove("failed")
+    login(password) {
+        this.icon.classList.remove("failed")
         fetch("/login", {headers:{Authorization:"Basic " + btoa(password)}}).then((res) => {
-            this.loggedIn = true
             if (res.status != 200) {
                 console.log("Unable to login", res)
-                this.classList.add("failed")
+                this.icon.classList.add("failed")
                 return
             }
+            this.loggedIn = true
             location.reload()
         })
     }
