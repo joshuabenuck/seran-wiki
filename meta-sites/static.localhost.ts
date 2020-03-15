@@ -61,18 +61,37 @@ export function siteMap() {
     return _siteMap
 }
 
-export async function init(opts) {
-    const {siteName, system} = opts
-    // Uncomment to register all existing wikis
-    return
-    if (siteName.indexOf("static.localhost") == -1) {
+async function password(host) {
+    let fullPath = join(wikiRoot, host, "status", "owner.json")
+    if (!await exists(fullPath)) {
+        console.log(`Unable to retrieve password from: ${fullPath}`)
         return
     }
+    console.log(`Looking for password in: ${fullPath}`)
+    let contents = await readFileStr(fullPath)
+    let json = JSON.parse(contents)
+    if (json.friend && json.friend.secret) {
+        return json.friend.secret
+    }
+    return null
+}
+
+export async function init(opts) {
+    const {siteName, system} = opts
     let port = ""
     let portIndex = siteName.indexOf(":")
+    let host = siteName
     if (portIndex != -1) {
         port = siteName.substring(portIndex)
+        host = siteName.substring(0, portIndex)
     }
+
+    if (siteName.indexOf("static.") == -1) {
+        system.passwords[siteName] = await password(host)
+        return
+    }
+    // Uncomment to register all existing wikis
+    return
     for (let dir of await Deno.readDir(wikiRoot)) {
         if (dir.isFile() ||
             dir.name == "assets" ||

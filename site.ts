@@ -10,10 +10,41 @@ let metaPages = {
   "/logout": logout
 };
 
+function authHeaderToPassword(header) {
+  let parts = header.trim().split(" ")
+  if (parts[0] != "Basic") {
+    console.log("Missing Basic")
+    return null
+  }
+  return atob(parts[1])
+}
+
 function login(req, site, system) {
-  console.log("login")
+  let pw = system.passwords[system.requestedSite]
   let headers = baseHeaders()
+  const failure = {
+    status: 401,
+    body: JSON.stringify({success: false}),
+    headers
+  };
+  if (!pw) {
+    console.log(`ERROR: '${system.requestedSite}' does not have a password set.`)
+    req.respond(failure);
+    return
+  }
   let obj = cookie(req.headers.get("cookie"))
+  let auth = req.headers.get("Authorization")
+  if (!auth) {
+    console.log("ERROR: No Authorization header found.")
+    req.respond(failure);
+    return
+  }
+  let providedPassword = authHeaderToPassword(auth)
+  if (pw != providedPassword) {
+    console.log("ERROR: Passwords do not match.")
+    req.respond(failure);
+    return
+  }
   let session = obj["wiki-session"]
   if (!session) {
     session = itemId()
@@ -29,7 +60,6 @@ function login(req, site, system) {
 }
 
 function logout(req, site, system) {
-  console.log("logout")
   let headers = baseHeaders()
   headers.set("Set-Cookie", `wiki-session=logout; expires=${new Date()}`)
   const res = {

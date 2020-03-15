@@ -5,11 +5,23 @@ export class Auth extends HTMLElement {
         let shadow = this.attachShadow({ mode: "open" })
         let css = `
             :host {
+                display: inline-block;
+            }
+
+            dialog {
+                position: absolute;
+                left: 0;
+                bottom: 30;
+                margin: 0;
             }
 
             span {
                 cursor: default;
                 user-select: none;
+            }
+
+            :host(.failed) {
+                transform: rotate(15deg);
             }
         `
         let style = document.createElement("style")
@@ -20,6 +32,26 @@ export class Auth extends HTMLElement {
         this.loggedIn = false
         this.update()
         this.addEventListener("click", this.loginOrLogout)
+
+        this.dialog = document.createElement("dialog")
+        this.dialog.setAttribute("style", "z-index: 1000;")
+        this.dialog.addEventListener("close", this.login)
+        this.dialog.addEventListener("focusout", () => this.dialog.removeAttribute("open"))
+
+        let form = document.createElement("form")
+        form.setAttribute("method", "dialog")
+        form.setAttribute("style", "margin: 0;")
+        this.dialog.appendChild(form)
+
+        let prompt = document.createElement("div")
+        prompt.textContent = "Enter password: "
+        form.appendChild(prompt)
+
+        let input = document.createElement("input")
+        input.setAttribute("type", "password")
+        form.appendChild(input)
+
+        shadow.appendChild(this.dialog)
     }
 
     _cookie(data) {
@@ -48,14 +80,28 @@ export class Auth extends HTMLElement {
             this.logout()
         }
         else {
-            this.login()
+            this.showLoginDialog()
         }
         this.update()
     }
 
-    login() {
-        fetch("/login").then((res) => {
+    showLoginDialog() {
+        this.dialog.setAttribute("open", "")
+        this.dialog.querySelector("input").focus()
+    }
+
+    login(event) {
+        let input = this.querySelector("input")
+        let password = input.value
+        input.value = ""
+        this.classList.remove("failed")
+        fetch("/login", {headers:{Authorization:"Basic " + btoa(password)}}).then((res) => {
             this.loggedIn = true
+            if (res.status != 200) {
+                console.log("Unable to login", res)
+                this.classList.add("failed")
+                return
+            }
             location.reload()
         })
     }
