@@ -186,7 +186,7 @@ export function pages(metaText) {
         page.story.push({type:'paragraph',text,id})
       }
     })
-    console.log(JSON.stringify(page,null,2))
+    // console.log(JSON.stringify(page,null,2))
     metaPages[`/${asSlug(title)}.json`] = async (req, site, _system) => {site.serveJson(req, page)}
   })
 
