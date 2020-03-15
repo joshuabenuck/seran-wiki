@@ -56,14 +56,14 @@ export class Auth extends HTMLElement {
     login() {
         fetch("/login").then((res) => {
             this.loggedIn = true
-            this.update()
+            location.reload()
         })
     }
 
     logout() {
         fetch("/logout").then((res) => {
             this.loggedIn = false
-            this.update()
+            location.reload()
         })
     }
 }
