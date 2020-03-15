@@ -16,7 +16,8 @@ async function readDir(path) {
 let metaPages = {};
 
 // since constructors cannot be async and readDir is async, use an init method
-export async function init() {
+export async function init({req, site, system}) {
+  site.enableLogin(req, system)
   for (let metaPagePath of await readDir("./meta-pages")) {
     let metaPage = await import(`../meta-pages/${metaPagePath.name}`);
     let exports = Object.keys(metaPage);

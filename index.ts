@@ -6,7 +6,7 @@ import {
   join,
   basename
 } from "std/path/posix.ts";
-import { serve } from "std/http/server.ts";
+import { serve, ServerRequest } from "std/http/server.ts";
 import { main } from "./journalck.ts";
 import { WikiClient } from "./client.ts";
 import * as site from "./site.ts";
@@ -22,7 +22,8 @@ let params = parse(args, {
     port: 8000,
     "meta-site": [],
     "meta-sites-dir": [],
-    "external-client": "dev.wiki.randombits.xyz"
+    "external-client": "dev.wiki.randombits.xyz",
+    "root": join(Deno.dir("home"), ".wiki")
   }
 });
 console.log(params);
@@ -62,7 +63,9 @@ interface System {
   siteMaps: {};
   plugins: {};
   passwords: {};
-  requestedSite: string;
+  siteHosts: {};
+  root: string;
+  port: number;
 }
 
 let system: System = {
@@ -70,7 +73,9 @@ let system: System = {
   siteMaps: {},
   plugins: {},
   passwords: {},
-  requestedSite: undefined
+  siteHosts: {},
+  root: params.root,
+  port: params.port
 };
 
 async function importMetaSite(path, host) {
@@ -89,20 +94,21 @@ async function importMetaSite(path, host) {
     name = basename(path.replace(/\.[tj]s$/, ""));
   }
   console.log(`Registering ${path} as ${name}`);
-  let targetHost = `${name}:${port}`;
+  let targetSite = `${name}:${port}`;
+  system.siteHosts[targetSite] = name;
   if (metaSite.init) {
     // Some sites will init their sitemap here
     // Others will do lengthy init processing
     // To wait or not to wait?
-    metaSite.init({siteName: targetHost, system, site});
+    metaSite.init({req: {site: targetSite, host: name}, system, site});
   }
-  system.metaSites[targetHost] = metaSite;
-  system.siteMaps[targetHost] = [];
+  system.metaSites[targetSite] = metaSite;
+  system.siteMaps[targetSite] = [];
   if (metaSite.siteMap) {
-    system.siteMaps[targetHost] = metaSite.siteMap(targetHost);
+    system.siteMaps[targetSite] = metaSite.siteMap(targetSite);
   }
   if (metaSite.plugins) {
-    system.plugins[targetHost] = metaSite.plugins;
+    system.plugins[targetSite] = metaSite.plugins;
   }
 }
 for (let metaSitePath of params["meta-site"]) {
@@ -152,8 +158,12 @@ if (etcHosts) {
   );
 }
 
+interface EnhancedRequest extends ServerRequest {
+  [key: string]: any
+}
 console.log("listening on port ", port);
-for await (const req of s) {
+for await (const r of s) {
+  let req = r as EnhancedRequest
   let requestedSite = req.headers.get("host");
   let metaSite = system.metaSites[requestedSite];
   if (req.url == "/") {
@@ -169,7 +179,9 @@ for await (const req of s) {
     req.respond(res);
   }
   if (metaSite) {
-    system.requestedSite = requestedSite;
+    req.site = requestedSite;
+    req.host = system.siteHosts[requestedSite];
+    req.siteRoot = join(system.root, req.host)
     if (metaSite.serve) {
       console.log("meta-site:", requestedSite, req.url);
       metaSite.serve(req, site, system);
