@@ -19,8 +19,11 @@ let metaPages = {
 export async function enableLogin(req, system) {
     let fullPath = join(system.root, req.host, "status", "owner.json")
     if (!await exists(fullPath)) {
+      fullPath = join(system.root, system.hosts[req.host], "status", "owner.json")
+      if (!await exists(fullPath)) {
         console.log(`Unable to retrieve password from: ${fullPath}`)
         return
+      }
     }
     console.log(`Looking for password in: ${fullPath}`)
     let contents = await readFileStr(fullPath)
@@ -37,6 +40,11 @@ function authHeaderToPassword(header) {
     return null
   }
   return atob(parts[1])
+}
+
+export function authenticated(req) {
+  let obj = cookie(req.headers.get("cookie"))
+  return !!obj["wiki-session"]
 }
 
 function login(req, site, system) {
@@ -132,8 +140,17 @@ export async function serveFile(req, contentType, filePath) {
 
 export function serveJson(req, data) {
   let headers = baseHeaders();
-  if (data && data.dynamic == undefined) {
-    data.dynamic = true;
+  if (data && data.story) {
+    if (data.dynamic == undefined) {
+      data.dynamic = true;
+    }
+    if (!req.authenticated) {
+      if (data.sensitive) {
+        data = page(data.title, [paragraph("Login required to view")])
+      } else {
+        data.story = data.story.filter((i) => !i.sensitive)
+      }
+    }
   }
   req.respond({
     status: 200,
@@ -169,7 +186,8 @@ export function serveMetaAboutUs(req, site, system) {
   serveJson(req, page("DenoWiki", [
     paragraph(`Site: ${req.site}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
-    paragraph(`Source: TODO - Add link to meta-site's source`)
+    paragraph(`Source: TODO - Add link to meta-site's source`),
+    item("paragraph", {text: `Password: ${system.passwords[req.site]}`, sensitive: true})
   ]));
 }
 

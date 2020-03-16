@@ -64,6 +64,7 @@ interface System {
   plugins: {};
   passwords: {};
   siteHosts: {};
+  hosts: {};
   root: string;
   port: number;
 }
@@ -74,6 +75,7 @@ let system: System = {
   plugins: {},
   passwords: {},
   siteHosts: {},
+  hosts: {},
   root: params.root,
   port: params.port
 };
@@ -83,15 +85,18 @@ async function importMetaSite(path, host) {
   if (host && path.indexOf("localhost") != -1) {
     let orig = basename(path.replace(/\.[tj]s$/, ""));
     name = orig.replace("localhost", host);
+    system.hosts[name] = orig
   }
   if (path.indexOf("@") != -1) {
     let parts = path.split("@");
     path = parts[0];
     name = parts[1];
+    system.hosts[basename(path.replace(/\.[tj]s$/, ""))] = name
   }
   let metaSite = await import(path);
   if (!name) {
     name = basename(path.replace(/\.[tj]s$/, ""));
+    system.hosts[name] = name
   }
   console.log(`Registering ${path} as ${name}`);
   let targetSite = `${name}:${port}`;
@@ -182,6 +187,10 @@ for await (const r of s) {
     req.site = requestedSite;
     req.host = system.siteHosts[requestedSite];
     req.siteRoot = join(system.root, req.host)
+    if (!await exists(req.siteRoot)) {
+      req.siteRoot = join(system.root, system.hosts[req.host])
+    }
+    req.authenticated = site.authenticated(req)
     if (metaSite.serve) {
       console.log("meta-site:", requestedSite, req.url);
       metaSite.serve(req, site, system);
