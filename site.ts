@@ -1,5 +1,11 @@
 const { args, stat, open } = Deno;
 import { ServerRequest } from "std/http/server.ts";
+import { readFileStr, exists } from "std/fs/mod.ts";
+import {
+  isAbsolute,
+  join,
+  basename
+} from "std/path/posix.ts";
 
 let metaPages = {
   "/system/site-index.json": serveSiteIndex,
@@ -10,10 +16,63 @@ let metaPages = {
   "/logout": logout
 };
 
-function login(req, site, system) {
-  console.log("login")
-  let headers = baseHeaders()
+export async function enableLogin(req, system) {
+    let fullPath = join(system.root, req.host, "status", "owner.json")
+    if (!await exists(fullPath)) {
+      fullPath = join(system.root, system.hosts[req.host], "status", "owner.json")
+      if (!await exists(fullPath)) {
+        console.log(`Unable to retrieve password from: ${fullPath}`)
+        return
+      }
+    }
+    console.log(`Looking for password in: ${fullPath}`)
+    let contents = await readFileStr(fullPath)
+    let json = JSON.parse(contents)
+    if (json.friend && json.friend.secret) {
+      system.passwords[req.site] = json.friend.secret
+    }
+}
+
+function authHeaderToPassword(header) {
+  let parts = header.trim().split(" ")
+  if (parts[0] != "Basic") {
+    console.log("Missing Basic")
+    return null
+  }
+  return atob(parts[1])
+}
+
+export function authenticated(req) {
   let obj = cookie(req.headers.get("cookie"))
+  return !!obj["wiki-session"]
+}
+
+function login(req, site, system) {
+  let pw = system.passwords[req.site]
+  let headers = baseHeaders()
+  const failure = {
+    status: 401,
+    body: JSON.stringify({success: false}),
+    headers
+  };
+  if (!pw) {
+    console.log(`ERROR: '${req.site}' does not have a password set.`)
+    req.respond(failure);
+    return
+  }
+  let obj = cookie(req.headers.get("cookie"))
+  let auth = req.headers.get("Authorization")
+  if (!auth) {
+    console.log("ERROR: No Authorization header found.")
+    req.respond(failure);
+    return
+  }
+  let providedPassword = authHeaderToPassword(auth)
+  if (pw != providedPassword) {
+    console.log("ERROR: Passwords do not match.")
+    req.respond(failure);
+    return
+  }
   let session = obj["wiki-session"]
   if (!session) {
     session = itemId()
@@ -29,7 +88,6 @@ function login(req, site, system) {
 }
 
 function logout(req, site, system) {
-  console.log("logout")
   let headers = baseHeaders()
   headers.set("Set-Cookie", `wiki-session=logout; expires=${new Date()}`)
   const res = {
@@ -82,8 +140,17 @@ export async function serveFile(req, contentType, filePath) {
 
 export function serveJson(req, data) {
   let headers = baseHeaders();
-  if (data && data.dynamic == undefined) {
-    data.dynamic = true;
+  if (data && data.story) {
+    if (data.dynamic == undefined) {
+      data.dynamic = true;
+    }
+    if (!req.authenticated) {
+      if (data.sensitive) {
+        data = page(data.title, [paragraph("Login required to view")])
+      } else {
+        data.story = data.story.filter((i) => !i.sensitive)
+      }
+    }
   }
   req.respond({
     status: 200,
@@ -108,18 +175,19 @@ export function serveSiteIndex(req) {
 }
 
 export function serveSiteMap(req, site, system) {
-  serveJson(req, system.siteMaps[system.requestedSite]);
+  serveJson(req, system.siteMaps[req.site]);
 }
 
 export function servePlugins(req, site, system) {
-  serveJson(req, system.plugins[system.requestedSite]);
+  serveJson(req, system.plugins[req.site]);
 }
 
 export function serveMetaAboutUs(req, site, system) {
   serveJson(req, page("DenoWiki", [
-    paragraph(`Site: ${system.requestedSite}`),
+    paragraph(`Site: ${req.site}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
-    paragraph(`Source: TODO - Add link to meta-site's source`)
+    paragraph(`Source: TODO - Add link to meta-site's source`),
+    item("paragraph", {text: `Password: ${system.passwords[req.site]}`, sensitive: true})
   ]));
 }
 
@@ -131,7 +199,7 @@ export function serve404(req) {
   });
 }
 
-export async function serve(req: ServerRequest, site, system) {
+export async function serve(req, site, system) {
   let nodeStyle = req.url.match(/^\/view\/([a-z0-9-]+)$/)
   if (nodeStyle) {
     let headers = baseHeaders()
@@ -143,6 +211,8 @@ export async function serve(req: ServerRequest, site, system) {
     });
     return
   }
+  let root = req.siteRoot
+  let match = req.url.match(/^\/([a-z0-9-]+).json$/)
   let metaPage = metaPages[req.url];
   if (metaPage) {
     let data = await metaPage(req, site, system);
@@ -153,9 +223,17 @@ export async function serve(req: ServerRequest, site, system) {
   } else if (req.url.match(/^\/client\/.*\.mjs$/)) {
     let filePath = `.${req.url}`;
     serveFile(req, "text/javascript", filePath);
+  } else if (req.url == "/favicon.png" && await exists(join(root, "status", "favicon.png"))) {
+      site.serveFile(req, "image/png", join(root, "status", "favicon.png"))
   } else if (req.url.match(/^\/.*\.png$/)) {
     let filePath = `.${req.url}`;
     serveFile(req, "image/png", filePath);
+  } else if (match) {
+    let page = match[1]
+    let fullPath = join(root, "pages", page);
+    if (await exists(fullPath)) {
+        site.serveFile(req, "application/json", fullPath)
+    }
   } else {
     serve404(req);
   }

@@ -124,5 +124,9 @@ class Wiki extends HTMLElement {
     updateURL() {
         history.pushState({}, "", this.URL.toString())
     }
+
+    get authenticated() {
+        return this.querySelector("wiki-auth").loggedIn
+    }
 }
 customElements.define("wiki-wiki", Wiki);

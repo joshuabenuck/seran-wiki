@@ -6,14 +6,6 @@ import {
   basename
 } from "std/path/posix.ts";
 
-let wikiRoot = join(Deno.dir("home"), ".wiki")
-function dirFromSite(siteName) {
-    if (siteName.indexOf(":") != -1) {
-        siteName = siteName.substring(0, siteName.indexOf(":"))
-    }
-    return join(wikiRoot, siteName)
-}
-
 function aboutStatic(site) {
     return site.page("About Static", [
         site.paragraph("This meta-site serves pages from existing wikis."),
@@ -28,7 +20,7 @@ function aboutStatic(site) {
 }
 
 export async function serve(req, site, system) {
-    if (system.requestedSite.indexOf("static.") != -1 &&
+    if (req.site.indexOf("static.") != -1 &&
         req.url == "/welcome-visitors.json") {
             site.serveJson(req, site.welcomePage("[[DenoWiki]]", "[[About static]]"))
             return
@@ -37,23 +29,7 @@ export async function serve(req, site, system) {
         site.serveJson(req, aboutStatic(site))
         return
     }
-    let root = dirFromSite(system.requestedSite)
-    if (req.url == "/favicon.png" && await exists(join(root, "status", "favicon.png"))) {
-        site.serveFile(req, "image/png", join(root, "status", "favicon.png"))
-        return
-    }
-    let match = req.url.match(/^\/([a-z0-9-]+).json$/)
-    if (!match) {
-        site.serve(req, site, system)
-        return
-    }
-    let page = match[1]
-    let fullPath = join(root, "pages", page)
-    if (await exists(fullPath)) {
-        site.serveFile(req, "application/json", fullPath)
-        return
-    }
-    site.serve404(req)
+    site.serve(req, site, system)
 }
 
 let _siteMap = {}
@@ -61,19 +37,14 @@ export function siteMap() {
     return _siteMap
 }
 
-export async function init(opts) {
-    const {siteName, system} = opts
-    // Uncomment to register all existing wikis
-    return
-    if (siteName.indexOf("static.localhost") == -1) {
+export async function init({req, system, site}) {
+    if (req.site.indexOf("static.") == -1) {
+        site.enableLogin(req, system)
         return
     }
-    let port = ""
-    let portIndex = siteName.indexOf(":")
-    if (portIndex != -1) {
-        port = siteName.substring(portIndex)
-    }
-    for (let dir of await Deno.readDir(wikiRoot)) {
+    // Uncomment to register all existing wikis
+    return
+    for (let dir of await Deno.readDir(system.root)) {
         if (dir.isFile() ||
             dir.name == "assets" ||
             dir.name == "pages" ||
@@ -81,18 +52,18 @@ export async function init(opts) {
             dir.name == "status") {
             continue
         }
-        let targetHost = `${dir.name}${port}`
-        if (system.metaSites.hasOwnProperty(targetHost)) {
-            console.log("static: Conflict - not registering", targetHost)
+        let targetSite = `${dir.name}${system.port}`
+        if (system.metaSites.hasOwnProperty(targetSite)) {
+            console.log("static: Conflict - not registering", targetSite)
             continue
         }
         // TODO: DRY this logic or keep the duplication?
         // Or move this registration into index.ts?
-        system.metaSites[targetHost] = system.metaSites[siteName];
-        system.siteMaps[targetHost] = [];
-        console.log("static: Registered", targetHost)
+        system.metaSites[targetSite] = system.metaSites[req.site];
+        system.siteMaps[targetSite] = [];
+        console.log("static: Registered", targetSite)
         // TODO: Uncomment when sitemap support is added
-        // system.siteMaps[targetHost] = siteMap(targetHost);
+        // system.siteMaps[targetSite] = siteMap(targetSite);
         
     }
 }
