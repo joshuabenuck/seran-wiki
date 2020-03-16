@@ -55,6 +55,7 @@ export class Paragraph extends HTMLElement {
     keyhandler(event) {
         if (event.key == "Escape" || (event.ctrlKey && event.key == "s")) {
             this.hideEditor()
+            this.save()
             event.preventDefault()
         }
         else if (event.key == "Enter") {
@@ -70,6 +71,7 @@ export class Paragraph extends HTMLElement {
             if (prefix == "") {
                 this.editor.value = suffix
                 this.hideEditor()
+                this.save()
                 let para = document.createElement("wiki-paragraph")
                 para.textContent = prefix
                 this.insertAdjacentElement("beforebegin", para)
@@ -82,6 +84,7 @@ export class Paragraph extends HTMLElement {
             // Insert new editor after
             this.editor.value = prefix
             this.hideEditor()
+            this.save()
             let para = document.createElement("wiki-paragraph")
             para.textContent = suffix
             this.insertAdjacentElement("afterend", para)
@@ -100,6 +103,8 @@ export class Paragraph extends HTMLElement {
                 prev.showEditor()
                 prev.editor.setSelectionRange(index, index)
                 prev.editor.focus()
+                // TODO: Is this the correct behavior?
+                // Should we save before removing?
                 this.remove()
                 event.preventDefault()
             }
@@ -116,24 +121,48 @@ export class Paragraph extends HTMLElement {
         this.editor.focus()
     }
 
+    async save() {
+        this.style.backgroundColor = "rgba(255, 0, 0, 0.25)"
+        try {
+            let resp = await fetch(`/system/save?page=${this.page.fullSlug}`, {method: "POST", body: JSON.stringify(this.json)})
+            let json = await resp.json()
+            if (json.success) {
+                this.style.backgroundColor = ""
+                return
+            }
+            console.log("Unable to save", json)
+        } catch(e) {
+            console.log("Unable to save", e)
+        }
+        // TODO: Hover button for retry
+        // let retry = document.createElement("input")
+        // retry.setAttribute("type", "button")
+        // retry.textContent = "retry"
+        // this.editor.appendChild(retry)
+    }
+
     get page() {
         return this.parentElement
     }
 
+    get id() {
+        return this.getAttribute("id")
+    }
+
+    set id(value) {
+        this.setAttribute("id", value)
+    }
+
     render(json) {
+        this.id = json.id
         this.textContent = json.text
     }
 
-    bind() {
-
-    }
-
-    // export to toString or serialize?
-    export() {
+    get json() {
         return {
             type: "paragraph",
-            id: "abc123",
-            text: this.text
+            text: this.textContent,
+            id: this.id
         }
     }
 }
