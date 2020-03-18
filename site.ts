@@ -211,32 +211,58 @@ export async function serve(req, site, system) {
     });
     return
   }
-  let root = req.siteRoot
-  let match = req.url.match(/^\/([a-z0-9-]+).json$/)
   let metaPage = metaPages[req.url];
   if (metaPage) {
     let data = await metaPage(req, site, system);
     serveJson(req, data);
-  } // TODO: Make safe for multi-tenant use
-  else if (req.url.indexOf("/index.html") == 0) {
+    return
+  }
+  if (req.url.indexOf("/system/save") == 0) {
+    // ensure this is a post
+    // check auth
+    if (!req.authenticated) {
+      return
+    }
+    // get page info
+    let url = new URL(req.url)
+    let fullSlug = url.searchParams.get("page")
+    // try to load existing page, if not found - create it
+    // get the content of the edit
+    let json = JSON.stringify(req.body)
+    // set or update the existing content
+    // save the file
+    // return the result of the op
+    return
+  }
+  if (req.url.indexOf("/index.html") == 0) {
     serveFile(req, "text/html", "./index.html");
-  } else if (req.url.match(/^\/client\/.*\.mjs$/)) {
+    return
+  }
+  if (req.url.match(/^\/client\/.*\.mjs$/)) {
     let filePath = `.${req.url}`;
     serveFile(req, "text/javascript", filePath);
-  } else if (req.url == "/favicon.png" && await exists(join(root, "status", "favicon.png"))) {
-      site.serveFile(req, "image/png", join(root, "status", "favicon.png"))
-  } else if (req.url.match(/^\/.*\.png$/)) {
+    return
+  }
+  let favicon = join(req.siteRoot, "status", "favicon.png")
+  if (req.url == "/favicon.png" && await exists(favicon)) {
+      site.serveFile(req, "image/png", favicon)
+      return
+  }
+  if (req.url.match(/^\/.*\.png$/)) {
     let filePath = `.${req.url}`;
     serveFile(req, "image/png", filePath);
-  } else if (match) {
-    let page = match[1]
-    let fullPath = join(root, "pages", page);
-    if (await exists(fullPath)) {
-        site.serveFile(req, "application/json", fullPath)
-    }
-  } else {
-    serve404(req);
+    return
   }
+  let match = req.url.match(/^\/([a-z0-9-]+).json$/)
+  if (match) {
+    let page = match[1]
+    let fullPath = join(req.siteRoot, "pages", page);
+    if (await exists(fullPath)) {
+      site.serveFile(req, "application/json", fullPath);
+      return
+    }
+  }
+  serve404(req);
 }
 
 export function pages(metaText) {
