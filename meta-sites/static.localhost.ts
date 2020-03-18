@@ -1,5 +1,6 @@
 const { args, stat, open, exit, writeFile } = Deno;
-import { readFileStr, exists } from "std/fs/mod.ts";
+import { readFileStr, exists, writeJson } from "std/fs/mod.ts";
+import { BufReader } from "std/io/bufio.ts";
 import {
   isAbsolute,
   join,
@@ -39,6 +40,20 @@ export function siteMap() {
 
 export async function init({req, system, site}) {
     if (req.site.indexOf("static.") == -1) {
+        console.log(system.root, system.hosts[req.host])
+        let path = join(system.root, req.host)
+        let fallback_path = join(system.root, system.hosts[req.host])
+        if (!await exists(path) && !await exists(fallback_path)) {
+            console.log(`Creating directory for '${req.host}`)
+            console.log("Enter secret for site: ")
+            let reader = new BufReader(Deno.stdin)
+            let secret = await reader.readString("\n")
+            Deno.mkdir(path)
+            Deno.mkdir(join(path, "status"))
+            await writeJson(join(path, "status", "owner.json"), {name: "Deno Wiki", friend: { secret }})
+            Deno.mkdir(join(path, "pages"))
+            await writeJson(join(path, "pages", "welcome-visitors"), site.welcomePage(null, null))
+        }
         site.enableLogin(req, system)
         return
     }

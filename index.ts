@@ -91,7 +91,7 @@ async function importMetaSite(path, host) {
     let parts = path.split("@");
     path = parts[0];
     name = parts[1];
-    system.hosts[basename(path.replace(/\.[tj]s$/, ""))] = name
+    system.hosts[name] = basename(path.replace(/\.[tj]s$/, ""))
   }
   let metaSite = await import(path);
   if (!name) {
@@ -102,10 +102,7 @@ async function importMetaSite(path, host) {
   let targetSite = `${name}:${port}`;
   system.siteHosts[targetSite] = name;
   if (metaSite.init) {
-    // Some sites will init their sitemap here
-    // Others will do lengthy init processing
-    // To wait or not to wait?
-    metaSite.init({req: {site: targetSite, host: name}, system, site});
+    await metaSite.init({req: {site: targetSite, host: name}, system, site});
   }
   system.metaSites[targetSite] = metaSite;
   system.siteMaps[targetSite] = [];
