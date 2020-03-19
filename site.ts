@@ -1,6 +1,6 @@
 const { args, stat, open } = Deno;
 import { ServerRequest } from "std/http/server.ts";
-import { readFileStr, exists } from "std/fs/mod.ts";
+import { readFileStr, exists, readJson, writeJson } from "std/fs/mod.ts";
 import {
   isAbsolute,
   join,
@@ -217,21 +217,56 @@ export async function serve(req, site, system) {
     serveJson(req, data);
     return
   }
+  // TODO: Extract into its own function
   if (req.url.indexOf("/system/save") == 0) {
-    // ensure this is a post
-    // check auth
-    if (!req.authenticated) {
+    if (req.url.method != "POST") {
+      // Different status code?
+      site.serve404()
       return
     }
-    // get page info
+    if (!req.authenticated) {
+      // TODO: Should be a different status code
+      site.serve404()
+      return
+    }
     let url = new URL(req.url)
     let fullSlug = url.searchParams.get("page")
+    let slug = fullSlug
+    let siteName = new URL(req.url).origin
+    let colonIndex = fullSlug.indexOf(":")
+    if (colonIndex != -1) {
+      siteName = fullSlug.substring(0, colonIndex)
+      slug = fullSlug.substring(colonIndex + 1)
+    }
+    // ick... Really need to encapsulate this logic somewhere
+    // the amount of code duplication here is a concern
+    let host = system.siteHosts[siteName];
+    let siteRoot = join(system.root, host)
+    if (!await exists(siteRoot)) {
+      siteRoot = join(system.root, system.hosts[host])
+    }
     // try to load existing page, if not found - create it
+    let pagePath = join(siteRoot, "pages", slug)
+    if (!await exists(pagePath)) {
+      // TODO: Handle initial page creation
+      site.serveJson(req, {success: false, status: `Can only edit existing pages: ${pagePath} doesn't exist`})
+      return
+    }
+    let page = await readJson(pagePath)
     // get the content of the edit
-    let json = JSON.stringify(req.body)
+    let json = JSON.parse(req.body)
     // set or update the existing content
+    for (let [i, item] of page["story"].entries()) {
+      if (item.id == json.id) {
+        page["story"][i] = json
+      }
+    }
+    // TODO: Record in journal, handle delete, handle add
     // save the file
+    let result = await writeJson(pagePath, page)
+    console.log(result)
     // return the result of the op
+    site.serveJson(req, {success: true})
     return
   }
   if (req.url.indexOf("/index.html") == 0) {
