@@ -110,7 +110,9 @@ async function importMetaSite(path, host) {
     system.siteMaps[targetSite] = metaSite.siteMap(targetSite);
   }
   if (metaSite.plugins) {
-    system.plugins[targetSite] = metaSite.plugins;
+    system.plugins[targetSite] = metaSite.plugins.map((p) => {
+      return (p.indexOf("/") == 0) ? "http://" + targetSite + p : p
+    });
   }
 }
 for (let metaSitePath of params["meta-site"]) {
