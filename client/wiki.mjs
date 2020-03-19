@@ -76,7 +76,7 @@ class Wiki extends HTMLElement {
                 }
             }
             catch (e) {
-                console.log("Unable to load plugins for:", origin)
+                console.log("Unable to load plugins for:", origin, e)
             }
         }
     }
