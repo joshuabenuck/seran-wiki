@@ -7,9 +7,7 @@ import {
   basename
 } from "std/path/posix.ts";
 import { serve, ServerRequest } from "std/http/server.ts";
-import { main } from "./journalck.ts";
-import { WikiClient } from "./client.ts";
-import * as site from "./site.ts";
+import * as wiki from "seran/wiki.ts";
 
 function convertToArray(param, params) {
   if (!Array.isArray(params[param])) {
@@ -93,6 +91,10 @@ async function importMetaSite(path, host) {
     name = parts[1];
     system.hosts[name] = basename(path.replace(/\.[tj]s$/, ""))
   }
+  // TODO: Test if a path or a url. If path, resolve relative to root of project
+  if (path.indexOf("http") == -1) {
+    path = "../" + path
+  }
   let metaSite = await import(path);
   if (!name) {
     name = basename(path.replace(/\.[tj]s$/, ""));
@@ -102,7 +104,7 @@ async function importMetaSite(path, host) {
   let targetSite = `${name}:${port}`;
   system.siteHosts[targetSite] = name;
   if (metaSite.init) {
-    await metaSite.init({req: {site: targetSite, host: name}, system, site});
+    await metaSite.init({req: {site: targetSite, host: name}, system, site: wiki});
   }
   system.metaSites[targetSite] = metaSite;
   system.siteMaps[targetSite] = [];
@@ -189,18 +191,18 @@ for await (const r of s) {
     if (!await exists(req.siteRoot)) {
       req.siteRoot = join(system.root, system.hosts[req.host])
     }
-    req.authenticated = site.authenticated(req)
+    req.authenticated = wiki.authenticated(req)
     if (metaSite.serve) {
       console.log("meta-site:", requestedSite, req.url);
-      metaSite.serve(req, site, system);
+      metaSite.serve(req, wiki, system);
     }
     if (metaSite.metaPages) {
       console.log("meta-page:", requestedSite, req.url);
       let metaPage = metaSite.metaPages[req.url];
       if (metaPage) {
-        metaPage(req, site, system);
+        metaPage(req, wiki, system);
       } else {
-        site.serve(req, site, system);
+        wiki.serve(req, wiki, system);
       }
     }
     continue;
@@ -210,5 +212,5 @@ for await (const r of s) {
     requestedSite,
     req.url
   );
-  site.serve404(req);
+  wiki.serve404(req);
 }

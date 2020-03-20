@@ -270,7 +270,7 @@ export async function serve(req, site, system) {
     return
   }
   if (req.url.indexOf("/index.html") == 0) {
-    serveFile(req, "text/html", "./index.html");
+    serveFile(req, "text/html", "./client/index.html");
     return
   }
   if (req.url.match(/^\/client\/.*\.mjs$/)) {
@@ -284,8 +284,7 @@ export async function serve(req, site, system) {
       return
   }
   if (req.url.match(/^\/.*\.png$/)) {
-    let filePath = `.${req.url}`;
-    serveFile(req, "image/png", filePath);
+    serveFile(req, "image/png", join("./client", req.url));
     return
   }
   let match = req.url.match(/^\/([a-z0-9-]+).json$/)

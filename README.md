@@ -1,5 +1,5 @@
-# denowiki
-Experiment to create a Deno based implementation of Federated Wiki
+# seran-wiki
+Experiment to create a Deno based implementation of Federated Wiki.
 
 ## Install
 
@@ -16,15 +16,15 @@ iwr https://deno.land/x/install/install.ps1 -useb -outf install.ps1; .\install.p
 ```
 then
 ```
-git clone git@github.com:joshuabenuck/denowiki.git
+git clone git@github.com:joshuabenuck/seran-wiki.git
 ```
 Build and run from denowiki directory
 ```
-./denowiki.sh --meta-sites-dir=./meta-sites@localtest.me
+./seran-wiki.sh --meta-sites-dir=./meta-sites@localtest.me
 ```
 or
 ```
-.\denowiki.cmd --meta-sites-dir=.\meta-sites@localtest.me
+.\seran-wiki.cmd --meta-sites-dir=.\meta-sites@localtest.me
 ```
 
 Navigate to http://localtest.me:8000/ or http://localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.
