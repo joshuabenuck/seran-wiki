@@ -104,7 +104,7 @@ async function importMetaSite(path, host) {
   let targetSite = `${name}:${port}`;
   system.siteHosts[targetSite] = name;
   if (metaSite.init) {
-    await metaSite.init({req: {site: targetSite, host: name}, system, site: wiki});
+    await metaSite.init({req: {site: targetSite, host: name}, system});
   }
   system.metaSites[targetSite] = metaSite;
   system.siteMaps[targetSite] = [];
@@ -194,15 +194,15 @@ for await (const r of s) {
     req.authenticated = wiki.authenticated(req)
     if (metaSite.serve) {
       console.log("meta-site:", requestedSite, req.url);
-      metaSite.serve(req, wiki, system);
+      metaSite.serve(req, system);
     }
     if (metaSite.metaPages) {
       console.log("meta-page:", requestedSite, req.url);
       let metaPage = metaSite.metaPages[req.url];
       if (metaPage) {
-        metaPage(req, wiki, system);
+        metaPage(req, system);
       } else {
-        wiki.serve(req, wiki, system);
+        wiki.serve(req, system);
       }
     }
     continue;

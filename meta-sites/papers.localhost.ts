@@ -1,5 +1,6 @@
 const { args, stat, open, exit, writeFile } = Deno;
 import { readFileStr, exists } from "std/fs/mod.ts";
+import * as wiki from "seran/wiki.ts";
 import {
   isAbsolute,
   join,
@@ -13,8 +14,8 @@ function route(url, fn) {
   metaPages[url] = fn;
 }
 
-route("/welcome-visitors.json", async (req, site, _system) => {
-  site.serveJson(req, site.welcomePage("[[DenoWiki]]", "[[Papers]]"));
+route("/welcome-visitors.json", async (req, _system) => {
+  wiki.serveJson(req, wiki.welcomePage("[[DenoWiki]]", "[[Papers]]"));
 });
 
 function asSlug(name) {
@@ -44,7 +45,7 @@ async function populatePapers() {
     });
     route(
       `/${asSlug(paper)}.json`,
-      (req, site, system) => servePaper(paper, req, site, system)
+      (req, system) => servePaper(paper, req, system)
     );
   }
   for (let paper of papers) {
@@ -53,7 +54,7 @@ async function populatePapers() {
         papersByTag[tag] = [];
         route(
           `/${asSlug(tag)}.json`,
-          (req, site, system) => serveTag(tag, req, site, system)
+          (req, system) => serveTag(tag, req, system)
         );
       }
       papersByTag[tag].push(paper);
@@ -61,36 +62,36 @@ async function populatePapers() {
   }
 }
 
-function serveTag(tag, req, site, system) {
-  site.serveJson(
+function serveTag(tag, req, system) {
+  wiki.serveJson(
     req,
-    site.page(tag, papersByTag[tag].map((p) => site.paragraph(`[[${p.name}]]`)))
+    wiki.page(tag, papersByTag[tag].map((p) => wiki.paragraph(`[[${p.name}]]`)))
   );
 }
 
-function servePaper(p, req, site, system) {
+function servePaper(p, req, system) {
   for (let paper of papers) {
     if (paper.name != p) continue;
-    site.serveJson(req, site.page(paper.name, [
-      site.paragraph(`${paper.name} [${paper.url} ref]`),
-      site.paragraph(`Tags:`)
+    wiki.serveJson(req, wiki.page(paper.name, [
+      wiki.paragraph(`${paper.name} [${paper.url} ref]`),
+      wiki.paragraph(`Tags:`)
     ].concat(
-      paper.tags.map((t) => site.paragraph(`[[${t}]]`))
+      paper.tags.map((t) => wiki.paragraph(`[[${t}]]`))
     )));
     break;
   }
 }
 
-route("/papers.json", async (req, site, _system) => {
+route("/papers.json", async (req, _system) => {
   let paras = [];
   for (let paper of papers) {
-    paras.push(site.paragraph(`[[${paper.name}]]`));
+    paras.push(wiki.paragraph(`[[${paper.name}]]`));
   }
-  paras.push(site.paragraph("Tags:"));
+  paras.push(wiki.paragraph("Tags:"));
   for (let tag of Object.keys(papersByTag)) {
-    paras.push(site.paragraph(`[[${tag}]]`));
+    paras.push(wiki.paragraph(`[[${tag}]]`));
   }
-  site.serveJson(req, site.page("Papers", paras));
+  wiki.serveJson(req, wiki.page("Papers", paras));
 });
 
 export async function init() {
