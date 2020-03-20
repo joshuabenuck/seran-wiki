@@ -1,5 +1,6 @@
 const { stat } = Deno;
 import { ServerRequest } from "std/http/server.ts";
+import * as wiki from "seran/wiki.ts";
 
 export let plugins = ["/client/wander.mjs"]
 
@@ -16,8 +17,8 @@ async function readDir(path) {
 let metaPages = {};
 
 // since constructors cannot be async and readDir is async, use an init method
-export async function init({req, site, system}) {
-  site.enableLogin(req, system)
+export async function init({req, system}) {
+  wiki.enableLogin(req, system)
   for (let metaPagePath of await readDir("./meta-pages")) {
     let metaPage = await import(`../meta-pages/${metaPagePath.name}`);
     let exports = Object.keys(metaPage);
@@ -36,42 +37,42 @@ export async function init({req, site, system}) {
   }
 }
 
-export async function serve(req: ServerRequest, site, system) {
+export async function serve(req: ServerRequest, system) {
   if (req.url == "/welcome-visitors.json") {
-    site.serveJson(
+    wiki.serveJson(
       req,
-      site.welcomePage("[[DenoWiki]]", "[[Admin]], [[Wander]], [[Deno Sites]]")
+      wiki.welcomePage("[[DenoWiki]]", "[[Admin]], [[Wander]], [[Deno Sites]]")
     );
   } else if (req.url == "/admin.json") {
-    let items = [site.paragraph("Active meta-sites:")]
+    let items = [wiki.paragraph("Active meta-sites:")]
     for (let siteName of Object.keys(system.metaSites)) {
-      items.push(site.paragraph(`[http://${siteName}/view/welcome-visitors ${siteName}]`))
+      items.push(wiki.paragraph(`[http://${siteName}/view/welcome-visitors ${siteName}]`))
     }
-    items.push(site.paragraph("Sites with passwords:"))
+    items.push(wiki.paragraph("Sites with passwords:"))
     if (Object.keys(system.passwords).length == 0) {
-      items.push(site.paragraph("None"))
+      items.push(wiki.paragraph("None"))
     }
     for (let siteName of Object.keys(system.passwords)) {
-      items.push(site.paragraph(`${siteName}: ${system.passwords[siteName]}`))
+      items.push(wiki.paragraph(`${siteName}: ${system.passwords[siteName]}`))
     }
-    let page = site.page("Admin", items)
-    page.sensitive = true
-    site.serveJson(
+    let page = wiki.page("Admin", items)
+    page["sensitive"] = true
+    wiki.serveJson(
       req,
       page
     );
   } else if (req.url == "/wander.json") {
-    site.serveJson(
+    wiki.serveJson(
       req,
-      site.page("Wander", [site.item("turtle-wander", {})])
+      wiki.page("Wander", [wiki.item("turtle-wander", {})])
     );
   } else if (metaPages[req.url]) {
     // These are meta-pages from the meta-pages folder
     console.log("calling:", metaPages[req.url]);
-    let data = await metaPages[req.url](req, site, system);
-    site.serveJson(req, data);
+    let data = await metaPages[req.url](req, system);
+    wiki.serveJson(req, data);
   } // This will serve system urls
   else {
-    site.serve(req, site, system);
+    wiki.serve(req, system);
   }
 }

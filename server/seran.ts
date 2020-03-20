@@ -7,9 +7,8 @@ import {
   basename
 } from "std/path/posix.ts";
 import { serve, ServerRequest } from "std/http/server.ts";
-import { main } from "./journalck.ts";
-import { WikiClient } from "./client.ts";
-import * as site from "./site.ts";
+import * as wiki from "seran/wiki.ts";
+import { System } from "seran/system.ts";
 
 function convertToArray(param, params) {
   if (!Array.isArray(params[param])) {
@@ -58,65 +57,10 @@ async function readDir(path) {
   return await Deno.readDir(path);
 }
 
-interface System {
-  metaSites: {};
-  siteMaps: {};
-  plugins: {};
-  passwords: {};
-  siteHosts: {};
-  hosts: {};
-  root: string;
-  port: number;
-}
+let system = new System(params.root, params.port);
 
-let system: System = {
-  metaSites: {},
-  siteMaps: {},
-  plugins: {},
-  passwords: {},
-  siteHosts: {},
-  hosts: {},
-  root: params.root,
-  port: params.port
-};
-
-async function importMetaSite(path, host) {
-  let name = undefined;
-  if (host && path.indexOf("localhost") != -1) {
-    let orig = basename(path.replace(/\.[tj]s$/, ""));
-    name = orig.replace("localhost", host);
-    system.hosts[name] = orig
-  }
-  if (path.indexOf("@") != -1) {
-    let parts = path.split("@");
-    path = parts[0];
-    name = parts[1];
-    system.hosts[name] = basename(path.replace(/\.[tj]s$/, ""))
-  }
-  let metaSite = await import(path);
-  if (!name) {
-    name = basename(path.replace(/\.[tj]s$/, ""));
-    system.hosts[name] = name
-  }
-  console.log(`Registering ${path} as ${name}`);
-  let targetSite = `${name}:${port}`;
-  system.siteHosts[targetSite] = name;
-  if (metaSite.init) {
-    await metaSite.init({req: {site: targetSite, host: name}, system, site});
-  }
-  system.metaSites[targetSite] = metaSite;
-  system.siteMaps[targetSite] = [];
-  if (metaSite.siteMap) {
-    system.siteMaps[targetSite] = metaSite.siteMap(targetSite);
-  }
-  if (metaSite.plugins) {
-    system.plugins[targetSite] = metaSite.plugins.map((p) => {
-      return (p.indexOf("/") == 0) ? "http://" + targetSite + p : p
-    });
-  }
-}
 for (let metaSitePath of params["meta-site"]) {
-  await importMetaSite(metaSitePath, null);
+  await system.importMetaSite(metaSitePath, null);
 }
 for (let metaSitesDir of params["meta-sites-dir"]) {
   let host = null;
@@ -130,7 +74,7 @@ for (let metaSitesDir of params["meta-sites-dir"]) {
     if (!isAbsolute(fullPath)) {
       fullPath = "./" + fullPath;
     }
-    await importMetaSite(fullPath, host);
+    await system.importMetaSite(fullPath, host);
   }
 }
 
@@ -189,18 +133,18 @@ for await (const r of s) {
     if (!await exists(req.siteRoot)) {
       req.siteRoot = join(system.root, system.hosts[req.host])
     }
-    req.authenticated = site.authenticated(req)
+    req.authenticated = wiki.authenticated(req)
     if (metaSite.serve) {
       console.log("meta-site:", requestedSite, req.url);
-      metaSite.serve(req, site, system);
+      metaSite.serve(req, system);
     }
     if (metaSite.metaPages) {
       console.log("meta-page:", requestedSite, req.url);
       let metaPage = metaSite.metaPages[req.url];
       if (metaPage) {
-        metaPage(req, site, system);
+        metaPage(req, system);
       } else {
-        site.serve(req, site, system);
+        wiki.serve(req, system);
       }
     }
     continue;
@@ -210,5 +154,5 @@ for await (const r of s) {
     requestedSite,
     req.url
   );
-  site.serve404(req);
+  wiki.serve404(req);
 }

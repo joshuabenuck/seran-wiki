@@ -1,36 +1,37 @@
 const { args, stat, open, exit, writeFile } = Deno;
 import { readFileStr, exists, writeJson } from "std/fs/mod.ts";
 import { BufReader } from "std/io/bufio.ts";
+import * as wiki from "seran/wiki.ts";
 import {
   isAbsolute,
   join,
   basename
 } from "std/path/posix.ts";
 
-function aboutStatic(site) {
-    return site.page("About Static", [
-        site.paragraph("This meta-site serves pages from existing wikis."),
-        site.paragraph("In order to use it, register the meta-site with the name of an existing wiki"),
-        site.paragraph("For example:"),
-        site.paragraph("./denowiki.sh --meta-site=static.localhost.ts@fed.wiki.org"),
-        site.paragraph("This will serve the wiki pages from ~/.wiki/fed.wiki.org/pages/"),
-        site.paragraph("For this example to work:"),
-        site.paragraph("* The name fed.wiki.org must resolve to the host running denowiki."),
-        site.paragraph("* ~/.wiki/fed.wiki.org/pages/ must exist.")
+function aboutStatic() {
+    return wiki.page("About Static", [
+        wiki.paragraph("This meta-site serves pages from existing wikis."),
+        wiki.paragraph("In order to use it, register the meta-site with the name of an existing wiki"),
+        wiki.paragraph("For example:"),
+        wiki.paragraph("./denowiki.sh --meta-site=static.localhost.ts@fed.wiki.org"),
+        wiki.paragraph("This will serve the wiki pages from ~/.wiki/fed.wiki.org/pages/"),
+        wiki.paragraph("For this example to work:"),
+        wiki.paragraph("* The name fed.wiki.org must resolve to the host running denowiki."),
+        wiki.paragraph("* ~/.wiki/fed.wiki.org/pages/ must exist.")
     ])
 }
 
-export async function serve(req, site, system) {
+export async function serve(req, system) {
     if (req.site.indexOf("static.") != -1 &&
         req.url == "/welcome-visitors.json") {
-            site.serveJson(req, site.welcomePage("[[DenoWiki]]", "[[About static]]"))
+            wiki.serveJson(req, wiki.welcomePage("[[DenoWiki]]", "[[About static]]"))
             return
     }
     if (req.url == "/about-static.json") {
-        site.serveJson(req, aboutStatic(site))
+        wiki.serveJson(req, aboutStatic())
         return
     }
-    site.serve(req, site, system)
+    wiki.serve(req, system)
 }
 
 let _siteMap = {}
@@ -38,7 +39,7 @@ export function siteMap() {
     return _siteMap
 }
 
-export async function init({req, system, site}) {
+export async function init({req, system}) {
     if (req.site.indexOf("static.") == -1) {
         console.log(system.root, system.hosts[req.host])
         let path = join(system.root, req.host)
@@ -52,9 +53,9 @@ export async function init({req, system, site}) {
             Deno.mkdir(join(path, "status"))
             await writeJson(join(path, "status", "owner.json"), {name: "Deno Wiki", friend: { secret }})
             Deno.mkdir(join(path, "pages"))
-            await writeJson(join(path, "pages", "welcome-visitors"), site.welcomePage(null, null))
+            await writeJson(join(path, "pages", "welcome-visitors"), wiki.welcomePage(null, null))
         }
-        site.enableLogin(req, system)
+        wiki.enableLogin(req, system)
         return
     }
     // Uncomment to register all existing wikis

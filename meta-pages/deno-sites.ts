@@ -1,24 +1,26 @@
-export async function sites(req, site, system) {
+import * as wiki from "seran/wiki.ts";
+
+export async function sites(req, system) {
   let sites = [];
   for (let metaSite of Object.keys(system.metaSites)) {
     sites.push(
-      site.reference(
+      wiki.reference(
         metaSite,
         "welcome-visitors",
         "Welcome Visitors",
-        await doAndShare(metaSite, site)
+        await doAndShare(metaSite)
       )
     );
   }
-  return site.page("Deno Sites", sites);
+  return wiki.page("Deno Sites", sites);
 }
 
-async function doAndShare(metaSite, site) {
+async function doAndShare(metaSite) {
   try {
     let response = await fetch(`http://${metaSite}/welcome-visitors.json`);
     let page = await response.json();
     for (let item of page.story) {
-      if (item.id == site.DO_AND_SHARE_ID) {
+      if (item.id == wiki.DO_AND_SHARE_ID) {
         return item.text;
       }
     }

@@ -278,5 +278,18 @@ class Page extends HTMLElement {
             }
         }
     }
+
+    get json() {
+        // TODO: Complete
+        let items = []
+        for (let item of this.items) {
+
+        }
+        let content = {
+            title: this.title,
+            story: items
+        }
+        return json
+    }
 }
 customElements.define("wiki-page", Page);

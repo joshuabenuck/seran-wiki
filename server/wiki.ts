@@ -47,7 +47,7 @@ export function authenticated(req) {
   return !!obj["wiki-session"]
 }
 
-function login(req, site, system) {
+function login(req, system) {
   let pw = system.passwords[req.site]
   let headers = baseHeaders()
   const failure = {
@@ -87,7 +87,7 @@ function login(req, site, system) {
   req.respond(res);
 }
 
-function logout(req, site, system) {
+function logout(req, system) {
   let headers = baseHeaders()
   headers.set("Set-Cookie", `wiki-session=logout; expires=${new Date()}`)
   const res = {
@@ -174,15 +174,15 @@ export function serveSiteIndex(req) {
   serveJson(req, data);
 }
 
-export function serveSiteMap(req, site, system) {
+export function serveSiteMap(req, system) {
   serveJson(req, system.siteMaps[req.site]);
 }
 
-export function servePlugins(req, site, system) {
+export function servePlugins(req, system) {
   serveJson(req, system.plugins[req.site]);
 }
 
-export function serveMetaAboutUs(req, site, system) {
+export function serveMetaAboutUs(req, system) {
   serveJson(req, page("DenoWiki", [
     paragraph(`Site: ${req.site}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
@@ -199,7 +199,7 @@ export function serve404(req) {
   });
 }
 
-export async function serve(req, site, system) {
+export async function serve(req, system) {
   let nodeStyle = req.url.match(/^\/view\/([a-z0-9-]+)$/)
   if (nodeStyle) {
     let headers = baseHeaders()
@@ -213,7 +213,7 @@ export async function serve(req, site, system) {
   }
   let metaPage = metaPages[req.url];
   if (metaPage) {
-    let data = await metaPage(req, site, system);
+    let data = await metaPage(req, system);
     serveJson(req, data);
     return
   }
@@ -221,12 +221,12 @@ export async function serve(req, site, system) {
   if (req.url.indexOf("/system/save") == 0) {
     if (req.url.method != "POST") {
       // Different status code?
-      site.serve404()
+      serve404(req)
       return
     }
     if (!req.authenticated) {
       // TODO: Should be a different status code
-      site.serve404()
+      serve404(req)
       return
     }
     let url = new URL(req.url)
@@ -249,28 +249,12 @@ export async function serve(req, site, system) {
     let pagePath = join(siteRoot, "pages", slug)
     if (!await exists(pagePath)) {
       // TODO: Handle initial page creation
-      site.serveJson(req, {success: false, status: `Can only edit existing pages: ${pagePath} doesn't exist`})
+      serveJson(req, {success: true})
       return
     }
-    let page = await readJson(pagePath)
-    // get the content of the edit
-    let json = JSON.parse(req.body)
-    // set or update the existing content
-    for (let [i, item] of page["story"].entries()) {
-      if (item.id == json.id) {
-        page["story"][i] = json
-      }
-    }
-    // TODO: Record in journal, handle delete, handle add
-    // save the file
-    let result = await writeJson(pagePath, page)
-    console.log(result)
-    // return the result of the op
-    site.serveJson(req, {success: true})
-    return
   }
   if (req.url.indexOf("/index.html") == 0) {
-    serveFile(req, "text/html", "./index.html");
+    serveFile(req, "text/html", "./client/index.html");
     return
   }
   if (req.url.match(/^\/client\/.*\.mjs$/)) {
@@ -280,12 +264,11 @@ export async function serve(req, site, system) {
   }
   let favicon = join(req.siteRoot, "status", "favicon.png")
   if (req.url == "/favicon.png" && await exists(favicon)) {
-      site.serveFile(req, "image/png", favicon)
+      serveFile(req, "image/png", favicon)
       return
   }
   if (req.url.match(/^\/.*\.png$/)) {
-    let filePath = `.${req.url}`;
-    serveFile(req, "image/png", filePath);
+    serveFile(req, "image/png", join("./client", req.url));
     return
   }
   let match = req.url.match(/^\/([a-z0-9-]+).json$/)
@@ -293,7 +276,7 @@ export async function serve(req, site, system) {
     let page = match[1]
     let fullPath = join(req.siteRoot, "pages", page);
     if (await exists(fullPath)) {
-      site.serveFile(req, "application/json", fullPath);
+      serveFile(req, "application/json", fullPath);
       return
     }
   }
@@ -326,7 +309,7 @@ export function pages(metaText) {
       }
     })
     // console.log(JSON.stringify(page,null,2))
-    metaPages[`/${asSlug(title)}.json`] = async (req, site, _system) => {site.serveJson(req, page)}
+    metaPages[`/${asSlug(title)}.json`] = async (req, _system) => {serveJson(req, page)}
   })
 
 }

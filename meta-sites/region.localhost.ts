@@ -1,5 +1,6 @@
 const { stat } = Deno;
 import { readFileStr, exists } from "std/fs/mod.ts";
+import * as wiki from "seran/wiki.ts";
 
 export let metaPages = {};
 
@@ -7,53 +8,53 @@ function route(url, fn) {
   metaPages[url] = fn;
 }
 
-route("/welcome-visitors.json", async (req, site, _system) => {
-  site.serveJson(req, site.welcomePage("[[DenoWiki]]", "[[Region]]"));
+route("/welcome-visitors.json", async (req, _system) => {
+  wiki.serveJson(req, wiki.welcomePage("[[DenoWiki]]", "[[Region]]"));
 });
 
-route("/region.json", async (req, site, _system) => {
-  site.serveJson(req, site.page("Region", [
-    site.paragraph("List of [[Sites]]"),
-    site.paragraph("Region crawling [[Config]]"),
-    site.paragraph("[[One Degree]]"),
-    site.paragraph("[[Two Degrees]]"),
-    site.paragraph("[[Three Degrees]]"),
-    site.roster([...(await oneDegreeAway(rootSite)).values()].join("\n"))
+route("/region.json", async (req, _system) => {
+  wiki.serveJson(req, wiki.page("Region", [
+    wiki.paragraph("List of [[Sites]]"),
+    wiki.paragraph("Region crawling [[Config]]"),
+    wiki.paragraph("[[One Degree]]"),
+    wiki.paragraph("[[Two Degrees]]"),
+    wiki.paragraph("[[Three Degrees]]"),
+    wiki.roster([...(await oneDegreeAway(rootSite)).values()].join("\n"))
   ]));
 });
 
-route("/one-degree.json", async (req, site, _system) => {
-  site.serveJson(req, site.page("One Degree", [
-    site.roster([...(await oneDegreeAway(rootSite)).values()].join("\n"))
+route("/one-degree.json", async (req, _system) => {
+  wiki.serveJson(req, wiki.page("One Degree", [
+    wiki.roster([...(await oneDegreeAway(rootSite)).values()].join("\n"))
   ]));
 });
 
-route("/two-degrees.json", async (req, site, _system) => {
-  site.serveJson(req, site.page("Two Degrees", [
-    site.roster([...(await twoDegreesAway(rootSite)).values()].join("\n"))
+route("/two-degrees.json", async (req, _system) => {
+  wiki.serveJson(req, wiki.page("Two Degrees", [
+    wiki.roster([...(await twoDegreesAway(rootSite)).values()].join("\n"))
   ]));
 });
 
-route("/three-degrees.json", async (req, site, _system) => {
-  site.serveJson(req, site.page("Three Degrees", [
-    site.roster([...(await threeDegreesAway(rootSite)).values()].join("\n"))
+route("/three-degrees.json", async (req, _system) => {
+  wiki.serveJson(req, wiki.page("Three Degrees", [
+    wiki.roster([...(await threeDegreesAway(rootSite)).values()].join("\n"))
   ]));
 });
 
 let rootSite = "wiki.dbbs.co";
-route("/config.json", (req, site, _system) => {
-  site.serveJson(req, site.page("Config", [
-    site.paragraph(`Root Site: ${rootSite}`),
-    site.paragraph(`Number of Crawled Sites: ${sites.size}`)
+route("/config.json", (req, _system) => {
+  wiki.serveJson(req, wiki.page("Config", [
+    wiki.paragraph(`Root Site: ${rootSite}`),
+    wiki.paragraph(`Number of Crawled Sites: ${sites.size}`)
   ]));
 });
 
-route("/sites.json", (req, site, _system) => {
+route("/sites.json", (req, _system) => {
   let paras = [];
   for (let s of sites) {
-    paras.push(site.paragraph(s));
+    paras.push(wiki.paragraph(s));
   }
-  site.serveJson(req, site.page("Sites", paras));
+  wiki.serveJson(req, wiki.page("Sites", paras));
 });
 
 async function readDir(path) {

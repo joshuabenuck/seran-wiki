@@ -1,5 +1,6 @@
 const { stat } = Deno;
 import { ServerRequest } from "std/http/server.ts";
+import * as wiki from "seran/wiki.ts";
 import {
   encode,
   decode
@@ -30,14 +31,14 @@ export function siteMap() {
   ];
 }
 
-export async function serve(req: ServerRequest, site, system) {
+export async function serve(req: ServerRequest, system) {
   console.log("du", req.url);
   if (req.url == "/welcome-visitors.json") {
-    site.serveJson(
+    wiki.serveJson(
       req,
-      site.page(
+      wiki.page(
         "Welcome Visitors",
-        [site.paragraph(`[[${b32path("/")}]] - /`)]
+        [wiki.paragraph(`[[${b32path("/")}]] - /`)]
       )
     );
   } else if (req.url.match("/^[a-z0-9]+.json")) {
@@ -54,14 +55,14 @@ export async function serve(req: ServerRequest, site, system) {
     for (let file of await readDir(path)) {
       let fullPath = [path, file.name].join("/").replace("//", "/");
       files.push(
-        site.paragraph(`[[${b32path(fullPath)}]] ${fullPath} - ${file.len}`)
+        wiki.paragraph(`[[${b32path(fullPath)}]] ${fullPath} - ${file.len}`)
       );
     }
 
-    let data = site.page(path, files);
+    let data = wiki.page(path, files);
 
-    site.serveJson(req, data);
+    wiki.serveJson(req, data);
   } else {
-    site.serve(req, site, system);
+    wiki.serve(req, system);
   }
 }
