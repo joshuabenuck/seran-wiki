@@ -2,6 +2,8 @@ const { args, stat, open, exit, writeFile } = Deno;
 import { readFileStr, exists, writeJson } from "std/fs/mod.ts";
 import { BufReader } from "std/io/bufio.ts";
 import * as wiki from "seran/wiki.ts";
+import { Request } from "seran/wiki.ts";
+import { System, MetaSite } from "seran/system.ts";
 import {
   isAbsolute,
   join,
@@ -13,16 +15,16 @@ function aboutStatic() {
         wiki.paragraph("This meta-site serves pages from existing wikis."),
         wiki.paragraph("In order to use it, register the meta-site with the name of an existing wiki"),
         wiki.paragraph("For example:"),
-        wiki.paragraph("./denowiki.sh --meta-site=static.localhost.ts@fed.wiki.org"),
+        wiki.paragraph("./seran-wiki.sh --meta-site=static.localhost.ts@fed.wiki.org"),
         wiki.paragraph("This will serve the wiki pages from ~/.wiki/fed.wiki.org/pages/"),
         wiki.paragraph("For this example to work:"),
-        wiki.paragraph("* The name fed.wiki.org must resolve to the host running denowiki."),
+        wiki.paragraph("* The name fed.wiki.org must resolve to the host running seran-wiki."),
         wiki.paragraph("* ~/.wiki/fed.wiki.org/pages/ must exist.")
     ])
 }
 
-export async function serve(req, system) {
-    if (req.site.indexOf("static.") != -1 &&
+export async function serve(req: Request, system: System) {
+    if (req.site.host.indexOf("static.") != -1 &&
         req.url == "/welcome-visitors.json") {
             wiki.serveJson(req, wiki.welcomePage("[[DenoWiki]]", "[[About static]]"))
             return
@@ -39,13 +41,12 @@ export function siteMap() {
     return _siteMap
 }
 
-export async function init({req, system}) {
-    if (req.site.indexOf("static.") == -1) {
-        console.log(system.root, system.hosts[req.host])
-        let path = join(system.root, req.host)
-        let fallback_path = join(system.root, system.hosts[req.host])
+export async function init({site, system}: {site: MetaSite, system: System}) {
+    if (site.host.indexOf("static.") == -1) {
+        let path = join(system.root, site.host)
+        let fallback_path = join(system.root, site.defaultHost)
         if (!await exists(path) && !await exists(fallback_path)) {
-            console.log(`Creating directory for '${req.host}`)
+            console.log(`Creating directory for '${site.host}`)
             console.log("Enter secret for site: ")
             let reader = new BufReader(Deno.stdin)
             let secret = await reader.readString("\n")
@@ -54,8 +55,13 @@ export async function init({req, system}) {
             await writeJson(join(path, "status", "owner.json"), {name: "Deno Wiki", friend: { secret }})
             Deno.mkdir(join(path, "pages"))
             await writeJson(join(path, "pages", "welcome-visitors"), wiki.welcomePage(null, null))
+            // site.root in this case would have used the default host path
+            // reset it to the one we just created
+            // TODO: Need System to handle the creation of the directory
+            // probably should allow meta-sites to specify if they want file backing
+            site.root = path
         }
-        wiki.enableLogin(req, system)
+        wiki.enableLogin(site, system)
         return
     }
     // Uncomment to register all existing wikis
@@ -73,11 +79,11 @@ export async function init({req, system}) {
             console.log("static: Conflict - not registering", targetSite)
             continue
         }
-        // TODO: DRY this logic or keep the duplication?
-        // Or move this registration into index.ts?
-        system.metaSites[targetSite] = system.metaSites[req.site];
-        system.siteMaps[targetSite] = [];
-        console.log("static: Registered", targetSite)
+        // TODO: Fix this! Broke when cleaning up MetaSite object
+        // Need a way to alias an existing site to another name.
+        // system.metaSites[targetSite] = system.metaSites[site];
+        // system.metaSites[targetSite] = [];
+        // console.log("static: Registered", targetSite)
         // TODO: Uncomment when sitemap support is added
         // system.siteMaps[targetSite] = siteMap(targetSite);
         

@@ -25,7 +25,6 @@ let params = parse(args, {
     "root": join(Deno.dir("home"), ".wiki")
   }
 });
-console.log(params);
 
 let intf = "0.0.0.0";
 let port = params.port;
@@ -78,42 +77,12 @@ for (let metaSitesDir of params["meta-sites-dir"]) {
   }
 }
 
-let etcHosts = null;
-if (await exists("/etc/hosts")) {
-  etcHosts = "/etc/hosts";
-}
-if (await exists("/Windows/System32/drivers/etc/hosts")) {
-  etcHosts = "/Windows/System32/drivers/etc/hosts";
-}
-if (etcHosts) {
-  let metaSites = Object.keys(system.metaSites);
-  let hosts = (await readFileStr(etcHosts)).split("\n");
-  for (let host of hosts) {
-    if (host.indexOf("127.0.0.1") == -1) {
-      continue;
-    }
-    host = host.replace("127.0.0.1", "").trim();
-    metaSites = metaSites.filter((s) => {
-      let metaSite = s.split(":")[0];
-      if (metaSite == host || metaSite.indexOf("localhost") == -1) {
-        return false;
-      }
-      return true;
-    });
-  }
-  metaSites.map((s) =>
-    console.log(`WARN: missing /etc/hosts entry for ${s}.`)
-  );
-}
+system.checkEtcHosts()
 
-interface EnhancedRequest extends ServerRequest {
-  [key: string]: any
-}
 console.log("listening on port ", port);
 for await (const r of s) {
-  let req = r as EnhancedRequest
+  let req = r as wiki.Request
   let requestedSite = req.headers.get("host");
-  let metaSite = system.metaSites[requestedSite];
   if (req.url == "/") {
     let headers = new Headers();
     headers.set(
@@ -126,32 +95,18 @@ for await (const r of s) {
     };
     req.respond(res);
   }
+  let metaSite = system.metaSites[requestedSite];
   if (metaSite) {
-    req.site = requestedSite;
-    req.host = system.siteHosts[requestedSite];
-    req.siteRoot = join(system.root, req.host)
-    if (!await exists(req.siteRoot)) {
-      req.siteRoot = join(system.root, system.hosts[req.host])
-    }
+    req.site = metaSite;
     req.authenticated = wiki.authenticated(req)
-    if (metaSite.serve) {
-      console.log("meta-site:", requestedSite, req.url);
-      metaSite.serve(req, system);
-    }
-    if (metaSite.metaPages) {
-      console.log("meta-page:", requestedSite, req.url);
-      let metaPage = metaSite.metaPages[req.url];
-      if (metaPage) {
-        metaPage(req, system);
-      } else {
-        wiki.serve(req, system);
-      }
+    if (!metaSite.serve(req)) {
+      wiki.serve(req, system);
     }
     continue;
   }
   console.log(
     "unknown site, unable to handle request:",
-    requestedSite,
+    req.site.host,
     req.url
   );
   wiki.serve404(req);
