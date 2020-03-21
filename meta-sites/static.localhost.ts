@@ -60,7 +60,7 @@ export async function init({req, system}) {
     }
     // Uncomment to register all existing wikis
     return
-    for (let dir of await Deno.readDir(system.root)) {
+    for (let dir of await Deno.readdir(system.root)) {
         if (dir.isFile() ||
             dir.name == "assets" ||
             dir.name == "pages" ||

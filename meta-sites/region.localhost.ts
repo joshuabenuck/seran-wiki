@@ -64,7 +64,7 @@ async function readDir(path) {
     return [];
   }
 
-  return await Deno.readDir(path);
+  return await Deno.readdir(path);
 }
 
 async function referencedSites(siteName) {
