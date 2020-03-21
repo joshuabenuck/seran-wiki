@@ -6,6 +6,12 @@ import {
   join,
   basename
 } from "std/path/posix.ts";
+import { System, MetaSite } from "./system.ts";
+
+export interface Request extends ServerRequest {
+  site: MetaSite;
+  authenticated: boolean;
+}
 
 let metaPages = {
   "/system/site-index.json": serveSiteIndex,
@@ -16,20 +22,17 @@ let metaPages = {
   "/logout": logout
 };
 
-export async function enableLogin(req, system) {
-    let fullPath = join(system.root, req.host, "status", "owner.json")
+export async function enableLogin(site: MetaSite, system: System) {
+    // TODO: Create helpers in MetaSite for these joins? 
+    let fullPath = join(site.root, "status", "owner.json")
     if (!await exists(fullPath)) {
-      fullPath = join(system.root, system.hosts[req.host], "status", "owner.json")
-      if (!await exists(fullPath)) {
-        console.log(`Unable to retrieve password from: ${fullPath}`)
-        return
-      }
+      console.log(`Unable to retrieve password from: ${fullPath}`)
+      return
     }
     console.log(`Looking for password in: ${fullPath}`)
-    let contents = await readFileStr(fullPath)
-    let json = JSON.parse(contents)
-    if (json.friend && json.friend.secret) {
-      system.passwords[req.site] = json.friend.secret
+    let json = await readJson(fullPath)
+    if (json["friend"] && json["friend"]["secret"]) {
+      site.password = json["friend"]["secret"]
     }
 }
 
@@ -42,13 +45,13 @@ function authHeaderToPassword(header) {
   return atob(parts[1])
 }
 
-export function authenticated(req) {
+export function authenticated(req: Request) {
   let obj = cookie(req.headers.get("cookie"))
   return !!obj["wiki-session"]
 }
 
-function login(req, system) {
-  let pw = system.passwords[req.site]
+function login(req: Request, system: System) {
+  let pw = req.site.password
   let headers = baseHeaders()
   const failure = {
     status: 401,
@@ -87,7 +90,7 @@ function login(req, system) {
   req.respond(res);
 }
 
-function logout(req, system) {
+function logout(req: Request, system: System) {
   let headers = baseHeaders()
   headers.set("Set-Cookie", `wiki-session=logout; expires=${new Date()}`)
   const res = {
@@ -120,7 +123,7 @@ export function baseHeaders() {
   return headers;
 }
 
-export function serveContents(req, contentType, contents, length) {
+export function serveContents(req: Request, contentType, contents, length) {
   let headers = baseHeaders();
   headers.set("content-length", length);
   headers.set("content-type", contentType);
@@ -133,12 +136,12 @@ export function serveContents(req, contentType, contents, length) {
   req.respond(res);
 }
 
-export async function serveFile(req, contentType, filePath) {
+export async function serveFile(req: Request, contentType, filePath) {
   const [file, fileInfo] = await Promise.all([open(filePath), stat(filePath)]);
   serveContents(req, contentType, file, fileInfo.len.toString());
 }
 
-export function serveJson(req, data) {
+export function serveJson(req: Request, data) {
   let headers = baseHeaders();
   if (data && data.story) {
     if (data.dynamic == undefined) {
@@ -159,7 +162,7 @@ export function serveJson(req, data) {
   });
 }
 
-export function serveSiteIndex(req) {
+export function serveSiteIndex(req: Request) {
   let data = {
     "index": { "_tree": {}, "_prefix": "" },
     "documentCount": 0,
@@ -174,24 +177,24 @@ export function serveSiteIndex(req) {
   serveJson(req, data);
 }
 
-export function serveSiteMap(req, system) {
-  serveJson(req, system.siteMaps[req.site]);
+export function serveSiteMap(req: Request, system: System) {
+  serveJson(req, req.site.siteMap);
 }
 
-export function servePlugins(req, system) {
-  serveJson(req, system.plugins[req.site]);
+export function servePlugins(req: Request, system: System) {
+  serveJson(req, req.site.plugins);
 }
 
-export function serveMetaAboutUs(req, system) {
+export function serveMetaAboutUs(req: Request, system: System) {
   serveJson(req, page("DenoWiki", [
-    paragraph(`Site: ${req.site}`),
+    paragraph(`Site: ${req.site.targetSite}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
     paragraph(`Source: TODO - Add link to meta-site's source`),
-    item("paragraph", {text: `Password: ${system.passwords[req.site]}`, sensitive: true})
+    item("paragraph", {text: `Password: ${req.site.password}`, sensitive: true})
   ]));
 }
 
-export function serve404(req) {
+export function serve404(req: Request) {
   console.log(`Unable to handle request: ${req.url}`);
   req.respond({
     status: 404,
@@ -199,7 +202,7 @@ export function serve404(req) {
   });
 }
 
-export async function serve(req, system) {
+export async function serve(req: Request, system: System) {
   let nodeStyle = req.url.match(/^\/view\/([a-z0-9-]+)$/)
   if (nodeStyle) {
     let headers = baseHeaders()
@@ -219,7 +222,7 @@ export async function serve(req, system) {
   }
   // TODO: Extract into its own function
   if (req.url.indexOf("/system/save") == 0) {
-    if (req.url.method != "POST") {
+    if (req.method != "POST") {
       // Different status code?
       serve404(req)
       return
@@ -238,15 +241,8 @@ export async function serve(req, system) {
       siteName = fullSlug.substring(0, colonIndex)
       slug = fullSlug.substring(colonIndex + 1)
     }
-    // ick... Really need to encapsulate this logic somewhere
-    // the amount of code duplication here is a concern
-    let host = system.siteHosts[siteName];
-    let siteRoot = join(system.root, host)
-    if (!await exists(siteRoot)) {
-      siteRoot = join(system.root, system.hosts[host])
-    }
     // try to load existing page, if not found - create it
-    let pagePath = join(siteRoot, "pages", slug)
+    let pagePath = join(req.site.root, "pages", slug)
     if (!await exists(pagePath)) {
       // TODO: Handle initial page creation
       serveJson(req, {success: true})
@@ -262,7 +258,7 @@ export async function serve(req, system) {
     serveFile(req, "text/javascript", filePath);
     return
   }
-  let favicon = join(req.siteRoot, "status", "favicon.png")
+  let favicon = join(req.site.root, "status", "favicon.png")
   if (req.url == "/favicon.png" && await exists(favicon)) {
       serveFile(req, "image/png", favicon)
       return
@@ -274,7 +270,7 @@ export async function serve(req, system) {
   let match = req.url.match(/^\/([a-z0-9-]+).json$/)
   if (match) {
     let page = match[1]
-    let fullPath = join(req.siteRoot, "pages", page);
+    let fullPath = join(req.site.root, "pages", page);
     if (await exists(fullPath)) {
       serveFile(req, "application/json", fullPath);
       return

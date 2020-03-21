@@ -1,6 +1,7 @@
 const { stat } = Deno;
-import { ServerRequest } from "std/http/server.ts";
 import * as wiki from "seran/wiki.ts";
+import { Request } from "seran/wiki.ts";
+import { System, MetaSite } from "seran/system.ts";
 
 export let plugins = ["/client/wander.mjs"]
 
@@ -17,8 +18,8 @@ async function readDir(path) {
 let metaPages = {};
 
 // since constructors cannot be async and readDir is async, use an init method
-export async function init({req, system}) {
-  wiki.enableLogin(req, system)
+export async function init({site, system}: {site: MetaSite, system: System}) {
+  wiki.enableLogin(site, system)
   for (let metaPagePath of await readDir("./meta-pages")) {
     let metaPage = await import(`../meta-pages/${metaPagePath.name}`);
     let exports = Object.keys(metaPage);
@@ -37,7 +38,7 @@ export async function init({req, system}) {
   }
 }
 
-export async function serve(req: ServerRequest, system) {
+export async function serve(req: Request, system: System) {
   if (req.url == "/welcome-visitors.json") {
     wiki.serveJson(
       req,
@@ -49,11 +50,15 @@ export async function serve(req: ServerRequest, system) {
       items.push(wiki.paragraph(`[http://${siteName}/view/welcome-visitors ${siteName}]`))
     }
     items.push(wiki.paragraph("Sites with passwords:"))
-    if (Object.keys(system.passwords).length == 0) {
-      items.push(wiki.paragraph("None"))
+    let count = 0
+    for (let site of Object.values(system.metaSites)) {
+      if (site.password) {
+        count += 1
+        items.push(wiki.paragraph(`${site.targetSite}: ${site.password}`))
+      }
     }
-    for (let siteName of Object.keys(system.passwords)) {
-      items.push(wiki.paragraph(`${siteName}: ${system.passwords[siteName]}`))
+    if (count == 0) {
+      items.push(wiki.paragraph("None"))
     }
     let page = wiki.page("Admin", items)
     page["sensitive"] = true
