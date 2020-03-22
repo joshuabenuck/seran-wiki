@@ -64,7 +64,7 @@ async function readDir(path) {
     return [];
   }
 
-  return await Deno.readDir(path);
+  return await Deno.readdir(path);
 }
 
 async function referencedSites(siteName) {
@@ -115,7 +115,7 @@ async function threeDegreesAway(siteName) {
 
 let dataUrl =
   "http://ward.asia.wiki.org/assets/pages/search-over-the-horizon/data.tgz";
-let sites = new Set();
+let sites = new Set<string>();
 export async function init() {
   // TODO: Complete auto-download of data.tgz
   // if (!await exists("./data")) {

@@ -24,7 +24,7 @@ export class MetaSite {
   // if set, login is enabled for the site
   password: string | null;
   // array of non-default plugins to load
-  plugins: [string];
+  plugins: string[];
   // exports from the meta-site script
   exports: { [key: string]: any };
   // cached sitemap
@@ -75,6 +75,7 @@ export class MetaSite {
     if (this.exports.siteMap) {
       this.siteMap = this.exports.siteMap(this.targetSite);
     }
+    this.plugins = [];
     if (this.exports.plugins) {
       // Make relative imports relative to target site, if needed
       this.plugins = this.exports.plugins.map((p) => {
