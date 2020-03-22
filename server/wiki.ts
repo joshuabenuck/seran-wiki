@@ -263,10 +263,13 @@ export async function serve(req: Request, system: System) {
     serveFile(req, "text/javascript", filePath);
     return
   }
-  let favicon = join(req.site.root, "status", "favicon.png")
-  if (req.url == "/favicon.png" && await exists(favicon)) {
-      serveFile(req, "image/png", favicon)
-      return
+  // workaround to allow this to be called outside of the context of a meta-site
+  if (req.site) {
+    let favicon = join(req.site.root, "status", "favicon.png")
+    if (req.url == "/favicon.png" && await exists(favicon)) {
+        serveFile(req, "image/png", favicon)
+        return
+    }
   }
   if (req.url.match(/^\/.*\.png$/)) {
     serveFile(req, "image/png", join("./client", req.url));
