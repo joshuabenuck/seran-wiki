@@ -23,7 +23,8 @@ let params = parse(args, {
     "meta-sites-dir": [],
     "external-client": "dev.wiki.randombits.xyz",
     "root": join(Deno.dir("home"), ".wiki")
-  }
+  },
+  boolean: "allow-disclosure"
 });
 
 let intf = "0.0.0.0";
@@ -83,7 +84,8 @@ console.log("listening on port ", port);
 for await (const r of s) {
   let req = r as wiki.Request
   let requestedSite = req.headers.get("host");
-  if (req.url == "/") {
+  let metaSite = system.metaSites[requestedSite];
+  if (req.url == "/" && metaSite) {
     let headers = new Headers();
     headers.set(
       "Location",
@@ -95,7 +97,6 @@ for await (const r of s) {
     };
     req.respond(res);
   }
-  let metaSite = system.metaSites[requestedSite];
   if (metaSite) {
     req.site = metaSite;
     req.authenticated = wiki.authenticated(req)
@@ -104,6 +105,47 @@ for await (const r of s) {
     }
     continue;
   }
+  if (req.url == "/not-in-service.json") {
+    let items = [
+      wiki.paragraph("You have reach a site that has been disconnected or is no longer in service."),
+      wiki.paragraph("If you feel you have reached this page in error, please check the server configuration and try again."),
+      wiki.paragraph("The most common cause for this during development is for there to be a mismatch between the hostname the server is listening on and the hostname you attempted to access."),
+    ]
+    if (params["allow-disclosure"]) {
+      let sites = Object.values(system.metaSites);
+      if (sites.length == 0) {
+        items.push(wiki.paragraph("WARNING: There are no registered meta-sites."))
+        items.push(wiki.paragraph("Did you forget to start the server with --meta-site or --meta-sites-dir?"))
+      }
+      else {
+        items.push(wiki.paragraph("These are the registered sites:"))
+        for (let site of sites) {
+          items.push(wiki.paragraph(site.targetSite))
+        }
+      }
+    }
+    wiki.serveJson(req, wiki.page("Not in Service", items))
+    continue
+  }
+  // minimum routes needed to display a default error page
+  // creating a meta-site just for this purpose
+  // would likely be better, but this works for now
+  if (req.url == "/index.html?page=not-in-service") {
+    wiki.serveFile(req, "text/html", "./client/index.html");
+    continue
+  }
+  if (req.url == "/" ||
+      req.url.indexOf("/index.html") == 0) {
+      req.url = "/view/not-in-service"
+      wiki.serve(req, system)
+  }
+  if (req.url.match(/^\/client\/.*\.mjs$/) ||
+      req.url.match(/^\/.*\.png$/)) {
+    wiki.serve(req, system)
+    continue
+  }
+
+  // if not a request for a user visible page in a missing site, return a 404
   console.log(
     "unknown site, unable to handle request:",
     requestedSite,
