@@ -7,7 +7,7 @@ async function readDir(path) {
     return [];
   }
 
-  return await Deno.readDir(path);
+  return await Deno.readdir(path);
 }
 
 export async function sites() {
