@@ -1,4 +1,4 @@
-FROM hayd/alpine-deno:0.35.0
+FROM hayd/alpine-deno:0.36.0
 
 EXPOSE 8000
 
@@ -18,4 +18,4 @@ ADD . /seran-wiki
 # RUN deno fetch main.ts
 
 # These are passed as deno arguments when run with docker:
-ENTRYPOINT ["deno", "-c", "tsconfig.json", "--importmap=import_map.json", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "./server/seran.ts"]
+ENTRYPOINT ["deno", "-c", "tsconfig.json", "--importmap=import_map.json", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "./server/seran.ts", "--allow-disclosure"]
