@@ -65,6 +65,9 @@ class Wiki extends HTMLElement {
         if (!origin) {
             origin = location.origin
         }
+        else {
+            origin = "http://" + origin
+        }
         if (!this.pluginsLoadedFor.has(origin)) {
             this.pluginsLoadedFor.add(origin)
             try {
@@ -87,7 +90,7 @@ class Wiki extends HTMLElement {
     }
 
     async loadRemotePage(site, slug) {
-        let res = fetch(`${origin}/${slug}.json`)
+        let res = fetch(`http://${site}/${slug}.json`)
         let page = await this.renderPage(res, slug, site)
     }
 
