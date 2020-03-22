@@ -61,7 +61,7 @@ export async function serve(req: Request, system: System) {
       items.push(wiki.paragraph("None"))
     }
     let page = wiki.page("Admin", items)
-    page["sensitive"] = true
+    page.sensitive = true
     wiki.serveJson(
       req,
       page

@@ -8,6 +8,11 @@ import {
 } from "std/path/posix.ts";
 import { System, MetaSite } from "./system.ts";
 
+import * as welcome from "./welcome.ts";
+export const ABOUT_US_ID = welcome.ABOUT_US_ID
+export const DO_AND_SHARE_ID = welcome.DO_AND_SHARE_ID
+export const welcomePage = welcome.welcomePage
+
 export interface Request extends ServerRequest {
   site: MetaSite;
   authenticated: boolean;
@@ -310,14 +315,26 @@ export function pages(metaText) {
 
 }
 
-export function page(title, items) {
+interface Page {
+  title: string;
+  story: Item[];
+  sensitive?: boolean;
+}
+
+export function page(title: string, items: Item[]): Page {
   return {
     title,
     story: items
   };
 }
 
-export function item(type, props) {
+interface Item {
+  id: string;
+  type: string;
+  [key: string]: any;
+}
+
+export function item(type: string, props: Object): Item {
   let item = {
     type,
     id: itemId()
@@ -328,63 +345,31 @@ export function item(type, props) {
   return item;
 }
 
-export function paragraph(text) {
-  return item("paragraph", { text });
+interface Paragraph extends Item {
+  text: string;
 }
 
-export function reference(site, slug, title, text) {
-  return item("reference", { site, slug, title, text });
+export function paragraph(text: string): Paragraph {
+  return item("paragraph", { text }) as Paragraph;
 }
 
-export function roster(roster) {
-  return item("roster", { text: roster });
+interface Reference extends Item {
+  site: string;
+  slug: string;
+  title: string;
+  text: string;
 }
 
-export let DO_AND_SHARE_ID = "05e2fa92643677ca";
-export let ABOUT_US_ID = "63ad2e58eecdd9e5";
+export function reference(site, slug, title, text): Reference {
+  return item("reference", { site, slug, title, text }) as Reference;
+}
 
-export function welcomePage(aboutUs, doAndShare) {
-  return {
-    "title": "Welcome Visitors",
-    "story": [
-      {
-        "text":
-          "Welcome to this [http://fed.wiki.org/view/federated-wiki Federated Wiki] site. From this page you can find who we are and what we do. New sites provide this information and then claim the site as their own. You will need your own site to participate.",
-        "id": "7b56f22a4b9ee974",
-        "type": "paragraph"
-      },
-      {
-        "type": "paragraph",
-        "id": "821827c99b90cfd1",
-        "text": "Pages about us."
-      },
-      {
-        "type": "paragraph",
-        "id": ABOUT_US_ID,
-        "prompt":
-          "Link to a page about yourself here. Type your name enclosed in double square brackets. Then press Command/ALT-S to save.\n\nMake all pages here yours alone with the login below.",
-        "text": aboutUs
-      },
-      {
-        "type": "paragraph",
-        "id": "2bbd646ff3f44b51",
-        "text": "Pages where we do and share."
-      },
-      {
-        "type": "paragraph",
-        "id": DO_AND_SHARE_ID,
-        "prompt":
-          "Create pages about things you do on this wiki. Type a descriptive name of something you will be writing about. Enclose it in square brackets. Then press Command/ALT-S to save.",
-        "text": doAndShare
-      },
-      {
-        "type": "paragraph",
-        "id": "ee416d431ebf4fb4",
-        "text":
-          "You can edit your copy of these pages. Press [+] to add more writing spaces. Read [http://fed.wiki.org/view/how-to-wiki How to Wiki] for more ideas. Follow [[Recent Changes]] here and nearby."
-      }
-    ]
-  };
+interface Roster extends Item {
+  text: string;
+}
+
+export function roster(roster: string): Roster {
+  return item("roster", { text: roster }) as Roster;
 }
 
 function randomByte() {

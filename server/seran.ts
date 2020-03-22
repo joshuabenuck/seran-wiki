@@ -106,7 +106,7 @@ for await (const r of s) {
   }
   console.log(
     "unknown site, unable to handle request:",
-    req.site.host,
+    requestedSite,
     req.url
   );
   wiki.serve404(req);
