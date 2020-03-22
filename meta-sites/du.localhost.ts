@@ -1,6 +1,7 @@
 const { stat } = Deno;
-import { ServerRequest } from "std/http/server.ts";
+import { System } from "seran/system.ts";
 import * as wiki from "seran/wiki.ts";
+import { Request } from "seran/wiki.ts";
 import {
   encode,
   decode
@@ -31,7 +32,7 @@ export function siteMap() {
   ];
 }
 
-export async function serve(req: ServerRequest, system) {
+export async function serve(req: Request, system: System) {
   console.log("du", req.url);
   if (req.url == "/welcome-visitors.json") {
     wiki.serveJson(

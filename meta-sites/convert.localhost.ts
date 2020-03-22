@@ -1,12 +1,12 @@
-import { ServerRequest } from "std/http/server.ts";
 import * as wiki from "seran/wiki.ts";
+import { Request } from "seran/wiki.ts";
 
 let conversions = {
   "inches-to-millimeters": (inches) => inches * 25.4,
   "millimeters-to-inches": (millimeters) => millimeters / 25.4
 };
 
-export async function serve(req: ServerRequest, system) {
+export async function serve(req: Request, system) {
   if (req.url == "/welcome-visitors.json") {
     wiki.serveJson(
       req,
@@ -21,7 +21,7 @@ export async function serve(req: ServerRequest, system) {
         req,
         wiki.page(
           "Unknown",
-          wiki.paragraph(`This site is unable to convert '${src}' to '${dst}'`)
+          [ wiki.paragraph(`This site is unable to convert '${src}' to '${dst}'`) ]
         )
       );
       return;
