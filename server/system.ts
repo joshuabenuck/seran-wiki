@@ -59,6 +59,9 @@ export class MetaSite {
     // TODO: Print canonical path here...
     console.log(`Registering ${normalize(path)} as ${this.host}`);
     this.targetSite = `${this.host}:${this.port}`;
+    if(this.port == '80') {
+      this.targetSite = `${this.host}`;
+    }
   }
 
   async init() {
