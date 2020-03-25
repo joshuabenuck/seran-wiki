@@ -18,7 +18,7 @@ export class MetaSite {
   // just the host
   host: string;
   // non-default port number, if any
-  port: number;
+  port: string;
   // default hostname if not remapped
   defaultHost: string;
   // if set, login is enabled for the site
