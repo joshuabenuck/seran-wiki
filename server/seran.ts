@@ -18,7 +18,7 @@ function convertToArray(param, params) {
 
 let params = parse(args, {
   default: {
-    port: 8000,
+    port: '8000',
     "meta-site": [],
     "meta-sites-dir": [],
     "external-client": "dev.wiki.randombits.xyz",
@@ -29,6 +29,12 @@ let params = parse(args, {
 
 let intf = "0.0.0.0";
 let port = params.port;
+let bind = params.port;
+let x = params.port.split(':')
+if (x[1]) {
+  port = x[0]
+  bind = x[1]
+}
 let allInterfaces = await permissions.query({ name: "net" });
 if (allInterfaces.state != "granted") {
   let localhostInterface = await permissions.query(
@@ -42,7 +48,7 @@ if (allInterfaces.state != "granted") {
   }
   intf = "127.0.0.1";
 }
-const s = serve(`${intf}:${port}`);
+const s = serve(`${intf}:${bind}`);
 
 convertToArray("meta-site", params);
 convertToArray("meta-sites-dir", params);
@@ -57,7 +63,7 @@ async function readDir(path) {
   return await Deno.readdir(path);
 }
 
-let system = new System(params.root, params.port);
+let system = new System(params.root, port);
 
 for (let metaSitePath of params["meta-site"]) {
   await system.importMetaSite(metaSitePath, null);
@@ -80,7 +86,7 @@ for (let metaSitesDir of params["meta-sites-dir"]) {
 
 system.checkEtcHosts()
 
-console.log("listening on port ", port);
+console.log("listening on port ", bind);
 for await (const r of s) {
   let req = r as wiki.Request
   let requestedSite = req.headers.get("host");

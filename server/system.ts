@@ -18,7 +18,7 @@ export class MetaSite {
   // just the host
   host: string;
   // non-default port number, if any
-  port: number;
+  port: string;
   // default hostname if not remapped
   defaultHost: string;
   // if set, login is enabled for the site
@@ -59,6 +59,9 @@ export class MetaSite {
     // TODO: Print canonical path here...
     console.log(`Registering ${normalize(path)} as ${this.host}`);
     this.targetSite = `${this.host}:${this.port}`;
+    if(this.port == '80') {
+      this.targetSite = `${this.host}`;
+    }
   }
 
   async init() {
