@@ -28,6 +28,8 @@ export class MetaSite {
   siteMap: Object[];
 
   constructor(system: System, path: string) {
+    // use consistent slashes as not all Deno method handle them being mixed
+    path = path.replace(/\\/g, "/")
     this.system = system
     this.port = system.port
     // handle remap of individual meta-site
