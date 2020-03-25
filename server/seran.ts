@@ -86,7 +86,7 @@ for (let metaSitesDir of params["meta-sites-dir"]) {
 
 system.checkEtcHosts()
 
-console.log("listening on port ", port);
+console.log("listening on port ", bind);
 for await (const r of s) {
   let req = r as wiki.Request
   let requestedSite = req.headers.get("host");
