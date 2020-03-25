@@ -20,11 +20,11 @@ git clone git@github.com:joshuabenuck/seran-wiki.git
 ```
 Build and run from denowiki directory
 ```
-./seran-wiki.sh --meta-sites-dir=./meta-sites
+./seran-wiki.sh ./meta-sites
 ```
 or
 ```
-.\seran-wiki.cmd --meta-sites-dir=.\meta-sites
+.\seran-wiki.cmd .\meta-sites
 ```
 
 Navigate to http://localtest.me:8000/ or http://localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.
@@ -40,11 +40,15 @@ This is the functionality the bundled meta-sites offer:
 
 The command line in the `Install` section will register and run all bundled meta-sites.
 
-To only run a specific set of meta-sites use `--meta-site=<path to meta-site>`. This can be specified more than once to run multiple meta-sites.
+`./seran-wiki.[sh|cmd] [--domain=<>] [--allow-disclosure] <file|directory|URL> ...`
 
-By default, the hostname requested must exactly match the filename of the meta-site code (minus the extension). To override this use the form `--meta-site=<path to meta-site>@<alternate hostname>`.
+  * --domain: Only have the server answer to URLs for this domain. May be specified more than once. Default is a wildcard.
+  * --allow-disclosure: Display the registered domains and meta-sites on the default error page. If this is not specified, the server will not disclose which domains or meta-sites are registered to avoid revealing too much about the server stetup.
+  * file: If the file is a TypeScript file, load the associated meta-site. If a JSON file, load it as a config file.
+  * directory: Load all TypeScript files in the directory as meta-sites.
+  * URL: Load the URL as a meta-site.
 
-For example, to have `du.localhost.ts` answer to `du.localtest.me`, `--meta-site=./meta-sites/du.localhost.ts@du.localtest.me`.
+If a file or directory does not exist, server startup will fail.
 
 Paths to meta-sites can be for local files or they can be urls to remote modules. Imports within the meta-site are resolved relative to their origin. This means local files will load other local files and remote modules will load other remote files.
 

@@ -19,12 +19,9 @@ function convertToArray(param, params) {
 let params = parse(args, {
   default: {
     port: '8000',
-    "meta-site": [],
-    "meta-sites-dir": [],
     "external-client": "dev.wiki.randombits.xyz",
-    "root": join(Deno.dir("home"), ".wiki"),
-    "domain": "*",
-    "config": null
+    root: join(Deno.dir("home"), ".wiki"),
+    domain: "*"
   },
   boolean: "allow-disclosure"
 });
@@ -52,11 +49,9 @@ if (allInterfaces.state != "granted") {
 }
 const s = serve(`${intf}:${bind}`);
 
-convertToArray("meta-site", params);
-convertToArray("meta-sites-dir", params);
 convertToArray("domain", params);
 
-async function readDir(path) {
+async function readdir(path) {
   let fileInfo = await stat(path);
   if (!fileInfo.isDirectory()) {
     console.log(`path ${path} is not a directory.`);
@@ -68,20 +63,39 @@ async function readDir(path) {
 
 let system = new System(params.domain, port, params.root);
 
-for (let metaSitePath of params["meta-site"]) {
-  await system.importMetaSite(metaSitePath);
-}
-for (let metaSitesDir of params["meta-sites-dir"]) {
-  for (let metaSitePath of await readDir(metaSitesDir)) {
-    let fullPath = join(metaSitesDir, metaSitePath.name);
-    if (!isAbsolute(fullPath)) {
-      fullPath = "./" + fullPath;
+let configFile = null
+for (let entry of params._) {
+  entry = entry.toString()
+  try {
+    let url = new URL(entry);
+    await system.importMetaSite(entry);
+    continue;
+  } catch (e) {
+    // ignore exception
+  }
+  if (!await exists(entry)) {
+    console.log(`FATAL: ${entry} is not a file, directory, or URL.`);
+    exit(1);
+  }
+  let info = await stat(entry);
+  if (info.isFile()) {
+    if (entry.match(/.*\.json$/)) {
+      configFile = entry;
+      continue;
     }
-    await system.importMetaSite(fullPath);
+    await system.importMetaSite(entry);
+  } else if (info.isDirectory()) {
+    for (let metaSitePath of await readdir(entry)) {
+      let fullPath = join(entry, metaSitePath.name);
+      if (!isAbsolute(fullPath)) {
+        fullPath = "./" + fullPath;
+      }
+      await system.importMetaSite(fullPath);
+      continue;
+    }
   }
 }
 if (Object.keys(system.metaSites).length == 0) {
-  let configFile = params.config
   if (!configFile) {
     configFile = join(params.root, "seran-config.json")
   }
