@@ -1,5 +1,5 @@
 const { exit, args, stat, permissions } = Deno;
-import { exists, readFileStr } from "std/fs/mod.ts";
+import { exists, readJson } from "std/fs/mod.ts";
 import { parse } from "std/flags/mod.ts";
 import {
   isAbsolute,
@@ -22,7 +22,9 @@ let params = parse(args, {
     "meta-site": [],
     "meta-sites-dir": [],
     "external-client": "dev.wiki.randombits.xyz",
-    "root": join(Deno.dir("home"), ".wiki")
+    "root": join(Deno.dir("home"), ".wiki"),
+    "domain": "*",
+    "config": null
   },
   boolean: "allow-disclosure"
 });
@@ -52,6 +54,7 @@ const s = serve(`${intf}:${bind}`);
 
 convertToArray("meta-site", params);
 convertToArray("meta-sites-dir", params);
+convertToArray("domain", params);
 
 async function readDir(path) {
   let fileInfo = await stat(path);
@@ -63,26 +66,33 @@ async function readDir(path) {
   return await Deno.readdir(path);
 }
 
-let system = new System(params.root, port);
+let system = new System(params.domain, port, params.root);
 
 for (let metaSitePath of params["meta-site"]) {
-  await system.importMetaSite(metaSitePath, null);
+  await system.importMetaSite(metaSitePath);
 }
 for (let metaSitesDir of params["meta-sites-dir"]) {
-  let host = null;
-  if (metaSitesDir.indexOf("@") != -1) {
-    let parts = metaSitesDir.split("@");
-    metaSitesDir = parts[0];
-    host = parts[1];
-  }
   for (let metaSitePath of await readDir(metaSitesDir)) {
     let fullPath = join(metaSitesDir, metaSitePath.name);
     if (!isAbsolute(fullPath)) {
       fullPath = "./" + fullPath;
     }
-    await system.importMetaSite(fullPath, host);
+    await system.importMetaSite(fullPath);
   }
 }
+if (Object.keys(system.metaSites).length == 0) {
+  let configFile = params.config
+  if (!configFile) {
+    configFile = join(params.root, "seran-config.json")
+  }
+  console.log(`Looking for config: ${configFile}`)
+  if (await exists(configFile)) {
+    let config = await readJson(configFile)
+    console.log("Parsing config.", config)
+    system.processConfig(config)
+  }
+}
+
 
 system.checkEtcHosts()
 
@@ -90,7 +100,7 @@ console.log("listening on port ", bind);
 for await (const r of s) {
   let req = r as wiki.Request
   let requestedSite = req.headers.get("host");
-  let metaSite = system.metaSites[requestedSite];
+  let metaSite = system.metaSiteFor(requestedSite);
   if (req.url == "/" && metaSite) {
     let headers = new Headers();
     headers.set(
@@ -124,9 +134,13 @@ for await (const r of s) {
         items.push(wiki.paragraph("Did you forget to start the server with --meta-site or --meta-sites-dir?"))
       }
       else {
-        items.push(wiki.paragraph("These are the registered sites:"))
+        items.push(wiki.paragraph("Registered domains:"))
+        for (let domain of system.domains) {
+          items.push(wiki.paragraph(domain))
+        }
+        items.push(wiki.paragraph("Registered sites:"))
         for (let site of sites) {
-          items.push(wiki.paragraph(site.targetSite))
+          items.push(wiki.paragraph(site.name))
         }
       }
     }

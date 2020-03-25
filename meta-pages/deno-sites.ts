@@ -2,16 +2,17 @@ import * as wiki from "seran/wiki.ts";
 
 export async function sites(req, system) {
   let sites = [];
-  for (let metaSite of Object.keys(system.metaSites)) {
-    sites.push(
-      wiki.reference(
-        metaSite,
-        "welcome-visitors",
-        "Welcome Visitors",
-        await doAndShare(metaSite)
-      )
-    );
-  }
+  // TODO: Fix after host agnostic refactoring is complete.
+  // for (let metaSite of Object.keys(system.metaSites)) {
+  //   sites.push(
+  //     wiki.reference(
+  //       metaSite,
+  //       "welcome-visitors",
+  //       "Welcome Visitors",
+  //       await doAndShare(metaSite)
+  //     )
+  //   );
+  // }
   return wiki.page("Deno Sites", sites);
 }
 

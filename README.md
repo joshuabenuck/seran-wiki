@@ -20,11 +20,11 @@ git clone git@github.com:joshuabenuck/seran-wiki.git
 ```
 Build and run from denowiki directory
 ```
-./seran-wiki.sh --meta-sites-dir=./meta-sites@localtest.me
+./seran-wiki.sh --meta-sites-dir=./meta-sites
 ```
 or
 ```
-.\seran-wiki.cmd --meta-sites-dir=.\meta-sites@localtest.me
+.\seran-wiki.cmd --meta-sites-dir=.\meta-sites
 ```
 
 Navigate to http://localtest.me:8000/ or http://localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.

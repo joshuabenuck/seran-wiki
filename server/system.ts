@@ -13,14 +13,10 @@ export class MetaSite {
   path: string;
   // where on disk static pages are stored
   root: string;
-  // our host:port
-  targetSite: string;
-  // just the host
-  host: string;
+  // just the meta-site name
+  name: string;
   // non-default port number, if any
   port: string;
-  // default hostname if not remapped
-  defaultHost: string;
   // if set, login is enabled for the site
   password: string | null;
   // array of non-default plugins to load
@@ -31,73 +27,55 @@ export class MetaSite {
   // TODO: Use stronger type here
   siteMap: Object[];
 
-  // TODO: rename host
-  constructor(system, path, host) {
+  constructor(system: System, path: string) {
     this.system = system
     this.port = system.port
-    if (host && path.indexOf("localhost") != -1) {
-      this.defaultHost = this.hostnameFrom(path);
-      this.host = this.defaultHost.replace("localhost", host);
-    }
     // handle remap of individual meta-site
     if (path.indexOf("@") != -1) {
       let parts = path.split("@");
       path = parts[0];
-      this.host = parts[1];
-      this.defaultHost = this.hostnameFrom(path);
+      this.name = parts[1];
     }
     // TODO: Test if a path or a url. If path, resolve relative to root of project
     if (path.indexOf("http") == -1) {
       path = join("../", path)
     }
     this.path = path;
-    // if not remapped, host and defaultHost are the same
-    if (!this.host) {
-      this.host = basename(path.replace(/\.[tj]s$/, ""));
-      this.defaultHost = this.host;
+    if (!this.name) {
+      this.name = this.nameFrom(path)
     }
-    // TODO: Print canonical path here...
-    console.log(`Registering ${normalize(path)} as ${this.host}`);
-    this.targetSite = `${this.host}:${this.port}`;
-    if(this.port == '80') {
-      this.targetSite = `${this.host}`;
-    }
+    // needed to allow localhost to be also mapped to seran
+    this.root = join(this.system.root, this.name)
   }
 
   async init() {
-    // set the root, fall back to default host to allow usage whether mapped or not
-    this.root = join(this.system.root, this.host)
-    if (!await exists(this.root)) {
-      this.root = join(this.system.root, this.defaultHost)
-    }
+    // TODO: Print canonical path here...
+    console.log(`Registering ${normalize(this.path)} as ${this.name}`);
     this.exports = await import(this.path);
     if (this.exports.init) {
       await this.exports.init({site: this, system: this.system});
     }
     this.siteMap = [];
     if (this.exports.siteMap) {
-      this.siteMap = this.exports.siteMap(this.targetSite);
+      this.siteMap = this.exports.siteMap(this.name);
     }
     this.plugins = [];
     if (this.exports.plugins) {
-      // Make relative imports relative to target site, if needed
-      this.plugins = this.exports.plugins.map((p) => {
-        return (p.indexOf("/") == 0) ? "http://" + this.targetSite + p : p
-      });
+      this.plugins = this.exports.plugins
     }
   }
 
-  hostnameFrom(path) {
+  nameFrom(path: string) {
     return basename(path.replace(/\.[tj]s$/, ""));
   }
 
   serve(req) {
     if (this.exports.serve) {
-      console.log("meta-site:", req.site.host, req.url);
+      console.log("meta-site:", req.site.name, req.url);
       this.exports.serve(req, this.system);
     }
     if (this.exports.metaPages) {
-      console.log("meta-page:", req.site.host, req.url);
+      console.log("meta-page:", req.site.name, req.url);
       let metaPage = this.exports.metaPages[req.url];
       if (metaPage) {
         metaPage(req, this.system);
@@ -111,19 +89,93 @@ export class MetaSite {
 
 export class System {
   metaSites: { [key: string]: MetaSite };
+  domains: string[];
+  port: string;
   root: string;
-  port: number;
 
-  constructor(root: string, port: number) {
+  constructor(domains: string[], port: string, root: string) {
     this.metaSites = {};
-    this.root = root;
+    this.domains = domains;
     this.port = port;
+    this.root = root;
   }
 
-  async importMetaSite(path, host) {
-    let metaSite = new MetaSite(this, path, host);
+  async importMetaSite(path: string) {
+    let metaSite = new MetaSite(this, path);
     await metaSite.init();
-    this.metaSites[metaSite.targetSite] = metaSite;
+    this.metaSites[metaSite.name] = metaSite;
+    // possibly a misguided hack
+    // register localhost as seran
+    // allows local dev to use localhost without /etc/hosts entry
+    // and public use to have an unambiguous name
+    if (metaSite.name == "localhost") {
+      metaSite = new MetaSite(this, path);
+      metaSite.name = "seran"
+      await metaSite.init();
+      this.metaSites["seran"] = metaSite;
+    }
+  }
+
+  metaSiteFor(host) {
+    let matches = Object.values(this.metaSites).filter((s) => host.indexOf(s.name) == 0)
+    matches = matches.filter((s) => this.domains.some((d) => d == "*" || host.match(`.*${d}`)))
+    if (matches.length == 0) return;
+    // TODO: Verify this sort does what we want.
+    matches = matches.sort((a, b) => a.name.length - b.name.length)
+    return matches[0];
+  }
+
+  async processConfig(config) {
+    /* Pseudo-json example
+    // Equivalent of an @domain for a meta-sites-dir
+    root-domains: []
+    meta-sites: {
+      // Must specific each meta-site to register
+      static.localhost.ts: {
+        subdomains: [],
+        hostnames: [],
+        // possible meta-site specific config?
+        register-all: true,
+        enabled-wikis: []
+      }
+      // Additional parameters are not required
+      localhost.ts: {}
+    }
+    */
+    let domains = config["root-domains"]
+    if (!domains) {
+      domains = []
+    }
+    let sites = config["meta-sites"]
+    if (!sites) {
+      sites = []
+    }
+    // TODO: Rework once host agnostic refactoring is complete.
+    // for (let site of Object.keys(sites)) {
+    //   // register meta-site specific subdomains of root domains
+    //   let subdomains = sites[site].subdomains
+    //   if (subdomains) {
+    //     for (let subdomain of subdomains) {
+    //       for (let domain of domains) {
+    //         await this.importMetaSite(`${site}@${subdomain}`, domain)
+    //       }
+    //     }
+    //   }
+    //   // register meta-site specific hostname mappiings
+    //   let hostnames = sites[site].hostnames
+    //   if (hostnames) {
+    //     for (let hostname of hostnames) {
+    //       await this.importMetaSite(`${site}@${hostname}`, null)
+    //     }
+    //   }
+    // }
+    // // register meta-sites for each specified root domain
+    // for (let domain of domains) {
+    //   for (let site of Object.keys(sites)) {
+    //     // should meta-sites with local mappings be skipped?
+    //     await this.importMetaSite(site, domain)
+    //   }
+    // }
   }
 
   async checkEtcHosts() {
@@ -135,7 +187,7 @@ export class System {
       etcHosts = "/Windows/System32/drivers/etc/hosts";
     }
     if (etcHosts) {
-      let metaSites = Object.values(this.metaSites).map((s) => s.host);
+      let metaSites = Object.values(this.metaSites).map((s) => s.name);
       let hosts = (await readFileStr(etcHosts)).split("\n");
       for (let host of hosts) {
         if (host.indexOf("127.0.0.1") == -1) {
@@ -143,7 +195,7 @@ export class System {
         }
         host = host.replace("127.0.0.1", "").trim();
         metaSites = metaSites.filter((metaSite) => {
-          if (metaSite == host || metaSite.indexOf("localhost") == -1) {
+          if (metaSite + ".localhost" == host) {
             return false;
           }
           return true;

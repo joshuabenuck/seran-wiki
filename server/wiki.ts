@@ -187,12 +187,16 @@ export function serveSiteMap(req: Request, system: System) {
 }
 
 export function servePlugins(req: Request, system: System) {
-  serveJson(req, req.site.plugins);
+  // Make relative imports relative to target site, if needed
+  let plugins = req.site.plugins.map((p) => {
+    return (p.indexOf("/") == 0) ? "http://" + req.headers.get("host") + p : p
+  });
+  serveJson(req, plugins);
 }
 
 export function serveMetaAboutUs(req: Request, system: System) {
   serveJson(req, page("DenoWiki", [
-    paragraph(`Site: ${req.site.targetSite}`),
+    paragraph(`Site: ${req.site.name}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
     paragraph(`Source: TODO - Add link to meta-site's source`),
     item("paragraph", {text: `Password: ${req.site.password}`, sensitive: true})
