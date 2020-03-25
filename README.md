@@ -55,3 +55,21 @@ New meta-sites are simple to create. All that is needed is a module that:
 * For the meta-site to have a non-empty sitemap, it must export `siteMap()`. The function should return a sitemap in the form of `{ 'a-slug': { title: 'a page title', synopsis: 'the text of the first item on the page' } }`. This will be cached when the meta-site is registered.
 
 Meta-sites may be hosted on any web accessible address. They need not be bundled with the denowiki install.
+
+## Creation of Plugins
+
+Plugins extend the web components that can be rendered by seran-wiki's client. They are created by calling `registerPlugin(pluginName, ComponentClass)`. As an example, the `paragraph` plugin is registered via `registerPlugin('paragraph', Paragraph)`.
+
+The web component that gets registered is always prefixed with `wiki-` (e.g. `wiki-plugin`).
+
+Plugins are nothing more than web components that follow a few conventions. The always have a `render(json)` object that gets called when they need to be rendered. It is recommended that an init flag be used to guard against the `connectedCallback` being called more than once for an item.
+
+Most plugins will want to set a `:host` style of `display: block`. It is recommended that plugins use the shadow dom to encapsulate their styling and dom.
+
+Configuration of their content should be via attributes and / or slots. Slots are best used when multi-line content is needed.
+
+Attributes should be mirrored as properties. Setting an attribute after item (plugin) instantiation should result in the visual display of the item being updated. To do this, `observedAttributes` must be defined along with an `attributeChangedCallback`. The property setters should call `setAttribute` and the property getters should call `getAttribute`, otherwise you risk creating an infinite loop when attributes or properties are changed.
+
+Examples of existing plugins are in the `client` folder. Look for `paragraph`, `roster`, and `reference`. See `page` for an example of the `attributeChangedCallback` and an `observedAttributes` implementation.
+
+For a plugin to be loaded, the meta-site that uses it should export a `plugins` array containing the URL of the plugin. If the plugin is hosted on the same site as the meta-site, the URL need not be fully qualified. All plugin URLs that start with `/` will have the origin of the meta-site prepended to the URL before sending it to the client.
