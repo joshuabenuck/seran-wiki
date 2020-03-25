@@ -29,7 +29,7 @@ let params = parse(args, {
 let intf = "0.0.0.0";
 let port = params.port;
 let bind = params.port;
-let x = params.port.split(':')
+let x = params.port.toString().split(':')
 if (x[1]) {
   port = x[0]
   bind = x[1]
