@@ -41,9 +41,21 @@ class ProcessStep extends HTMLElement {
         shadow.appendChild(p)
     }
 
-    render(json) {
+    get json() {
+        return {
+            href: this.getAttribute("href"),
+            text: this.textContent
+        }
+    }
+
+    set json(json) {
         this.setAttribute("href", json.href)
-        this.appendChild(document.createTextNode(json.legend))
+        this.appendChild(document.createTextNode(json.text))
+    }
+
+    // TODO: Remove once switch to json property is complete
+    render(json) {
+        this.json = json
     }
 
     get state() {
