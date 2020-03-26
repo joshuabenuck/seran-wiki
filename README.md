@@ -27,14 +27,26 @@ or
 .\seran-wiki.cmd .\meta-sites
 ```
 
-Navigate to http://seran.localtest.me:8000/ or http://seran.localtest.me:8000/index.html to view with a remote client or the bundled client, respectively. This site is also reachable via `localhost`.
+Navigate to http://seran.localtest.me:8000/ or http://seran.localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.
 
 ## Meta-Sites
 
-This is the functionality the bundled meta-sites offer:
-* du.localhost: Displays wiki pages with information about the files on disk starting with the root directory. Do not run this on a publicly facing wiki! It will allow anyone to browse the contents of the server's disk.
-* localhost: Demonstrates how to write meta-pages.
-* region.localhost: Experiment in parsing and displaying data from Ward's full federation scraper.
+The vast majority of useful meta-sites will not be stored within this repo. This section lists interesting meta-sites to try out. If you have a meta-site you want added to the list, please mention it in the Federated Wiki riot chat room.
+
+### Federation Scraper
+Run this to create your own scrape of the federation.
+
+`./seran-wiki.sh http://raw.githubusercontent/WardCunningham/seran-scrape/scrape.ts`
+
+### Region
+Experiment in parsing and displaying data from Ward's full federation scraper.
+
+`./seran-wiki.sh ./meta-sites/region.ts`
+
+### Seran
+This meta-site will eventually hold the core management functionality for configuring the seran-wiki server itself. Right now it contains miscellany.
+
+This site is mapped to both the `seran` prefix and `localhost`. This makes it reachable without an internet connection on a local development system.
 
 ## Usage
 
