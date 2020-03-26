@@ -27,7 +27,7 @@ or
 .\seran-wiki.cmd .\meta-sites
 ```
 
-Navigate to http://localtest.me:8000/ or http://localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.
+Navigate to http://seran.localtest.me:8000/ or http://seran.localtest.me:8000/index.html to view with a remote client or the bundled client, respectively. This site is also reachable via `localhost`.
 
 ## Meta-Sites
 
