@@ -18,7 +18,7 @@ export class MetaSite {
   // non-default port number, if any
   port: string;
   // if set, login is enabled for the site
-  password: string | null;
+  secret: string | null;
   // array of non-default plugins to load
   plugins: string[];
   // exports from the meta-site script
@@ -94,12 +94,20 @@ export class System {
   domains: string[];
   port: string;
   root: string;
+  secret: string;
 
-  constructor(domains: string[], port: string, root: string) {
+  constructor(domains: string[], port: string, root: string, secret: string) {
     this.metaSites = {};
     this.domains = domains;
     this.port = port;
     this.root = root;
+    if (!secret) {
+      secret = Deno.env().SERAN_SECRET
+      if (!secret) {
+        console.log("INFO: Login not enabled. Neither --secret parameter nor SERAN_SECRET env var are set.")
+      }
+    }
+    this.secret = secret;
   }
 
   async importMetaSite(path: string) {

@@ -21,7 +21,8 @@ let params = parse(args, {
     port: '8000',
     "external-client": "dev.wiki.randombits.xyz",
     root: join(Deno.dir("home"), ".wiki"),
-    domain: "*"
+    domain: "*",
+    secret: null
   },
   boolean: "allow-disclosure"
 });
@@ -61,7 +62,7 @@ async function readdir(path) {
   return await Deno.readdir(path);
 }
 
-let system = new System(params.domain, port, params.root);
+let system = new System(params.domain, port, params.root, params.secret);
 
 let configFile = null
 for (let entry of params._) {
