@@ -20,31 +20,47 @@ git clone git@github.com:joshuabenuck/seran-wiki.git
 ```
 Build and run from denowiki directory
 ```
-./seran-wiki.sh --meta-sites-dir=./meta-sites@localtest.me
+./seran-wiki.sh ./meta-sites
 ```
 or
 ```
-.\seran-wiki.cmd --meta-sites-dir=.\meta-sites@localtest.me
+.\seran-wiki.cmd .\meta-sites
 ```
 
-Navigate to http://localtest.me:8000/ or http://localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.
+Navigate to http://seran.localtest.me:8000/ or http://seran.localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.
 
 ## Meta-Sites
 
-This is the functionality the bundled meta-sites offer:
-* du.localhost: Displays wiki pages with information about the files on disk starting with the root directory. Do not run this on a publicly facing wiki! It will allow anyone to browse the contents of the server's disk.
-* localhost: Demonstrates how to write meta-pages.
-* region.localhost: Experiment in parsing and displaying data from Ward's full federation scraper.
+The vast majority of useful meta-sites will not be stored within this repo. This section lists interesting meta-sites to try out. If you have a meta-site you want added to the list, please mention it in the Federated Wiki riot chat room.
+
+### Federation Scraper
+Run this to create your own scrape of the federation.
+
+`./seran-wiki.sh http://raw.githubusercontent/WardCunningham/seran-scrape/scrape.ts`
+
+### Region
+Experiment in parsing and displaying data from Ward's full federation scraper.
+
+`./seran-wiki.sh ./meta-sites/region.ts`
+
+### Seran
+This meta-site will eventually hold the core management functionality for configuring the seran-wiki server itself. Right now it contains miscellany.
+
+This site is mapped to both the `seran` prefix and `localhost`. This makes it reachable without an internet connection on a local development system.
 
 ## Usage
 
 The command line in the `Install` section will register and run all bundled meta-sites.
 
-To only run a specific set of meta-sites use `--meta-site=<path to meta-site>`. This can be specified more than once to run multiple meta-sites.
+`./seran-wiki.[sh|cmd] [--domain=<>] [--allow-disclosure] <file|directory|URL> ...`
 
-By default, the hostname requested must exactly match the filename of the meta-site code (minus the extension). To override this use the form `--meta-site=<path to meta-site>@<alternate hostname>`.
+  * --domain: Only have the server answer to URLs for this domain. May be specified more than once. Default is a wildcard.
+  * --allow-disclosure: Display the registered domains and meta-sites on the default error page. If this is not specified, the server will not disclose which domains or meta-sites are registered to avoid revealing too much about the server stetup.
+  * file: If the file is a TypeScript file, load the associated meta-site. If a JSON file, load it as a config file.
+  * directory: Load all TypeScript files in the directory as meta-sites.
+  * URL: Load the URL as a meta-site.
 
-For example, to have `du.localhost.ts` answer to `du.localtest.me`, `--meta-site=./meta-sites/du.localhost.ts@du.localtest.me`.
+If a file or directory does not exist, server startup will fail.
 
 Paths to meta-sites can be for local files or they can be urls to remote modules. Imports within the meta-site are resolved relative to their origin. This means local files will load other local files and remote modules will load other remote files.
 

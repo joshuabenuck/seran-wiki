@@ -28,17 +28,7 @@ let metaPages = {
 };
 
 export async function enableLogin(site: MetaSite, system: System) {
-    // TODO: Create helpers in MetaSite for these joins? 
-    let fullPath = join(site.root, "status", "owner.json")
-    if (!await exists(fullPath)) {
-      console.log(`Unable to retrieve password from: ${fullPath}`)
-      return
-    }
-    console.log(`Looking for password in: ${fullPath}`)
-    let json = await readJson(fullPath)
-    if (json["friend"] && json["friend"]["secret"]) {
-      site.password = json["friend"]["secret"]
-    }
+  site.secret = system.secret
 }
 
 function authHeaderToPassword(header) {
@@ -56,15 +46,15 @@ export function authenticated(req: Request) {
 }
 
 function login(req: Request, system: System) {
-  let pw = req.site.password
+  let secret = req.site.secret
   let headers = baseHeaders()
   const failure = {
     status: 401,
     body: JSON.stringify({success: false}),
     headers
   };
-  if (!pw) {
-    console.log(`ERROR: '${req.site}' does not have a password set.`)
+  if (!secret) {
+    console.log(`ERROR: '${req.site.name}' does not have a secret set.`)
     req.respond(failure);
     return
   }
@@ -76,8 +66,8 @@ function login(req: Request, system: System) {
     return
   }
   let providedPassword = authHeaderToPassword(auth)
-  if (pw != providedPassword) {
-    console.log("ERROR: Passwords do not match.")
+  if (secret != providedPassword) {
+    console.log("ERROR: Provided password does not match site secret.")
     req.respond(failure);
     return
   }
@@ -187,15 +177,19 @@ export function serveSiteMap(req: Request, system: System) {
 }
 
 export function servePlugins(req: Request, system: System) {
-  serveJson(req, req.site.plugins);
+  // Make relative imports relative to target site, if needed
+  let plugins = req.site.plugins.map((p) => {
+    return (p.indexOf("/") == 0) ? "http://" + req.headers.get("host") + p : p
+  });
+  serveJson(req, plugins);
 }
 
 export function serveMetaAboutUs(req: Request, system: System) {
   serveJson(req, page("DenoWiki", [
-    paragraph(`Site: ${req.site.targetSite}`),
+    paragraph(`Site: ${req.site.name}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
     paragraph(`Source: TODO - Add link to meta-site's source`),
-    item("paragraph", {text: `Password: ${req.site.password}`, sensitive: true})
+    item("paragraph", {text: `Secret: ${req.site.secret}`, sensitive: true})
   ]));
 }
 

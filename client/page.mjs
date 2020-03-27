@@ -239,7 +239,7 @@ class Page extends HTMLElement {
 
     addProcessStep(legend, href) {
         let processStep = document.createElement("wiki-process-step")
-        processStep.render({ legend, href })
+        processStep.json = { legend, href }
         this.appendChild(processStep)
     }
 

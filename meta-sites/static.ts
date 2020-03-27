@@ -24,7 +24,7 @@ function aboutStatic() {
 }
 
 export async function serve(req: Request, system: System) {
-    if (req.site.host.indexOf("static.") != -1 &&
+    if (req.site.name.indexOf("static") != -1 &&
         req.url == "/welcome-visitors.json") {
             wiki.serveJson(req, wiki.welcomePage("[[DenoWiki]]", "[[About static]]"))
             return
@@ -42,11 +42,10 @@ export function siteMap() {
 }
 
 export async function init({site, system}: {site: MetaSite, system: System}) {
-    if (site.host.indexOf("static.") == -1) {
-        let path = join(system.root, site.host)
-        let fallback_path = join(system.root, site.defaultHost)
-        if (!await exists(path) && !await exists(fallback_path)) {
-            console.log(`Creating directory for '${site.host}`)
+    if (site.name.indexOf("static") == -1) {
+        let path = join(system.root, site.name)
+        if (!await exists(path)) {
+            console.log(`Creating directory for '${site.name}`)
             console.log("Enter secret for site: ")
             let reader = new BufReader(Deno.stdin)
             let secret = await reader.readString("\n")
