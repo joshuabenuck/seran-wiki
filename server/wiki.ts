@@ -143,10 +143,10 @@ export function serveJson(req: Request, data) {
       data.dynamic = true;
     }
     if (!req.authenticated) {
-      if (data.sensitive) {
+      if (data.protected) {
         data = page(data.title, [paragraph("Login required to view")])
       } else {
-        data.story = data.story.filter((i) => !i.sensitive)
+        data.story = data.story.filter((i) => !i.protected)
       }
     }
   }
@@ -189,7 +189,7 @@ export function serveMetaAboutUs(req: Request, system: System) {
     paragraph(`Site: ${req.site.name}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
     paragraph(`Source: TODO - Add link to meta-site's source`),
-    item("paragraph", {text: `Secret: ${req.site.secret}`, sensitive: true})
+    item("paragraph", {text: `Secret: ${req.site.secret}`, protected: true})
   ]));
 }
 
@@ -315,7 +315,7 @@ export function pages(metaText) {
 interface Page {
   title: string;
   story: Item[];
-  sensitive?: boolean;
+  protected?: boolean;
 }
 
 export function page(title: string, items: Item[]): Page {
