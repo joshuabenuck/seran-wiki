@@ -35,6 +35,7 @@ class Lineup extends HTMLElement {
     }
 
     newPage(slug, title, site) {
+        // TODO: DRY this code with Page.load?
         let page = document.createElement("wiki-page")
         if (site) {
             page.setAttribute("site", site)

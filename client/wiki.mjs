@@ -85,23 +85,15 @@ class Wiki extends HTMLElement {
     }
 
     async loadPage(slug) {
-        let res = fetch(`/${slug}.json`)
-        let page = await this.renderPage(res, slug)
+        return this.loadRemotePage(undefined, slug)
     }
 
     async loadRemotePage(site, slug) {
-        let res = fetch(`http://${site}/${slug}.json`)
-        let page = await this.renderPage(res, slug, site)
-    }
-
-    async renderPage(res, slug, site) {
-        let page = this.lineup.newPage(slug, slug, site)
-        page.activate()
         await this.loadPlugins(site)
-        res = await res
-        let json = await res.json()
-        page.render(json)
-        return page
+        let page = document.createElement("wiki-page")
+        page.load(slug, site)
+        this.lineup.appendChild(page)
+        page.activate()
     }
 
     showNeighborhood() {
