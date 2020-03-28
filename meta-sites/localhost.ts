@@ -42,31 +42,30 @@ export async function serve(req: Request, system: System) {
   if (req.url == "/welcome-visitors.json") {
     wiki.serveJson(
       req,
-      wiki.welcomePage("[[DenoWiki]]", "[[Wander]], [[Deno Sites]]")
+      wiki.welcomePage("[[DenoWiki]]", "[[Admin]], [[Wander]], [[Deno Sites]]")
     );
-  // TODO: Add once host agnostic refactoring is complete.
-  // } else if (req.url == "/admin.json") {
-  //   let items = [wiki.paragraph("Active meta-sites:")]
-  //   for (let siteName of Object.keys(system.metaSites)) {
-  //     items.push(wiki.paragraph(`[http://${siteName}/view/welcome-visitors ${siteName}]`))
-  //   }
-  //   items.push(wiki.paragraph("Sites with passwords:"))
-  //   let count = 0
-  //   for (let site of Object.values(system.metaSites)) {
-  //     if (site.password) {
-  //       count += 1
-  //       items.push(wiki.paragraph(`${site.targetSite}: ${site.password}`))
-  //     }
-  //   }
-  //   if (count == 0) {
-  //     items.push(wiki.paragraph("None"))
-  //   }
-  //   let page = wiki.page("Admin", items)
-  //   page.sensitive = true
-  //   wiki.serveJson(
-  //     req,
-  //     page
-  //   );
+  } else if (req.url == "/admin.json") {
+    let items = [wiki.paragraph("Active meta-sites:")]
+    for (let siteName of system.metaSitesInDomain(req)) {
+      items.push(wiki.paragraph(`[http://${siteName}/view/welcome-visitors ${siteName}]`))
+    }
+    items.push(wiki.paragraph("Sites with passwords:"))
+    let count = 0
+    for (let site of Object.values(system.metaSites)) {
+      if (site.secret) {
+        count += 1
+        items.push(wiki.paragraph(`${site.name}: ${site.secret}`))
+      }
+    }
+    if (count == 0) {
+      items.push(wiki.paragraph("None"))
+    }
+    let page = wiki.page("Admin", items)
+    page.protected = true
+    wiki.serveJson(
+      req,
+      page
+    );
   } else if (req.url == "/wander.json") {
     wiki.serveJson(
       req,

@@ -135,6 +135,23 @@ export class System {
     return matches[0];
   }
 
+  metaSitesInDomain(req) {
+    let domain = req.headers.get("host")
+    let sites = Object.keys(this.metaSites).filter((s) => !s.match(/localhost/))
+    if (!domain.match(/^localhost.*/)) {
+      // strip off meta-site name
+      domain = domain.substring(req.site.name.length + 1)
+    }
+    if (domain.match(/.*localhost.*/)) {
+      // filter out seran entry if on localhost
+      sites = sites.filter((s) => !s.match(/seran/))
+    }
+    // append domain to all non-localhost sites
+    sites = sites.map((s) => `${s}.${domain}`)
+    sites.push(`localhost:${this.port}`)
+    return sites
+  }
+
   async processConfig(config) {
     /* Pseudo-json example
     // Equivalent of an @domain for a meta-sites-dir
