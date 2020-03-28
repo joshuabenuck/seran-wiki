@@ -228,9 +228,7 @@ export class System {
           return true;
         });
       }
-      metaSites.map((s) =>
-        console.log(`WARN: missing /etc/hosts entry for ${s}.`)
-      );
+      console.log(`WARN: missing /etc/hosts entries for ${metaSites.join(", ")}.`)
     }
   }
 }
