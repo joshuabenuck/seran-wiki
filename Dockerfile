@@ -5,7 +5,7 @@ EXPOSE 8000
 WORKDIR /seran-wiki
 
 # Prefer not to run as root.
-USER deno
+# USER deno
 
 # Cache the dependencies as a layer (this is re-run only when deps.ts is modified).
 # Ideally this will download and compile _all_ external files used in main.ts.
