@@ -75,17 +75,19 @@ export class MetaSite {
     if (this.exports.serve) {
       console.log("meta-site:", req.site.name, req.url);
       this.exports.serve(req, this.system);
-    }
-    if (this.exports.metaPages) {
+      return true;
+    } else if (this.exports.handler &&
+      this.exports.handler.serve(req, this.system)) {
+        return true;
+    } else if (this.exports.metaPages) {
       console.log("meta-page:", req.site.name, req.url);
       let metaPage = this.exports.metaPages[req.url];
       if (metaPage) {
         metaPage(req, this.system);
-      } else {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   }
 }
 
@@ -228,7 +230,9 @@ export class System {
           return true;
         });
       }
-      console.log(`WARN: missing /etc/hosts entries for ${metaSites.join(", ")}.`)
+      if (metaSites.length > 0) {
+        console.log(`WARN: missing /etc/hosts entries for ${metaSites.join(", ")}.`)
+      }
     }
   }
 }

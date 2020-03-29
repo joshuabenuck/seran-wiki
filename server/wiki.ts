@@ -27,6 +27,49 @@ let metaPages = {
   "/logout": logout
 };
 
+export class Handler {
+  routes: { [key: string]: (r: Request, s: System) => void };
+
+  constructor() {
+    this.routes = {}
+  }
+
+  page(page) {
+    this.route(`/${asSlug(page.title)}.json`, async (req: Request, system: System) => {
+      if (page.story.call) {
+        page.story = await page.story(req, system)
+      }
+      serveJson(req, page);
+    });
+  }
+
+  items(title: string, items) {
+    this.page({ title, story: items })
+  }
+
+  route(pattern, callback) {
+    this.routes[pattern] = callback
+  }
+
+  match(url): (r: Request, s: System) => void {
+    for (let pattern of Object.keys(this.routes)) {
+      if (pattern.match(url)) {
+        return this.routes[pattern]
+      }
+    }
+    return null
+  }
+
+  serve(req: Request, system: System) {
+    let match = this.match(req.url)
+    if (!match) {
+      return false;
+    }
+    match(req, system)
+    return true;
+  }
+}
+
 export async function enableLogin(site: MetaSite, system: System) {
   site.secret = system.secret
 }
@@ -281,11 +324,11 @@ export async function serve(req: Request, system: System) {
   serve404(req);
 }
 
-export function pages(metaText) {
+function asSlug(title) {
+  return title.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase();
+}
 
-  function asSlug(title) {
-    return title.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase();
-  }
+export function pages(metaText) {
 
   function parse(sep, text, fn) {
     let v = text.split(sep)
