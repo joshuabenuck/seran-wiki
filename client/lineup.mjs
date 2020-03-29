@@ -46,6 +46,18 @@ class Lineup extends HTMLElement {
         return page
     }
 
+    closeAllAfter(page) {
+        let index = this.pageIndex(page)
+        if (page == -1) {
+            console.log("ERROR: Unable to find page to remove;", page)
+            return
+        }
+        while (index < this.pages.length - 1) {
+            console.log(this.pages.length, this.pageIndex(page))
+            this.pages[this.pages.length - 1].remove()
+        }
+    }
+
     closePageByIndex(index) {
         this.pages[index].remove()
     }

@@ -1,3 +1,7 @@
+const REPLACE = 0
+const APPEND = 1
+const INSERT = 2
+
 export class Link extends HTMLElement {
     connectedCallback() {
         if (this.inited) return
@@ -31,7 +35,7 @@ export class Link extends HTMLElement {
             }
         }
 
-        this.replaceMode()
+        this.mode = REPLACE
         this.addEventListener("mousemove", this._updateMode)
         this.addEventListener("click", this.click)
 
@@ -40,20 +44,74 @@ export class Link extends HTMLElement {
         shadow.appendChild(this.anchor)
     }
 
-    click(event) {
-        window.location.href = this.anchor.href
+    attributeChangedCallback(attrName, oldValue, newValue) {
+        if (!this.inited) {
+            return;
+        }
+        if (attrName == "mode") {
+            this.modeToURL(newValue)
+        }
+    }
+
+    static get observedAttributes() {
+        return ["mode"]
+    }
+
+    async click(event) {
+        if (this.getAttribute("href")) {
+            return
+        }
+        if (location.href != this.anchor.href) {
+            console.log("URLs differ, pushing state")
+            window.history.pushState({}, "", this.anchor.href)
+        }
+        if (this.mode == REPLACE) {
+            this.lineup.closeAllAfter(this.page)
+            this.lineup.wiki.loadRemotePage(this.getAttribute("site"), this.getAttribute("slug"))
+        }
+        if (this.mode == APPEND) {
+            this.lineup.wiki.loadRemotePage(this.getAttribute("site"), this.getAttribute("slug"))
+        }
+        if (this.mode == INSERT) {
+            // DRY with wiki.loadRemotePage at some point
+            let site = this.getAttribute("site")
+            if (site) {
+                await this.lineup.wiki.loadPlugins(site)
+            }
+            let page = document.createElement("wiki-page")
+            page.load(this.getAttribute("slug"), this.getAttribute("site"))
+            this.page.addPageAfter(page)
+            page.activate()
+        }
         event.preventDefault()
     }
 
-    appendMode() {
-        this._updateAnchor(this.wiki.URL)
+    set mode(mode) {
+        this.setAttribute("mode", mode)
     }
 
-    replaceMode() {
-        this._updateAnchor(this.page.URL)
+    get mode() {
+        return this.getAttribute("mode")
     }
 
-    _updateAnchor(url) {
+    modeToURL(mode) {
+        if (mode == REPLACE) {
+            this._updateAnchor(this.page.URL)
+            return
+        }
+        if (mode == APPEND) {
+            this._updateAnchor(this.wiki.URL)
+            return
+        }
+        if (mode == INSERT) {
+            this._updateAnchor(this.page.URL, this.page.remainderURL)
+            return
+        }
+        console.log(`WARN: Unsupported mode ${this.mode}`)
+        return null;
+    }
+
+    _updateAnchor(url, remainder) {
         if (this.getAttribute("href")) {
             return
         }
@@ -68,10 +126,14 @@ export class Link extends HTMLElement {
 
     _updateMode(event) {
         if (event.shiftKey) {
-            this.appendMode()
+            this.mode = APPEND
             return
         }
-        this.replaceMode()
+        if (event.ctrlKey) {
+            this.mode = INSERT
+            return
+        }
+        this.mode = REPLACE
     }
 
     get page() {
