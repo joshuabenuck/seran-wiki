@@ -75,17 +75,19 @@ export class MetaSite {
     if (this.exports.serve) {
       console.log("meta-site:", req.site.name, req.url);
       this.exports.serve(req, this.system);
-    }
-    if (this.exports.metaPages) {
+      return true;
+    } else if (this.exports.handler &&
+      this.exports.handler.serve(req, this.system)) {
+        return true;
+    } else if (this.exports.metaPages) {
       console.log("meta-page:", req.site.name, req.url);
       let metaPage = this.exports.metaPages[req.url];
       if (metaPage) {
         metaPage(req, this.system);
-      } else {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   }
 }
 
@@ -133,6 +135,23 @@ export class System {
     // TODO: Verify this sort does what we want.
     matches = matches.sort((a, b) => a.name.length - b.name.length)
     return matches[0];
+  }
+
+  metaSitesInDomain(req) {
+    let domain = req.headers.get("host")
+    let sites = Object.keys(this.metaSites).filter((s) => !s.match(/localhost/))
+    if (!domain.match(/^localhost.*/)) {
+      // strip off meta-site name
+      domain = domain.substring(req.site.name.length + 1)
+    }
+    if (domain.match(/.*localhost.*/)) {
+      // filter out seran entry if on localhost
+      sites = sites.filter((s) => !s.match(/seran/))
+    }
+    // append domain to all non-localhost sites
+    sites = sites.map((s) => `${s}.${domain}`)
+    sites.push(`localhost:${this.port}`)
+    return sites
   }
 
   async processConfig(config) {
@@ -211,9 +230,9 @@ export class System {
           return true;
         });
       }
-      metaSites.map((s) =>
-        console.log(`WARN: missing /etc/hosts entry for ${s}.`)
-      );
+      if (metaSites.length > 0) {
+        console.log(`WARN: missing /etc/hosts entries for ${metaSites.join(", ")}.`)
+      }
     }
   }
 }

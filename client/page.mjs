@@ -76,6 +76,10 @@ class Page extends HTMLElement {
         paper.className = "paper"
         shadow.appendChild(paper)
 
+        let twins = document.createElement("wiki-twins")
+        twins.light = this
+        paper.appendChild(twins)
+
         // TODO: Put header into its own web component
         // <wiki-header title="" flag="" url=""/>
         let header = document.createElement("div")
@@ -261,33 +265,47 @@ class Page extends HTMLElement {
         return [...this.childNodes].filter((e) => e.nodeName.indexOf("WIKI-") == 0)
     }
 
-    async render(json) {
+    async load(slug, site) {
+        let url = `/${slug}.json`
+        if (site) {
+            this.setAttribute("site", site)
+            url = `http://${site}` + url
+        }
+        this.setAttribute("slug", slug)
+        // Title is slug until json is loaded
+        this.setAttribute("title", slug)
+        // Synchronously setup base page attrs
+        // Let caller decide whether to wait for rendering
+        return fetch(url).then((r) => r.json()).then((j) => this.json = j)
+    }
+
+    set json(json) {
         if (json.dynamic) {
             this.setAttribute("dynamic", true)
         }
         this.title = json.title
-        for (let pageContent of json.story) {
-            let plugin = window.plugins[pageContent.type]
+        for (let item of json.story) {
+            let plugin = window.plugins[item.type]
             if (plugin) {
                 let element = new plugin()
-                element.render(pageContent)
+                element.json = item
                 this.appendChild(element)
             }
             else {
-                this.addParagraph(`Unknown type: ${pageContent.type}`)
+                this.addParagraph(`Unknown type: ${item.type}`)
             }
+        }
+        this.journal = []
+        if (json.journal) {
+            this.journal = json.journal
         }
     }
 
     get json() {
-        // TODO: Complete
-        let items = []
-        for (let item of this.items) {
-
-        }
         let content = {
             title: this.title,
-            story: items
+            story: this.items.map((i) => i.json),
+            journal: this.journal
         }
         return json
     }

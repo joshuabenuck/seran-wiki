@@ -153,7 +153,7 @@ export class Paragraph extends HTMLElement {
         this.setAttribute("id", value)
     }
 
-    render(json) {
+    set json(json) {
         this.id = json.id
         this.textContent = json.text
     }

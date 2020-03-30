@@ -43,11 +43,20 @@ class Reference extends HTMLElement {
         wiki.neighborhood.add(site)
     }
 
-    render(json) {
+    set json(json) {
         this.setAttribute("site", json.site)
         this.setAttribute("slug", json.slug)
         this.setAttribute("title", json.title)
         this.setAttribute("text", json.text)
+    }
+
+    get json() {
+        return {
+            site: this.getAttribute("site"),
+            slug: this.getAttribute("slug"),
+            title: this.getAttribute("title"),
+            text: this.getAttribute("text")
+        }
     }
 }
 registerPlugin("reference", Reference);

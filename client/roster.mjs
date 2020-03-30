@@ -31,10 +31,16 @@ export class Roster extends HTMLElement {
         shadow.appendChild(p)
     }
 
-    render(json) {
+    set json(json) {
         console.log("Rendering roster", json)
         let text = document.createTextNode(json.text)
         this.appendChild(text)
+    }
+
+    get json() {
+        return {
+            text: this.textContent
+        }
     }
 }
 registerPlugin("roster", Roster);

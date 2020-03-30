@@ -35,6 +35,7 @@ class Lineup extends HTMLElement {
     }
 
     newPage(slug, title, site) {
+        // TODO: DRY this code with Page.load?
         let page = document.createElement("wiki-page")
         if (site) {
             page.setAttribute("site", site)
@@ -43,6 +44,18 @@ class Lineup extends HTMLElement {
         page.setAttribute("title", title)
         this.appendChild(page)
         return page
+    }
+
+    closeAllAfter(page) {
+        let index = this.pageIndex(page)
+        if (page == -1) {
+            console.log("ERROR: Unable to find page to remove;", page)
+            return
+        }
+        while (index < this.pages.length - 1) {
+            console.log(this.pages.length, this.pageIndex(page))
+            this.pages[this.pages.length - 1].remove()
+        }
     }
 
     closePageByIndex(index) {

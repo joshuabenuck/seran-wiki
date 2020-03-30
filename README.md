@@ -33,20 +33,39 @@ Navigate to http://seran.localtest.me:8000/ or http://seran.localtest.me:8000/in
 
 The vast majority of useful meta-sites will not be stored within this repo. This section lists interesting meta-sites to try out. If you have a meta-site you want added to the list, please mention it in the Federated Wiki riot chat room.
 
+### Prog21
+This is a collection of meta-sites centered around an archive copy of a blog.
+
+A site with a history of experiments performed to better understand the contents of the archived posts. (Cannot run from a URL, must checkout from source)
+
+```
+git checkout https://github.com/joshuabenuck/seran-prog21
+cd seran-wiki
+./seran-wiki.sh ../seran-prog21/meta-sites/analysis21.ts`
+```
+
+Go to http://analysis21.localtest.me:8000/index.html
+
 ### Federation Scraper
 Run this to create your own scrape of the federation.
 
-`./seran-wiki.sh http://raw.githubusercontent/WardCunningham/seran-scrape/scrape.ts`
+`./seran-wiki.sh http://raw.githubusercontent.com/WardCunningham/seran-scrape/master/scrape.ts`
+
+Go to http://scrape.localtest.me:8000/index.html
 
 ### Region
 Experiment in parsing and displaying data from Ward's full federation scraper.
 
 `./seran-wiki.sh ./meta-sites/region.ts`
 
+Go to http://region.localtest.me:8000/index.html
+
 ### Seran
 This meta-site will eventually hold the core management functionality for configuring the seran-wiki server itself. Right now it contains miscellany.
 
 This site is mapped to both the `seran` prefix and `localhost`. This makes it reachable without an internet connection on a local development system.
+
+Go to http://seran.localtest.me:8000/index.html or http://localhost:8000/index.html
 
 ## Usage
 
@@ -54,11 +73,11 @@ The command line in the `Install` section will register and run all bundled meta
 
 `./seran-wiki.[sh|cmd] [--domain=<>] [--allow-disclosure] <file|directory|URL> ...`
 
-  * --domain: Only have the server answer to URLs for this domain. May be specified more than once. Default is a wildcard.
-  * --allow-disclosure: Display the registered domains and meta-sites on the default error page. If this is not specified, the server will not disclose which domains or meta-sites are registered to avoid revealing too much about the server stetup.
-  * file: If the file is a TypeScript file, load the associated meta-site. If a JSON file, load it as a config file.
-  * directory: Load all TypeScript files in the directory as meta-sites.
-  * URL: Load the URL as a meta-site.
+  * **--domain**: Only have the server answer to URLs for this domain. May be specified more than once. Default is a wildcard.
+  * **--allow-disclosure**: Display the registered domains and meta-sites on the default error page. If this is not specified, the server will not disclose which domains or meta-sites are registered to avoid revealing too much about the server stetup.
+  * <**file**>: If the file is a TypeScript file, load the associated meta-site. If a JSON file, load it as a config file.
+  * **directory**: Load all TypeScript files in the directory as meta-sites.
+  * **URL**: Load the URL as a meta-site.
 
 If a file or directory does not exist, server startup will fail.
 
