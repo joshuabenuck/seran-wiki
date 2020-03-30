@@ -76,6 +76,10 @@ class Page extends HTMLElement {
         paper.className = "paper"
         shadow.appendChild(paper)
 
+        let twins = document.createElement("wiki-twins")
+        twins.light = this
+        paper.appendChild(twins)
+
         // TODO: Put header into its own web component
         // <wiki-header title="" flag="" url=""/>
         let header = document.createElement("div")
@@ -291,12 +295,17 @@ class Page extends HTMLElement {
                 this.addParagraph(`Unknown type: ${item.type}`)
             }
         }
+        this.journal = []
+        if (json.journal) {
+            this.journal = json.journal
+        }
     }
 
     get json() {
         let content = {
             title: this.title,
-            story: this.items.map((i) => i.json)
+            story: this.items.map((i) => i.json),
+            journal: this.journal
         }
         return json
     }

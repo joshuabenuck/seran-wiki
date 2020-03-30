@@ -98,7 +98,7 @@ class Wiki extends HTMLElement {
 
     showNeighborhood() {
         // Should all pages created with newPage be ghosted?
-        let page = this.lineup.newPage("Neighborhood")
+        let page = this.lineup.newPage("neighborhood", "Neighborhood")
         page.ghost()
         for (let neighbor of this.neighborhood.neighbors) {
             page.addReference(neighbor, "welcome-visitors", "Welcome Visitors", neighbor)

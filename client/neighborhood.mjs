@@ -3,6 +3,7 @@ class Neighboorhood extends HTMLElement {
         if (this.inited) return
         this.inited = true
         this.neighbors = new Set()
+        this.siteMaps = {}
         let shadow = this.attachShadow({ mode: "open" })
         let css = `
             :host {
@@ -37,11 +38,25 @@ class Neighboorhood extends HTMLElement {
 
     add(site) {
         if (this.neighbors.has(site)) return
+        this.fetchSiteMap(site)
+        this.neighbors.add(site)
+
+        // No need to show the local site in the neighborhood
+        // (Still need it in the neighborhood for twin computation)
+        if (site == location.origin.replace("http://", "")) return
         let flag = document.createElement("img")
         flag.setAttribute("src", `http://${site}/favicon.png`)
         flag.setAttribute("title", site)
         this.shadowRoot.appendChild(flag)
-        this.neighbors.add(site)
+    }
+
+    async fetchSiteMap(site) {
+        // TODO: Spinning animation / tilting
+        // site map is empty until loaded
+        this.siteMaps[site] = []
+        let resp = await fetch(`http://${site}/system/sitemap.json`)
+        let json = await resp.json()
+        this.siteMaps[site] = json
     }
 
     has(site) {
