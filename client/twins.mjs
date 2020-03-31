@@ -51,4 +51,4 @@ export class Twins extends HTMLElement {
     }
 }
 
-registerPlugin("twins", Twins)
+customElements.define("wiki-twins", Twins)
