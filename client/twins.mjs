@@ -21,17 +21,20 @@ export class Twins extends HTMLElement {
         shadow.appendChild(this.p)
 
         // TODO: Rerun / update twins when the neighborhood changes
-        for (let neighbor of this.neighborhood.neighbors) {
-            for (let page of this.neighborhood.siteMaps[neighbor]) {
-                if (page.slug == this.page.slug) {
-                    if (this.page.site && this.page.site == neighbor) continue
-                    let img = document.createElement("img")
-                    img.setAttribute("src", `http://${neighbor}/favicon.png`)
-                    img.setAttribute("title", neighbor)
-                    img.addEventListener("click", () => this.wiki.loadRemotePage(neighbor, page.slug))
-                    this.p.appendChild(img)
-                }
-            }
+        this.displayTwins()
+    }
+
+    displayTwins() {
+        while(this.p.firstChild) {
+            this.p.firstChild.remove()
+        }
+        for (let twin of this.neighborhood.copiesOf(this.page.slug)) {
+            if (this.page.site && this.page.site == twin.site) continue
+            let img = document.createElement("img")
+            img.setAttribute("src", `http://${twin.site}/favicon.png`)
+            img.setAttribute("title", twin.site)
+            img.addEventListener("click", () => this.wiki.loadRemotePage(twin.site, page.slug))
+            this.p.appendChild(img)
         }
     }
 

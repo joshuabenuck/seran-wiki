@@ -36,7 +36,7 @@ export async function serve(req: Request, system: System) {
     wiki.serve(req, system)
 }
 
-let _siteMap = {}
+let _siteMap = []
 export function siteMap() {
     return _siteMap
 }
