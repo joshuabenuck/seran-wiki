@@ -155,7 +155,12 @@ export class Paragraph extends HTMLElement {
 
     set json(json) {
         this.id = json.id
+        // TODO: Figure out how to apply escaping logic when text content is set manually
+        // https://github.com/fedwiki/wiki-client/blob/master/lib/resolve.coffee#L28-L61
         this.textContent = json.text
+            // .replace(/&/g, "&amp;")
+            // .replace(/</g, "&lt;")
+        // this.renderLinks()
     }
 
     get json() {
