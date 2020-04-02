@@ -185,6 +185,26 @@ export function serveJson(req: Request, data) {
     if (data.dynamic == undefined) {
       data.dynamic = true;
     }
+    if (!data.journal) {
+      let date = new Date().getTime()
+      data.journal = []
+      data.journal.push({
+        type: "create",
+        item: {
+          title: data.title,
+          story: []
+        },
+        date
+      })
+      for(let item of data.story) {
+        data.journal.push({
+          type: "add",
+          item,
+          id: item.id,
+          date
+        })
+      }
+    }
     if (!req.authenticated) {
       if (data.protected) {
         data = page(data.title, [paragraph("Login required to view")])

@@ -67,5 +67,19 @@ class Neighboorhood extends HTMLElement {
         }
         return false
     }
+
+    copiesOf(slug) {
+        let copiesOf = []
+        for (let neighbor of this.neighbors) {
+            let pages = this.siteMaps[neighbor]
+            if (!pages) continue
+            for (let page of pages) {
+                if (page.slug == slug) {
+                    copiesOf.push(Object.assign({site: neighbor}, page))
+                }
+            }
+        }
+        return copiesOf
+    }
 }
 customElements.define("wiki-neighborhood", Neighboorhood)
