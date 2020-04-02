@@ -18,6 +18,10 @@ export class Code extends HTMLElement {
         let slot = document.createElement("slot")
         this.pre.appendChild(slot)
     }
+
+    set json(json) {
+        this.textContent = json.text
+    }
 }
 
 registerPlugin("code", Code)
