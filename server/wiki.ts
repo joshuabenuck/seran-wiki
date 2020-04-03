@@ -344,7 +344,7 @@ export async function serve(req: Request, system: System) {
   serve404(req);
 }
 
-function asSlug(title) {
+export function asSlug(title) {
   return title.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase();
 }
 
@@ -375,7 +375,7 @@ export function pages(metaText) {
 
 }
 
-interface Page {
+export interface Page {
   title: string;
   story: Item[];
   protected?: boolean;
