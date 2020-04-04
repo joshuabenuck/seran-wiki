@@ -91,6 +91,11 @@
             })
             return html.replace(/\[([^+]*)\]/g, (_full, match) => {
                 let url = match.substring(0, match.indexOf(" "))
+                try {
+                    new URL(url)
+                } catch(e) {
+                    return _full
+                }
                 let text = match.substring(match.indexOf(" "))
                 return `<wiki-link href='${url}' target="_blank">${text}</wiki-link>`
             })
