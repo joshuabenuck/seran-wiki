@@ -106,8 +106,12 @@ class Wiki extends HTMLElement {
         page.activate()
     }
 
+    get origin() {
+        return window.location.origin.replace("http://", "")
+    }
+
     get baseURL() {
-        return new URL(window.location.origin + "/index.html")
+        return new URL(`http://${this.origin}/index.html`)
     }
 
     get URL() {
