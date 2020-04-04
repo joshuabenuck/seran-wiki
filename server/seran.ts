@@ -30,6 +30,7 @@ let params = parse(args, {
 let intf = "0.0.0.0";
 let port = params.port;
 let bind = params.port;
+
 let x = params.port.toString().split(':')
 if (x[1]) {
   port = x[0]
@@ -61,6 +62,7 @@ async function readdir(path) {
 
   return await Deno.readdir(path);
 }
+
 
 let system = new System(params.domain, port, params.root, params.secret);
 

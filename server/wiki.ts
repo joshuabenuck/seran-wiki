@@ -356,7 +356,7 @@ export function pages(metaText) {
       fn(v[i], v[i+1])
   }
 
-  parse(/\n([A-Z][A-Za-z ]*)/g, metaText, (title, body) => {
+  parse(/\n([A-Z].*)/g, metaText, (title, body) => {
     let page = {title,story:[]}
     parse(/(\n\n\s*)/g, body, (blank, text) => {
       let id = itemId()
