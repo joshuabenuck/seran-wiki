@@ -1,6 +1,6 @@
 {
     "imports": {
-        "std/": "https://deno.land/std@v0.36.0/",
+        "std/": "https://deno.land/std@v0.39.0/",
         "seran/": "./server/"
     }
 }

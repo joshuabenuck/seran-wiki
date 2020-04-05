@@ -56,7 +56,7 @@ export async function serve(req: Request, system: System) {
     for (let file of await readDir(path)) {
       let fullPath = [path, file.name].join("/").replace("//", "/");
       files.push(
-        wiki.paragraph(`[[${b32path(fullPath)}]] ${fullPath} - ${file.len}`)
+        wiki.paragraph(`[[${b32path(fullPath)}]] ${fullPath} - ${file.name.length}`)
       );
     }
 
