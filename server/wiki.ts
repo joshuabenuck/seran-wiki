@@ -176,7 +176,7 @@ export function serveContents(req: Request, contentType, contents, length) {
 
 export async function serveFile(req: Request, contentType, filePath) {
   const [file, fileInfo] = await Promise.all([open(filePath), stat(filePath)]);
-  serveContents(req, contentType, file, fileInfo.len.toString());
+  serveContents(req, contentType, file, fileInfo.size.toString());
 }
 
 export function serveJson(req: Request, data) {
