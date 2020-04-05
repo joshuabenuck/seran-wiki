@@ -28,9 +28,9 @@ class Wiki extends HTMLElement {
     handleShortcut(event) {
         if (event.altKey && event.key == "o") {
             console.log("open dialog")
-            let dialog = this.getElementsByTagName("dialog")[0]
+            let dialog = this.querySelector("dialog")
             dialog.setAttribute("open", "")
-            let input = dialog.getElementsByTagName("input")[0]
+            let input = dialog.querySelector("input")
             event.preventDefault()
             input.focus()
         }
@@ -38,7 +38,7 @@ class Wiki extends HTMLElement {
 
     open(event) {
         console.log("opening:", this)
-        let input = this.getElementsByTagName("input")[0]
+        let input = this.querySelector("input")
         let path = input.value
         let site = location.origin
         let slug = path
@@ -50,7 +50,7 @@ class Wiki extends HTMLElement {
     }
 
     get lineup() {
-        return this.getElementsByTagName("wiki-lineup")[0]
+        return this.querySelector("wiki-lineup")
     }
 
     get pages() {
@@ -58,7 +58,7 @@ class Wiki extends HTMLElement {
     }
 
     get neighborhood() {
-        return this.getElementsByTagName("footer")[0].getElementsByTagName("wiki-neighborhood")[0]
+        return this.querySelector("wiki-neighborhood")
     }
 
     async loadPlugins(origin) {

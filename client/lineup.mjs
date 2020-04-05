@@ -4,11 +4,10 @@ class Lineup extends HTMLElement {
         this.inited = true
         this.setAttribute("tabindex", -1)
         this.addEventListener("keydown", (ev) => {
-            let actives = document.getElementsByClassName("active")
-            if (actives.length == 0) {
-                actives = [this.pages[this.pages.length - 1]]
+            let active = document.querySelector(".active")
+            if (!active) {
+                active = this.pages[this.pages.length - 1]
             }
-            let active = actives[0]
             let index = [...this.pages].indexOf(active)
             let max = this.pages.length - 1
             let min = 0

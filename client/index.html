@@ -128,7 +128,7 @@
             if (event.target.readyState != "complete") {
                 return
             }
-            let wiki = document.getElementsByTagName("wiki-wiki")[0]
+            let wiki = document.querySelector("wiki-wiki")
             async function loadPages() {
                 if (document.URL.indexOf("?") == -1) {
                     console.log("loading default page")

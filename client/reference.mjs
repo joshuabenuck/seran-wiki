@@ -39,7 +39,7 @@ class Reference extends HTMLElement {
         desc.innerHTML = ` - ${renderLinks(text, site)}`
         p.appendChild(desc)
         shadow.appendChild(p)
-        let wiki = document.getElementsByTagName("wiki-wiki")[0]
+        let wiki = document.querySelector("wiki-wiki")
         wiki.neighborhood.add(site)
     }
 

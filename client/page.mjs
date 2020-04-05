@@ -249,10 +249,7 @@ class Page extends HTMLElement {
 
     activate() {
         this.scrollIntoView()
-        let actives = document.getElementsByClassName("active")
-        for (let active of actives) {
-            active.classList.remove("active")
-        }
+        document.querySelectorAll(".active").forEach((a) => a.classList.remove("active"))
         this.classList.add("active")
         this.lineup.focus()
     }
