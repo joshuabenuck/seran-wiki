@@ -76,9 +76,9 @@ class Page extends HTMLElement {
         paper.className = "paper"
         shadow.appendChild(paper)
 
-        let twins = document.createElement("wiki-twins")
-        twins.light = this
-        paper.appendChild(twins)
+        this.twins = document.createElement("wiki-twins")
+        this.twins.light = this
+        paper.appendChild(this.twins)
 
         // TODO: Put header into its own web component
         // <wiki-header title="" flag="" url=""/>
@@ -265,18 +265,40 @@ class Page extends HTMLElement {
         return [...this.childNodes].filter((e) => e.nodeName.indexOf("WIKI-") == 0)
     }
 
-    async load(slug, site) {
-        let url = `/${slug}.json`
-        if (site) {
-            this.setAttribute("site", site)
-            url = `http://${site}` + url
+    async followCollabLink(site, slug) {
+        let wiki = document.querySelector("wiki-wiki")
+        let sites = new Set([site, ...wiki.neighborhood.neighbors])
+        for (let site of sites) {
+            let url = `/${slug}.json`
+            if (site) {
+                url = `http://${site}` + url
+            }
+            try {
+                let json = await fetch(url).then((r) => r.json()).then((j) => this.json = j)
+                if (site) {
+                    this.setAttribute("site", site)
+                }
+                return json
+            }
+            catch (e) {
+                console.log("collab link", site, slug, e)
+            }
         }
+    }
+
+    async load(site, slug, fallbacks) {
         this.setAttribute("slug", slug)
         // Title is slug until json is loaded
         this.setAttribute("title", slug)
         // Synchronously setup base page attrs
         // Let caller decide whether to wait for rendering
-        return fetch(url).then((r) => r.json()).then((j) => this.json = j)
+        return await this.followCollabLink(site, slug, fallbacks)
+    }
+
+    async loadPageAfter(site, slug, fallbacks) {
+        let page = new Page()
+        await page.load(site, slug, fallbacks)
+        this.addPageAfter(page)
     }
 
     set json(json) {
@@ -298,6 +320,8 @@ class Page extends HTMLElement {
         this.journal = []
         if (json.journal) {
             this.journal = json.journal
+            let wiki = document.querySelector("wiki-wiki")
+            this.journal.filter((i) => i.type == "fork" && i.site).forEach((i) => wiki.neighborhood.add(i.site))
         }
     }
 

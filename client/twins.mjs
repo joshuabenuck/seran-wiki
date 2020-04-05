@@ -33,7 +33,7 @@ export class Twins extends HTMLElement {
             let img = document.createElement("img")
             img.setAttribute("src", `http://${twin.site}/favicon.png`)
             img.setAttribute("title", twin.site)
-            img.addEventListener("click", () => this.wiki.loadRemotePage(twin.site, page.slug))
+            img.addEventListener("click", () => this.wiki.loadRemotePage(twin.site, this.page.slug))
             this.p.appendChild(img)
         }
     }

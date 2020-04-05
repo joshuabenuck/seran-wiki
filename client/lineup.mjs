@@ -46,6 +46,10 @@ class Lineup extends HTMLElement {
         return page
     }
 
+    get lastPage() {
+        return this.pages[this.pages.length - 1]
+    }
+
     closeAllAfter(page) {
         let index = this.pageIndex(page)
         if (page == -1) {

@@ -65,24 +65,18 @@ export class Link extends HTMLElement {
             console.log("URLs differ, pushing state")
             window.history.pushState({}, "", this.anchor.href)
         }
+        let page = null
         if (this.mode == REPLACE) {
             this.lineup.closeAllAfter(this.page)
-            this.lineup.wiki.loadRemotePage(this.getAttribute("site"), this.getAttribute("slug"))
+            page = this.lineup.lastPage
         }
         if (this.mode == APPEND) {
-            this.lineup.wiki.loadRemotePage(this.getAttribute("site"), this.getAttribute("slug"))
+            page = this.lineup.lastPage
         }
         if (this.mode == INSERT) {
-            // DRY with wiki.loadRemotePage at some point
-            let site = this.getAttribute("site")
-            if (site) {
-                await this.lineup.wiki.loadPlugins(site)
-            }
-            let page = document.createElement("wiki-page")
-            page.load(this.getAttribute("slug"), this.getAttribute("site"))
-            this.page.addPageAfter(page)
-            page.activate()
+            page = this.page
         }
+        page.loadPageAfter(this.getAttribute("site"), this.getAttribute("slug"))
         event.preventDefault()
     }
 

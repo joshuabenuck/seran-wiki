@@ -33,12 +33,11 @@ class Neighboorhood extends HTMLElement {
         link.appendChild(document.createTextNode(">>"))
         shadow.appendChild(link)
         this.add(location.origin.replace("http://", ""))
-        this.add("fed.wiki.org")
     }
 
-    add(site) {
+    async add(site) {
         if (this.neighbors.has(site)) return
-        this.fetchSiteMap(site)
+        await this.fetchSiteMap(site)
         this.neighbors.add(site)
 
         // No need to show the local site in the neighborhood
@@ -48,6 +47,9 @@ class Neighboorhood extends HTMLElement {
         flag.setAttribute("src", `http://${site}/favicon.png`)
         flag.setAttribute("title", site)
         this.shadowRoot.appendChild(flag)
+        for (let page of document.querySelector("wiki-wiki").lineup.pages) {
+            page.twins.displayTwins()
+        }
     }
 
     async fetchSiteMap(site) {

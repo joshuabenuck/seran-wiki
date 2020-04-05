@@ -91,7 +91,7 @@ class Wiki extends HTMLElement {
     async loadRemotePage(site, slug) {
         await this.loadPlugins(site)
         let page = document.createElement("wiki-page")
-        page.load(slug, site)
+        await page.load(site, slug)
         this.lineup.appendChild(page)
         page.activate()
     }
