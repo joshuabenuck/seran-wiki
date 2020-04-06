@@ -26,13 +26,25 @@ class ProcessStep extends HTMLElement {
 
         this.button = document.createElement("button")
         let href = this.getAttribute("href")
-        let remoteState = await fetch(`${href}?action=state`).then((r) => r.json())
-        console.log(remoteState)
-        this.state = remoteState.running ? "stop" : "start"
         let site = this.parentElement.getAttribute("site")
         // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/shiftKey
         this.button.addEventListener("click", (e) => this.click(href, site, e.shiftKey))
         p.appendChild(this.button)
+        let remoteState = {}
+        try {
+            let result = await fetch(`${href}?action=state`)
+            if (result.status == 404) {
+                throw new Error(`Missing route: ${href}`)
+            }
+            remoteState = await result.json()
+            console.log(remoteState)
+            this.state = remoteState.running ? "stop" : "start"
+        } catch (e) {
+            console.log(e)
+            this.state = "error"
+            this.button.disabled = true
+            remoteState.status = e
+        }
 
         this.statusElement = document.createElement("div")
         this.statusElement.appendChild(document.createTextNode(""))
