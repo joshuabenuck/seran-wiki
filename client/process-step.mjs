@@ -65,11 +65,6 @@ class ProcessStep extends HTMLElement {
         this.appendChild(document.createTextNode(json.text))
     }
 
-    // TODO: Remove once switch to json property is complete
-    render(json) {
-        this.json = json
-    }
-
     get state() {
         return this.button.textContent
     }
