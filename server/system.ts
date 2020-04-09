@@ -74,9 +74,11 @@ export class MetaSite {
   serve(req) {
     if (this.exports.serve) {
       console.log("meta-site:", req.site.name, req.url);
-      this.exports.serve(req, this.system);
-      return true;
-    } else if (this.exports.handler &&
+      if (this.exports.serve(req, this.system)) {
+        return true;
+      }
+    }
+    if (this.exports.handler &&
       this.exports.handler.serve(req, this.system)) {
         return true;
     } else if (this.exports.metaPages) {
