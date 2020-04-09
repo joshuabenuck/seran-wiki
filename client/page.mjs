@@ -248,6 +248,9 @@ class Page extends HTMLElement {
     }
 
     activate() {
+        if (this.classList.contains("active")) {
+            return;
+        }
         this.scrollIntoView()
         document.querySelectorAll(".active").forEach((a) => a.classList.remove("active"))
         this.classList.add("active")
