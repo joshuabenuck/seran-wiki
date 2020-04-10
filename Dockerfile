@@ -18,4 +18,4 @@ ADD . /seran-wiki
 # RUN deno fetch main.ts
 
 # These are passed as deno arguments when run with docker:
-ENTRYPOINT ["deno", "-c", "tsconfig.json", "--importmap=import_map.json", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "./server/seran.ts", "--allow-disclosure"]
+ENTRYPOINT ["deno", "-c", "tsconfig.json", "--importmap=import_map.json", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "--allow-run", "./server/seran.ts", "--allow-disclosure"]
