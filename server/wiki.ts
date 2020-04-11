@@ -360,7 +360,7 @@ export function pages(metaText) {
     let page = {title,story:[]}
     parse(/(\n\n\s*)/g, body, (blank, text) => {
       let id = itemId()
-      let m = text.match(/([a-z-]+):/)
+      let m = text.match(/^ *([a-z-]+):/)
       if (m) {
         let expr = `({${text.replace(/([a-z-]+):/,'')}})`
         let args = eval(expr)
