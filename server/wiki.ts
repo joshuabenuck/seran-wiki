@@ -43,8 +43,26 @@ export class Handler {
     });
   }
 
-  items(title: string, items) {
-    this.page({ title, story: items })
+  items(title: string, items, extraProps={}) {
+    this.page(Object.assign({ title, story: items }, extraProps))
+  }
+
+  plugins(root, subdir) {
+    this.route("^/[^/.]+\.mjs", async (req) => {
+      let segments = root.split("/")
+      let url = [...segments.slice(0, -2), subdir, req.url.substring(1)].join("/")
+      if (url.startsWith("file://")) {
+        let prefixLength = "file://".length
+        // workaround to avoid leading slash on windows paths
+        if (url.indexOf(":") != 0) {
+          prefixLength += 1
+        }
+        serveFile(req, "text/javascript", url.substring(prefixLength))
+        return
+      }
+      let contents = await (await fetch(url)).text()
+      serveContents(req, "text/javascript", contents, contents.length)
+    })
   }
 
   route(pattern, callback) {
@@ -53,7 +71,7 @@ export class Handler {
 
   match(url): (r: Request, s: System) => void {
     for (let pattern of Object.keys(this.routes)) {
-      if (pattern.match(url)) {
+      if (url.match(pattern)) {
         return this.routes[pattern]
       }
     }
