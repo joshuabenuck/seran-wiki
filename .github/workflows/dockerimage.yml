@@ -10,12 +10,12 @@ jobs:
         docker build . --file Dockerfile --tag ${GITHUB_SHA:0:8}
     - name: Push Build Image
       run: |
-        echo ${{ secrets.GITHUB_TOKEN }} |  docker login docker.pkg.github.com -u WardCunningham --password-stdin
-        docker tag ${GITHUB_SHA:0:8} docker.pkg.github.com/wardcunningham/seran-wiki/seran-wiki:${GITHUB_SHA:0:8}
-        docker push docker.pkg.github.com/wardcunningham/seran-wiki/seran-wiki:${GITHUB_SHA:0:8}
+        echo ${{ github.token }} |  docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+        docker tag ${GITHUB_SHA:0:8} docker.pkg.github.com/${{ github.repository }}/seran-wiki:${GITHUB_SHA:0:8}
+        docker push docker.pkg.github.com/${{ github.repository}}/seran-wiki:${GITHUB_SHA:0:8}
     - name: Push Latest Image
       if: github.ref == 'refs/heads/master'
       run: |
-        echo ${{ secrets.GITHUB_TOKEN }} |  docker login docker.pkg.github.com -u WardCunningham --password-stdin
-        docker tag ${GITHUB_SHA:0:8} docker.pkg.github.com/wardcunningham/seran-wiki/seran-wiki:latest
-        docker push docker.pkg.github.com/wardcunningham/seran-wiki/seran-wiki:latest
+        echo ${{ github.token }} |  docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+        docker tag ${GITHUB_SHA:0:8} docker.pkg.github.com/${{ github.repository }}/seran-wiki:latest
+        docker push docker.pkg.github.com/${{ github.repository}}/seran-wiki:latest
