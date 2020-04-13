@@ -52,12 +52,12 @@ export class Handler {
       let segments = root.split("/")
       let url = [...segments.slice(0, -2), subdir, req.url.substring(1)].join("/")
       if (url.startsWith("file://")) {
-        let prefixLength = "file://".length
+        url = url.substring("file://".length)
         // workaround to avoid leading slash on windows paths
-        if (url.indexOf(":") != 0) {
-          prefixLength += 1
+        if (url.indexOf(":") != -1) {
+          url = url.substring(1)
         }
-        serveFile(req, "text/javascript", url.substring(prefixLength))
+        serveFile(req, "text/javascript", url)
         return
       }
       let contents = await (await fetch(url)).text()
