@@ -36,10 +36,11 @@ export class Handler {
 
   page(page) {
     this.route(`/${asSlug(page.title)}.json`, async (req: Request, system: System) => {
+      let story = page.story
       if (page.story.call) {
-        page.story = await page.story(req, system)
+        story = await page.story(req, system)
       }
-      serveJson(req, page);
+      serveJson(req, Object.assign({}, page, {story}));
     });
   }
 
@@ -49,19 +50,7 @@ export class Handler {
 
   plugins(root, subdir) {
     this.route("^/[^/.]+\.mjs", async (req) => {
-      let segments = root.split("/")
-      let url = [...segments.slice(0, -2), subdir, req.url.substring(1)].join("/")
-      if (url.startsWith("file://")) {
-        url = url.substring("file://".length)
-        // workaround to avoid leading slash on windows paths
-        if (url.indexOf(":") != -1) {
-          url = url.substring(1)
-        }
-        serveFile(req, "text/javascript", url)
-        return
-      }
-      let contents = await (await fetch(url)).text()
-      serveContents(req, "text/javascript", contents, contents.length)
+      serveResource(req, root, `/${subdir}/${req.url}`)
     })
   }
 
@@ -197,6 +186,49 @@ export async function serveFile(req: Request, contentType, filePath) {
   serveContents(req, contentType, file, fileInfo.size.toString());
 }
 
+export function mimeTypeFor(url) {
+  let filetypes = {
+    "mjs": "text/javascript",
+    "js": "text/javascript",
+    "css": "text/css"
+  }
+  let ext = url.split(".")[1]
+  let filetype = filetypes[ext]
+  if (!filetype) {
+    console.log("Unknown filetype:", ext, url)
+    Deno.exit(1)
+  }
+  return filetype
+}
+
+export function localPathForUrl(url) {
+  url = url.substring("file://".length)
+  // workaround to avoid leading slash on windows paths
+  if (url.indexOf(":") != -1) {
+    url = url.substring(1)
+  }
+  return url
+}
+
+// TODO: Needs some work
+// assumes that base is two levels away from the root of the project
+// and that resource is relative to the root of the project
+// This fits a model where the meta-site is in meta-sites
+// And the desired resource is in the root or a peer to meta-sites
+// A more robust implementation would detct this or provide a means
+// to specify where the root of the project is
+export async function serveResource(req: Request, base, resource) {
+  let segments = base.split("/")
+  let url = [...segments.slice(0, -2), resource.substring(1)].join("/")
+  if (url.startsWith("file://")) {
+    let path = localPathForUrl(url)
+    serveFile(req, mimeTypeFor(path), path)
+    return
+  }
+  let contents = await (await fetch(url)).text()
+  serveContents(req, mimeTypeFor(url), contents, contents.length)
+}
+
 export function serveJson(req: Request, data) {
   let headers = baseHeaders();
   if (data && data.story) {
@@ -266,7 +298,7 @@ export function servePlugins(req: Request, system: System) {
 }
 
 export function serveMetaAboutUs(req: Request, system: System) {
-  serveJson(req, page("DenoWiki", [
+  serveJson(req, page("SeranWiki", [
     paragraph(`Site: ${req.site.name}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
     paragraph(`Source: TODO - Add link to meta-site's source`),
