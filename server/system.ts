@@ -118,16 +118,6 @@ export class System {
     let metaSite = new MetaSite(this, path);
     await metaSite.init();
     this.metaSites[metaSite.name] = metaSite;
-    // possibly a misguided hack
-    // register localhost as seran
-    // allows local dev to use localhost without /etc/hosts entry
-    // and public use to have an unambiguous name
-    if (metaSite.name == "localhost") {
-      metaSite = new MetaSite(this, path);
-      metaSite.name = "seran"
-      await metaSite.init();
-      this.metaSites["seran"] = metaSite;
-    }
   }
 
   metaSiteFor(host) {
@@ -152,7 +142,6 @@ export class System {
     }
     // append domain to all non-localhost sites
     sites = sites.map((s) => `${s}.${domain}`)
-    sites.push(`localhost:${this.port}`)
     return sites
   }
 
