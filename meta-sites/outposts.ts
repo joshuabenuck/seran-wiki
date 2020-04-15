@@ -53,7 +53,7 @@ async function doAndShare(metaSite) {
 
 export let handler = new wiki.Handler()
 
-handler.page(wiki.welcomePage("[[DenoWiki]]", "[[Admin]], [[Deno Sites]]"))
+handler.page(wiki.welcomePage("[[SeranWiki]]", "[[Admin]], [[Outposts]]"))
 handler.items("Admin", async (req: Request, system: System) => {
   let items = []
   items.push(wiki.paragraph("Active meta-sites:"))
@@ -75,7 +75,7 @@ handler.items("Admin", async (req: Request, system: System) => {
   return items
 }, { protected: true })
 
-handler.items("Deno Sites", sites)
+handler.items("Outposts", sites)
 
 async function serve(req: Request, system: System) {
   if (req.url.indexOf("/cm") == 0) {
