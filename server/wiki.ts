@@ -27,6 +27,9 @@ let metaPages = {
   "/logout": logout
 };
 
+/**
+ * Helper to handle common types of routes needed by meta-sites
+ */
 export class Handler {
   routes: { [key: string]: (r: Request, s: System) => void };
 
@@ -34,6 +37,10 @@ export class Handler {
     this.routes = {}
   }
 
+  /**
+   * Register a route that will serve the given page.
+   * @param page Either a page object or a function that produces one
+   */
   page(page) {
     this.route(`/${asSlug(page.title)}.json`, async (req: Request, system: System) => {
       let story = page.story
@@ -44,20 +51,42 @@ export class Handler {
     });
   }
 
+  /**
+   * Register a route that will serve a page with the given items
+   * @param title The title of the page
+   * @param items The list of items to be in the story of the page
+   * @param extraProps Extra properties to add to the page object
+   */
   items(title: string, items, extraProps={}) {
     this.page(Object.assign({ title, story: items }, extraProps))
   }
 
+  /**
+   * Register a route that will serve the source for plugins contained
+   * within the meta-site.
+   * @param root This should be the value of `import.meta.url`
+   * @param subdir The subdirectory of the meta-site containing the source of the plugins
+   */
   plugins(root, subdir) {
     this.route("^/[^/.]+\.mjs", async (req) => {
       serveResource(req, root, `/${subdir}/${req.url}`)
     })
   }
 
+  /**
+   * Generic route registration method
+   * @param pattern A regex of the pattern for the route
+   * @param callback What to do when a request matches the pattern
+   */
   route(pattern, callback) {
     this.routes[pattern] = callback
   }
 
+  /**
+   * Helper function to look up matching route callbacks
+   * @param url The url to match against the registered routes
+   * @returns The function to call to service the url
+   */
   match(url): (r: Request, s: System) => void {
     for (let pattern of Object.keys(this.routes)) {
       if (url.match(pattern)) {
@@ -67,6 +96,11 @@ export class Handler {
     return null
   }
 
+  /**
+   * Serve a request using the registered routes
+   * @param req The request to service
+   * @param system Meta data about the system configuration
+   */
   serve(req: Request, system: System) {
     let match = this.match(req.url)
     if (!match) {
