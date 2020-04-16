@@ -53,14 +53,14 @@ const s = serve(`${intf}:${bind}`);
 
 convertToArray("domain", params);
 
-async function readdir(path) {
+async function readdir(path): Promise<AsyncIterable<Deno.DirEntry>> {
   let fileInfo = await stat(path);
-  if (!fileInfo.isDirectory()) {
+  if (!fileInfo.isDirectory) {
     console.log(`path ${path} is not a directory.`);
-    return [];
+    return;
   }
 
-  return await Deno.readdir(path);
+  return Deno.readdir(path);
 }
 
 if (!await exists(params.root)) {
@@ -84,14 +84,14 @@ for (let entry of params._) {
     exit(1);
   }
   let info = await stat(entry);
-  if (info.isFile()) {
+  if (info.isFile) {
     if (entry.match(/.*\.json$/)) {
       configFile = entry;
       continue;
     }
     await system.importMetaSite(entry);
-  } else if (info.isDirectory()) {
-    for (let metaSitePath of await readdir(entry)) {
+  } else if (info.isDirectory) {
+    for await (let metaSitePath of await readdir(entry)) {
       let fullPath = join(entry, metaSitePath.name);
       if (!isAbsolute(fullPath)) {
         fullPath = "./" + fullPath;

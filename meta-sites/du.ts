@@ -7,14 +7,14 @@ import {
   decode
 } from "std/encoding/base32.ts";
 
-async function readDir(path) {
+async function readDir(path): Promise<AsyncIterable<Deno.DirEntry>> {
   let fileInfo = await stat(path);
-  if (!fileInfo.isDirectory()) {
+  if (!fileInfo.isDirectory) {
     console.log(`path ${path} is not a directory.`);
-    return [];
+    return;
   }
 
-  return await Deno.readdir(path);
+  return Deno.readdir(path);
 }
 
 function b32path(path) {
@@ -52,7 +52,7 @@ export async function serve(req: Request, system: System) {
     console.log("path", path);
 
     let files = [];
-    for (let file of await readDir(path)) {
+    for await (let file of await readDir(path)) {
       let fullPath = [path, file.name].join("/").replace("//", "/");
       files.push(
         wiki.paragraph(`[[${b32path(fullPath)}]] ${fullPath} - ${file.name.length}`)
