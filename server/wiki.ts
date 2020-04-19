@@ -216,6 +216,11 @@ export function serveContents(req: Request, contentType, contents, length) {
 }
 
 export async function serveFile(req: Request, contentType, filePath) {
+  if (!await exists(filePath)) {
+    console.log(`ERROR: Unable to serve ${filePath}`)
+    serve404(req)
+    return
+  }
   const [file, fileInfo] = await Promise.all([open(filePath), stat(filePath)]);
   serveContents(req, contentType, file, fileInfo.size.toString());
 }
