@@ -11,11 +11,11 @@ jobs:
     - name: Push Build Image
       run: |
         echo ${{ github.token }} |  docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-        docker tag ${GITHUB_SHA:0:8} docker.pkg.github.com/wardcunningham/seran-wiki:${GITHUB_SHA:0:8}
-        docker push docker.pkg.github.com/wardcunningham/seran-wiki:${GITHUB_SHA:0:8}
+        docker tag ${GITHUB_SHA:0:8} docker.pkg.github.com/wardcunninghamseran-wiki/seran-wiki:${GITHUB_SHA:0:8}
+        docker push docker.pkg.github.com/wardcunninghamseran-wiki/seran-wiki:${GITHUB_SHA:0:8}
     - name: Push Latest Image
       if: github.ref == 'refs/heads/master'
       run: |
         echo ${{ github.token }} |  docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-        docker tag ${GITHUB_SHA:0:8} docker.pkg.github.com/wardcunningham/seran-wiki:latest
-        docker push docker.pkg.github.com/wardcunningham/seran-wiki:latest
+        docker tag ${GITHUB_SHA:0:8} docker.pkg.github.com/wardcunninghamseran-wiki/seran-wiki:latest
+        docker push docker.pkg.github.com/wardcunninghamseran-wiki/seran-wiki:latest
