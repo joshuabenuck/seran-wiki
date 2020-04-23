@@ -47,6 +47,12 @@ export class Handler {
       if (page.story.call) {
         story = await page.story(req, system)
       }
+      story = story.map((i) => {
+        if (typeof i == typeof "") {
+          return paragraph(i)
+        }
+        return i
+      })
       serveJson(req, Object.assign({}, page, {story}));
     });
   }
@@ -519,6 +525,10 @@ interface Roster extends Item {
 
 export function roster(roster: string): Roster {
   return item("roster", { text: roster }) as Roster;
+}
+
+export function pagefold(text: string) {
+  return item("pagefold", { text });
 }
 
 function randomByte() {
