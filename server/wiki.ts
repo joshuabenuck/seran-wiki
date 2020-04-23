@@ -54,6 +54,7 @@ export class Handler {
         return i
       })
       serveJson(req, Object.assign({}, page, {story}));
+      return true;
     });
   }
 
@@ -107,13 +108,12 @@ export class Handler {
    * @param req The request to service
    * @param system Meta data about the system configuration
    */
-  serve(req: Request, system: System) {
+  async serve(req: Request, system: System) {
     let match = this.match(req.url)
     if (!match) {
       return false;
     }
-    match(req, system)
-    return true;
+    return await match(req, system)
   }
 }
 

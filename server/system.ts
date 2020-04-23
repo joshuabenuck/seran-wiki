@@ -71,21 +71,21 @@ export class MetaSite {
     return basename(path.replace(/\.[tj]s$/, ""));
   }
 
-  serve(req) {
+  async serve(req) {
     if (this.exports.serve) {
       console.log("meta-site:", req.site.name, req.url);
-      if (this.exports.serve(req, this.system)) {
+      if (await this.exports.serve(req, this.system)) {
         return true;
       }
     }
     if (this.exports.handler &&
-      this.exports.handler.serve(req, this.system)) {
+      await this.exports.handler.serve(req, this.system)) {
         return true;
     } else if (this.exports.metaPages) {
       console.log("meta-page:", req.site.name, req.url);
       let metaPage = this.exports.metaPages[req.url];
       if (metaPage) {
-        metaPage(req, this.system);
+        await metaPage(req, this.system);
         return true;
       }
     }
