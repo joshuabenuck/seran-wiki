@@ -27,7 +27,7 @@ or
 .\seran-wiki.cmd .\meta-sites
 ```
 
-Navigate to http://seran.localtest.me:8000/ or http://seran.localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.
+Navigate to http://outposts.localtest.me:8000/ or http://outposts.localtest.me:8000/index.html to view with a remote client or the bundled client, respectively.
 
 ## Meta-Sites
 
@@ -60,12 +60,12 @@ Experiment in parsing and displaying data from Ward's full federation scraper.
 
 Go to http://region.localtest.me:8000/index.html
 
-### Seran
+### Outposts
 This meta-site will eventually hold the core management functionality for configuring the seran-wiki server itself. Right now it contains miscellany.
 
-This site is mapped to both the `seran` prefix and `localhost`. This makes it reachable without an internet connection on a local development system.
+`./seran-wiki.sh ./meta-sites/outposts.ts`
 
-Go to http://seran.localtest.me:8000/index.html or http://localhost:8000/index.html
+Go to http://outposts.localtest.me:8000/index.html
 
 ## Usage
 
@@ -76,8 +76,8 @@ The command line in the `Install` section will register and run all bundled meta
   * **--domain**: Only have the server answer to URLs for this domain. May be specified more than once. Default is a wildcard.
   * **--allow-disclosure**: Display the registered domains and meta-sites on the default error page. If this is not specified, the server will not disclose which domains or meta-sites are registered to avoid revealing too much about the server stetup.
   * <**file**>: If the file is a TypeScript file, load the associated meta-site. If a JSON file, load it as a config file.
-  * **directory**: Load all TypeScript files in the directory as meta-sites.
-  * **URL**: Load the URL as a meta-site.
+  * <**directory**>: Load all TypeScript files in the directory as meta-sites.
+  * <**URL**>: Load the URL as a meta-site.
 
 If a file or directory does not exist, server startup will fail.
 
@@ -85,9 +85,16 @@ Paths to meta-sites can be for local files or they can be urls to remote modules
 
 ## Creation of Meta-Sites
 
-New meta-sites are simple to create. All that is needed is a module that:
-* Exports an implementation of `serve(req, site, system)`. The function is called whenever a request for the meta-site is received. The `site` parameter provides access to commonly used helper functions useful when servicing requests. The `system` parameter provides system state metadata such as the list of registered sites and the list of sitemaps.
-* For the meta-site to have a non-empty sitemap, it must export `siteMap()`. The function should return a sitemap in the form of `{ 'a-slug': { title: 'a page title', synopsis: 'the text of the first item on the page' } }`. This will be cached when the meta-site is registered.
+New meta-sites are simple to create.
+
+Meta-sites are modules. Adding exports with well-known names enables certain functionality.
+
+* `handler: wiki.Handler`: The `Handler` class provides many helper methods for registering routes for pages, plugins, or more complex regex patterns.
+* `metaPages: {}`: An object literal with a mapping of URLs to functions in the form `fn(req: Request, system: System): void`. If there is an exact match of the URL, the associated function will be called to service the request.
+* `serve(req: Request, system: System): boolean`: This function is called whenever a request for the meta-site is received. The `system` parameter provides system state metadata such as the list of registered sites and the list of sitemaps.
+* `siteMap: () => {}`: Gives the meta-site a sitemap which is useful if it participates in the larger federation. The function should return a sitemap in the form of `{ 'a-slug': { title: 'a page title', synopsis: 'the text of the first item on the page' } }`. This will be cached when the meta-site is registered.
+
+It is permissible for a meta-site to export more than one request routing export. If implementing your own `serve` method, be sure to return true if and only if the request was handled. Otherwise, the server will appear to hang and the request will timeout.
 
 Meta-sites may be hosted on any web accessible address. They need not be bundled with the denowiki install.
 

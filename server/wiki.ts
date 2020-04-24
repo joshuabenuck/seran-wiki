@@ -27,6 +27,9 @@ let metaPages = {
   "/logout": logout
 };
 
+/**
+ * Helper to handle common types of routes needed by meta-sites
+ */
 export class Handler {
   routes: { [key: string]: (r: Request, s: System) => void };
 
@@ -34,39 +37,83 @@ export class Handler {
     this.routes = {}
   }
 
+  /**
+   * Register a route that will serve the given page.
+   * @param page Either a page object or a function that produces one
+   */
   page(page) {
     this.route(`/${asSlug(page.title)}.json`, async (req: Request, system: System) => {
+      let story = page.story
       if (page.story.call) {
-        page.story = await page.story(req, system)
+        story = await page.story(req, system)
       }
-      serveJson(req, page);
+      story = story.map((i) => {
+        if (typeof i == typeof "") {
+          return paragraph(i)
+        }
+        return i
+      })
+      serveJson(req, Object.assign({}, page, {story}));
+      return true;
     });
   }
 
-  items(title: string, items) {
-    this.page({ title, story: items })
+  /**
+   * Register a route that will serve a page with the given items
+   * @param title The title of the page
+   * @param items The list of items to be in the story of the page
+   * @param extraProps Extra properties to add to the page object
+   */
+  items(title: string, items, extraProps={}) {
+    this.page(Object.assign({ title, story: items }, extraProps))
   }
 
+  /**
+   * Register a route that will serve the source for plugins contained
+   * within the meta-site.
+   * @param root This should be the value of `import.meta.url`
+   * @param subdir The subdirectory of the meta-site containing the source of the plugins
+   */
+  plugins(root, subdir) {
+    this.route("^/[^/.]+\.mjs", async (req) => {
+      serveResource(req, root, `/${subdir}/${req.url}`)
+    })
+  }
+
+  /**
+   * Generic route registration method
+   * @param pattern A regex of the pattern for the route
+   * @param callback What to do when a request matches the pattern
+   */
   route(pattern, callback) {
     this.routes[pattern] = callback
   }
 
+  /**
+   * Helper function to look up matching route callbacks
+   * @param url The url to match against the registered routes
+   * @returns The function to call to service the url
+   */
   match(url): (r: Request, s: System) => void {
     for (let pattern of Object.keys(this.routes)) {
-      if (pattern.match(url)) {
+      if (url.match(pattern)) {
         return this.routes[pattern]
       }
     }
     return null
   }
 
-  serve(req: Request, system: System) {
+  /**
+   * Serve a request using the registered routes
+   * @param req The request to service
+   * @param system Meta data about the system configuration
+   */
+  async serve(req: Request, system: System) {
     let match = this.match(req.url)
     if (!match) {
       return false;
     }
-    match(req, system)
-    return true;
+    return await match(req, system)
   }
 }
 
@@ -175,8 +222,56 @@ export function serveContents(req: Request, contentType, contents, length) {
 }
 
 export async function serveFile(req: Request, contentType, filePath) {
+  if (!await exists(filePath)) {
+    console.log(`ERROR: Unable to serve ${filePath}`)
+    serve404(req)
+    return
+  }
   const [file, fileInfo] = await Promise.all([open(filePath), stat(filePath)]);
   serveContents(req, contentType, file, fileInfo.size.toString());
+}
+
+export function mimeTypeFor(url) {
+  let filetypes = {
+    "mjs": "text/javascript",
+    "js": "text/javascript",
+    "css": "text/css"
+  }
+  let ext = url.split(".")[1]
+  let filetype = filetypes[ext]
+  if (!filetype) {
+    console.log("Unknown filetype:", ext, url)
+    Deno.exit(1)
+  }
+  return filetype
+}
+
+export function localPathForUrl(url) {
+  url = url.substring("file://".length)
+  // workaround to avoid leading slash on windows paths
+  if (url.indexOf(":") != -1) {
+    url = url.substring(1)
+  }
+  return url
+}
+
+// TODO: Needs some work
+// assumes that base is two levels away from the root of the project
+// and that resource is relative to the root of the project
+// This fits a model where the meta-site is in meta-sites
+// And the desired resource is in the root or a peer to meta-sites
+// A more robust implementation would detct this or provide a means
+// to specify where the root of the project is
+export async function serveResource(req: Request, base, resource) {
+  let segments = base.split("/")
+  let url = [...segments.slice(0, -2), resource.substring(1)].join("/")
+  if (url.startsWith("file://")) {
+    let path = localPathForUrl(url)
+    serveFile(req, mimeTypeFor(path), path)
+    return
+  }
+  let contents = await (await fetch(url)).text()
+  serveContents(req, mimeTypeFor(url), contents, contents.length)
 }
 
 export function serveJson(req: Request, data) {
@@ -248,7 +343,7 @@ export function servePlugins(req: Request, system: System) {
 }
 
 export function serveMetaAboutUs(req: Request, system: System) {
-  serveJson(req, page("DenoWiki", [
+  serveJson(req, page("SeranWiki", [
     paragraph(`Site: ${req.site.name}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
     paragraph(`Source: TODO - Add link to meta-site's source`),
@@ -430,6 +525,10 @@ interface Roster extends Item {
 
 export function roster(roster: string): Roster {
   return item("roster", { text: roster }) as Roster;
+}
+
+export function pagefold(text: string) {
+  return item("pagefold", { text });
 }
 
 function randomByte() {

@@ -71,21 +71,21 @@ export class MetaSite {
     return basename(path.replace(/\.[tj]s$/, ""));
   }
 
-  serve(req) {
+  async serve(req) {
     if (this.exports.serve) {
       console.log("meta-site:", req.site.name, req.url);
-      if (this.exports.serve(req, this.system)) {
+      if (await this.exports.serve(req, this.system)) {
         return true;
       }
     }
     if (this.exports.handler &&
-      this.exports.handler.serve(req, this.system)) {
+      await this.exports.handler.serve(req, this.system)) {
         return true;
     } else if (this.exports.metaPages) {
       console.log("meta-page:", req.site.name, req.url);
       let metaPage = this.exports.metaPages[req.url];
       if (metaPage) {
-        metaPage(req, this.system);
+        await metaPage(req, this.system);
         return true;
       }
     }
@@ -118,16 +118,6 @@ export class System {
     let metaSite = new MetaSite(this, path);
     await metaSite.init();
     this.metaSites[metaSite.name] = metaSite;
-    // possibly a misguided hack
-    // register localhost as seran
-    // allows local dev to use localhost without /etc/hosts entry
-    // and public use to have an unambiguous name
-    if (metaSite.name == "localhost") {
-      metaSite = new MetaSite(this, path);
-      metaSite.name = "seran"
-      await metaSite.init();
-      this.metaSites["seran"] = metaSite;
-    }
   }
 
   metaSiteFor(host) {
@@ -152,7 +142,6 @@ export class System {
     }
     // append domain to all non-localhost sites
     sites = sites.map((s) => `${s}.${domain}`)
-    sites.push(`localhost:${this.port}`)
     return sites
   }
 

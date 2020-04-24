@@ -33,7 +33,6 @@ export function siteMap() {
 }
 
 export async function serve(req: Request, system: System) {
-  console.log("du", req.url);
   if (req.url == "/welcome-visitors.json") {
     wiki.serveJson(
       req,
@@ -42,7 +41,7 @@ export async function serve(req: Request, system: System) {
         [wiki.paragraph(`[[${b32path("/")}]] - /`)]
       )
     );
-  } else if (req.url.match("/^[a-z0-9]+.json")) {
+  } else if (req.url.match("^/[a-z0-9]+.json")) {
     let parts = req.url.split(".json");
     let base32path = parts[0].substring(1, parts[0].length);
     let multipleOf = Math.ceil(base32path.length / 8);

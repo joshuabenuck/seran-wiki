@@ -133,7 +133,7 @@ for await (const r of s) {
   if (metaSite) {
     req.site = metaSite;
     req.authenticated = wiki.authenticated(req)
-    if (!metaSite.serve(req)) {
+    if (!await metaSite.serve(req)) {
       wiki.serve(req, system);
     }
     continue;
