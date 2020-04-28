@@ -77,6 +77,7 @@ export class Handler {
   plugins(root, subdir) {
     this.route("^/[^/.]+\.mjs", async (req) => {
       serveResource(req, root, `/${subdir}/${req.url}`)
+      return true
     })
   }
 
