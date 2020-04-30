@@ -110,7 +110,7 @@ export class System {
     this.port = port;
     this.root = root;
     if (!secret) {
-      secret = Deno.env().SERAN_SECRET
+      secret = Deno.env.get("SERAN_SECRET")
       if (!secret) {
         console.log("INFO: Login not enabled. Neither --secret parameter nor SERAN_SECRET env var are set.")
       }

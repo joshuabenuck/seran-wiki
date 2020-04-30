@@ -60,7 +60,7 @@ async function readdir(path): Promise<AsyncIterable<Deno.DirEntry>> {
     return;
   }
 
-  return Deno.readdir(path);
+  return Deno.readDir(path);
 }
 
 if (!await exists(params.root)) {

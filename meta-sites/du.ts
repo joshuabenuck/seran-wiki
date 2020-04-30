@@ -14,7 +14,7 @@ async function readDir(path): Promise<AsyncIterable<Deno.DirEntry>> {
     return;
   }
 
-  return Deno.readdir(path);
+  return Deno.readDir(path);
 }
 
 function b32path(path) {

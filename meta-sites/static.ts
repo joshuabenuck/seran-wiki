@@ -65,7 +65,7 @@ export async function init({site, system}: {site: MetaSite, system: System}) {
     }
     // Uncomment to register all existing wikis
     return
-    for await (let dir of Deno.readdir(system.root)) {
+    for await (let dir of Deno.readDir(system.root)) {
         if (dir.isFile ||
             dir.name == "assets" ||
             dir.name == "pages" ||
