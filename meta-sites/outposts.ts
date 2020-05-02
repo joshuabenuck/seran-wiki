@@ -89,7 +89,7 @@ async function serve(req: Request, system: System) {
       console.log("Unknown filetype:", ext, req.url)
       Deno.exit(1)
     }
-    wiki.serveFile(req, filetype, join("./client", req.url))
+    await wiki.serveFile(req, filetype, join("./client", req.url))
     return true
   }
 }

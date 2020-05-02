@@ -1,4 +1,4 @@
-const { stat } = Deno;
+const { stat, readDir } = Deno;
 import { System } from "seran/system.ts";
 import * as wiki from "seran/wiki.ts";
 import { Request } from "seran/wiki.ts";
@@ -6,16 +6,6 @@ import {
   encode,
   decode
 } from "std/encoding/base32.ts";
-
-async function readDir(path): Promise<AsyncIterable<Deno.DirEntry>> {
-  let fileInfo = await stat(path);
-  if (!fileInfo.isDirectory) {
-    console.log(`path ${path} is not a directory.`);
-    return;
-  }
-
-  return Deno.readDir(path);
-}
 
 function b32path(path) {
   return encode(new TextEncoder().encode(path)).replace(/=/g, "");
@@ -34,7 +24,7 @@ export function siteMap() {
 
 export async function serve(req: Request, system: System) {
   if (req.url == "/welcome-visitors.json") {
-    wiki.serveJson(
+    await wiki.serveJson(
       req,
       wiki.page(
         "Welcome Visitors",
@@ -52,17 +42,21 @@ export async function serve(req: Request, system: System) {
     console.log("path", path);
 
     let files = [];
-    for await (let file of await readDir(path)) {
-      let fullPath = [path, file.name].join("/").replace("//", "/");
-      files.push(
-        wiki.paragraph(`[[${b32path(fullPath)}]] ${fullPath} - ${file.name.length}`)
-      );
+    let fileInfo = await stat(path);
+    if (fileInfo.isDirectory) {  
+      for await (let file of readDir(path)) {
+        console.log("readDir2", file.name);
+        let fullPath = [path, file.name].join("/").replace("//", "/");
+        files.push(
+          wiki.paragraph(`[[${b32path(fullPath)}]] ${fullPath} - ${file.name.length}`)
+        );
+      }
     }
 
     let data = wiki.page(path, files);
 
-    wiki.serveJson(req, data);
+    await wiki.serveJson(req, data);
   } else {
-    wiki.serve(req, system);
+    await wiki.serve(req, system);
   }
 }

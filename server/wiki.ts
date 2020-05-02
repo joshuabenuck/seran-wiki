@@ -1,4 +1,4 @@
-const { args, stat, open } = Deno;
+const { args, stat, open, close } = Deno;
 import { ServerRequest } from "std/http/server.ts";
 import { readFileStr, exists, readJson, writeJson } from "std/fs/mod.ts";
 import {
@@ -53,7 +53,7 @@ export class Handler {
         }
         return i
       })
-      serveJson(req, Object.assign({}, page, {story}));
+      await serveJson(req, Object.assign({}, page, {story}));
       return true;
     });
   }
@@ -125,7 +125,7 @@ export async function enableLogin(site: MetaSite, system: System) {
 function authHeaderToPassword(header) {
   let parts = header.trim().split(" ")
   if (parts[0] != "Basic") {
-    console.log("Missing Basic")
+    console.warn("Missing Basic")
     return null
   }
   return atob(parts[1])
@@ -136,7 +136,7 @@ export function authenticated(req: Request) {
   return !!obj["wiki-session"]
 }
 
-function login(req: Request, system: System) {
+async function login(req: Request, system: System) {
   let secret = req.site.secret
   let headers = baseHeaders()
   const failure = {
@@ -145,27 +145,27 @@ function login(req: Request, system: System) {
     headers
   };
   if (!secret) {
-    console.log(`ERROR: '${req.site.name}' does not have a secret set.`)
-    req.respond(failure);
+    console.error(`ERROR: '${req.site.name}' does not have a secret set.`)
+    await req.respond(failure);
     return
   }
   let obj = cookie(req.headers.get("cookie"))
   let auth = req.headers.get("Authorization")
   if (!auth) {
-    console.log("ERROR: No Authorization header found.")
-    req.respond(failure);
+    console.error("ERROR: No Authorization header found.")
+    await req.respond(failure);
     return
   }
   let providedPassword = authHeaderToPassword(auth)
   if (secret != providedPassword) {
-    console.log("ERROR: Provided password does not match site secret.")
-    req.respond(failure);
+    console.warn("ERROR: Provided password does not match site secret.")
+    await req.respond(failure);
     return
   }
   let session = obj["wiki-session"]
   if (!session) {
     session = itemId()
-    console.log("Generating session id:", session)
+    console.debug("Generating session id:", session)
     headers.set("Set-Cookie", `wiki-session=${session}`)
   }
   const res = {
@@ -173,10 +173,10 @@ function login(req: Request, system: System) {
     body: JSON.stringify({success: true}),
     headers
   };
-  req.respond(res);
+  await req.respond(res);
 }
 
-function logout(req: Request, system: System) {
+async function logout(req: Request, system: System) {
   let headers = baseHeaders()
   headers.set("Set-Cookie", `wiki-session=logout; expires=${new Date()}`)
   const res = {
@@ -184,7 +184,7 @@ function logout(req: Request, system: System) {
     body: "OK",
     headers
   };
-  req.respond(res);
+  await req.respond(res);
 }
 
 export function cookie(data) {
@@ -209,7 +209,7 @@ export function baseHeaders() {
   return headers;
 }
 
-export function serveContents(req: Request, contentType, contents, length) {
+export async function serveContents(req: Request, contentType, contents, length) {
   let headers = baseHeaders();
   headers.set("content-length", length);
   headers.set("content-type", contentType);
@@ -219,17 +219,19 @@ export function serveContents(req: Request, contentType, contents, length) {
     body: contents,
     headers
   };
-  req.respond(res);
+  await req.respond(res);
 }
 
 export async function serveFile(req: Request, contentType, filePath) {
   if (!await exists(filePath)) {
-    console.log(`ERROR: Unable to serve ${filePath}`)
-    serve404(req)
+    console.error(`ERROR: Unable to serve ${filePath}`)
+    await serve404(req)
     return
   }
   const [file, fileInfo] = await Promise.all([open(filePath), stat(filePath)]);
-  serveContents(req, contentType, file, fileInfo.size.toString());
+  console.debug("serveFile", filePath, fileInfo.size.toString());
+  await serveContents(req, contentType, file, fileInfo.size.toString());
+  close(file.rid);
 }
 
 export function mimeTypeFor(url) {
@@ -241,7 +243,7 @@ export function mimeTypeFor(url) {
   let ext = url.split(".")[1]
   let filetype = filetypes[ext]
   if (!filetype) {
-    console.log("Unknown filetype:", ext, url)
+    console.warn("Unknown filetype:", ext, url)
     Deno.exit(1)
   }
   return filetype
@@ -268,15 +270,17 @@ export async function serveResource(req: Request, base, resource) {
   let url = [...segments.slice(0, -2), resource.substring(1)].join("/")
   if (url.startsWith("file://")) {
     let path = localPathForUrl(url)
-    serveFile(req, mimeTypeFor(path), path)
+    await serveFile(req, mimeTypeFor(path), path)
     return
   }
   let contents = await (await fetch(url)).text()
-  serveContents(req, mimeTypeFor(url), contents, contents.length)
+  console.debug("serveResource", url, contents.length)
+  await serveContents(req, mimeTypeFor(url), contents, contents.length)
 }
 
-export function serveJson(req: Request, data) {
+export async function serveJson(req: Request, data) {
   let headers = baseHeaders();
+  headers.set("content-type", "application/json");
   if (data && data.story) {
     if (data.dynamic == undefined) {
       data.dynamic = true;
@@ -301,14 +305,14 @@ export function serveJson(req: Request, data) {
       })
     }
   }
-  req.respond({
+  await req.respond({
     status: 200,
     body: JSON.stringify(data, null, 2),
     headers
   });
 }
 
-export function serveSiteIndex(req: Request) {
+export async function serveSiteIndex(req: Request) {
   let data = {
     "index": { "_tree": {}, "_prefix": "" },
     "documentCount": 0,
@@ -320,23 +324,23 @@ export function serveSiteIndex(req: Request) {
     "storedFields": {}
   };
 
-  serveJson(req, data);
+  await serveJson(req, data);
 }
 
-export function serveSiteMap(req: Request, system: System) {
-  serveJson(req, req.site.siteMap);
+export async function serveSiteMap(req: Request, system: System) {
+  await serveJson(req, req.site.siteMap);
 }
 
-export function servePlugins(req: Request, system: System) {
+export async function servePlugins(req: Request, system: System) {
   // Make relative imports relative to target site, if needed
   let plugins = req.site.plugins.map((p) => {
     return (p.indexOf("/") == 0) ? "http://" + req.headers.get("host") + p : p
   });
-  serveJson(req, plugins);
+  await serveJson(req, plugins);
 }
 
-export function serveMetaAboutUs(req: Request, system: System) {
-  serveJson(req, page("SeranWiki", [
+export async function serveMetaAboutUs(req: Request, system: System) {
+  await serveJson(req, page("SeranWiki", [
     paragraph(`Site: ${req.site.name}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
     paragraph(`Source: TODO - Add link to meta-site's source`),
@@ -344,9 +348,9 @@ export function serveMetaAboutUs(req: Request, system: System) {
   ]));
 }
 
-export function serve404(req: Request) {
-  console.log(`Unable to handle request: ${req.url}`);
-  req.respond({
+export async function serve404(req: Request) {
+  console.warn(`Unable to handle request: ${req.url}`);
+  await req.respond({
     status: 404,
     body: `Unable to handle request: ${req.url}`
   });
@@ -357,7 +361,7 @@ export async function serve(req: Request, system: System) {
   if (nodeStyle) {
     let headers = baseHeaders()
     headers.set("Refresh", `0; url=/index.html?page=${nodeStyle[1]}`)
-    req.respond({
+    await req.respond({
       status: 200,
       body: `<html><body>Redirecting to: <a href="/index.html?page=${nodeStyle[1]}">new style url</a>.</body></html>`,
       headers
@@ -367,19 +371,19 @@ export async function serve(req: Request, system: System) {
   let metaPage = metaPages[req.url];
   if (metaPage) {
     let data = await metaPage(req, system);
-    serveJson(req, data);
+    await serveJson(req, data);
     return
   }
   // TODO: Extract into its own function
   if (req.url.indexOf("/system/save") == 0) {
     if (req.method != "POST") {
       // Different status code?
-      serve404(req)
+      await serve404(req)
       return
     }
     if (!req.authenticated) {
       // TODO: Should be a different status code
-      serve404(req)
+      await serve404(req)
       return
     }
     let url = new URL(req.url)
@@ -395,29 +399,29 @@ export async function serve(req: Request, system: System) {
     let pagePath = join(req.site.root, "pages", slug)
     if (!await exists(pagePath)) {
       // TODO: Handle initial page creation
-      serveJson(req, {success: true})
+      await serveJson(req, {success: true})
       return
     }
   }
   if (req.url.indexOf("/index.html") == 0) {
-    serveFile(req, "text/html", "./client/index.html");
+    await serveFile(req, "text/html", "./client/index.html");
     return
   }
   if (req.url.match(/^\/client\/.*\.mjs$/)) {
     let filePath = `.${req.url}`;
-    serveFile(req, "text/javascript", filePath);
+    await serveFile(req, "text/javascript", filePath);
     return
   }
   // workaround to allow this to be called outside of the context of a meta-site
   if (req.site) {
     let favicon = join(req.site.root, "status", "favicon.png")
     if (req.url == "/favicon.png" && await exists(favicon)) {
-        serveFile(req, "image/png", favicon)
+      await serveFile(req, "image/png", favicon)
         return
     }
   }
   if (req.url.match(/^\/.*\.png$/)) {
-    serveFile(req, "image/png", join("./client", req.url));
+    await serveFile(req, "image/png", join("./client", req.url));
     return
   }
   let match = req.url.match(/^\/([a-z0-9-]+).json$/)
@@ -425,11 +429,11 @@ export async function serve(req: Request, system: System) {
     let page = match[1]
     let fullPath = join(req.site.root, "pages", page);
     if (await exists(fullPath)) {
-      serveFile(req, "application/json", fullPath);
+      await serveFile(req, "application/json", fullPath);
       return
     }
   }
-  serve404(req);
+  await serve404(req);
 }
 
 export function asSlug(title) {
@@ -458,7 +462,7 @@ export function pages(metaText,mp) {
       }
     });
     // console.log(JSON.stringify(page,null,2))
-    (mp||metaPages)[`/${asSlug(title)}.json`] = async (req, _system) => {serveJson(req, page)}
+    (mp||metaPages)[`/${asSlug(title)}.json`] = async (req, _system) => {await serveJson(req, page)}
   })
 
 }

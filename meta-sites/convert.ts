@@ -8,7 +8,7 @@ let conversions = {
 
 export async function serve(req: Request, system) {
   if (req.url == "/welcome-visitors.json") {
-    wiki.serveJson(
+    await wiki.serveJson(
       req,
       wiki.welcomePage("[[DenoWiki]]", "[[Inches to Millimeters]]")
     );
@@ -17,7 +17,7 @@ export async function serve(req: Request, system) {
     let [src, dst] = conversion.split("-to-");
     let formula = conversions[conversion];
     if (!formula) {
-      wiki.serveJson(
+      await wiki.serveJson(
         req,
         wiki.page(
           "Unknown",
@@ -28,7 +28,7 @@ export async function serve(req: Request, system) {
     }
     src = src.charAt(0).toUpperCase() + src.substring(1);
     dst = dst.charAt(0).toUpperCase() + dst.substring(1);
-    wiki.serveJson(
+    await wiki.serveJson(
       req,
       wiki.page(
         `${src} to ${dst}`,
@@ -36,6 +36,6 @@ export async function serve(req: Request, system) {
       )
     );
   } else {
-    wiki.serve(req, system);
+    await wiki.serve(req, system);
   }
 }
