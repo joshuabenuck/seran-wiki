@@ -51,6 +51,10 @@ export class MetaSite {
   }
 
   async init() {
+    if (!await exists(this.root)) {
+      console.log(`Creating: ${this.root}`)
+      await Deno.mkdir(this.root)
+    }
     // TODO: Print canonical path here...
     console.log(`Registering ${normalize(this.path)} as ${this.name}`);
     this.exports = await import(this.path);

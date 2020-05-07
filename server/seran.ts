@@ -20,7 +20,7 @@ let params = parse(args, {
   default: {
     port: '8000',
     "external-client": "dev.wiki.randombits.xyz",
-    root: join(Deno.dir("home"), ".wiki"),
+    root: join(Deno.dir("home"), ".seran"),
     domain: "*",
     secret: null
   },
@@ -63,7 +63,10 @@ async function readdir(path) {
   return await Deno.readdir(path);
 }
 
-
+if (!await exists(params.root)) {
+  console.log(`Creating: ${params.root}`)
+  await Deno.mkdir(params.root)
+}
 let system = new System(params.domain, port, params.root, params.secret);
 
 let configFile = null
