@@ -12,23 +12,32 @@ export class Roster extends HTMLElement {
             img {
                 width: 16px;
                 height: 16px;
+                padding-right: 4px;
             }
         `
         let style = document.createElement("style")
         style.innerHTML = css
         shadow.appendChild(style)
-        let p = document.createElement("p")
         console.log(this, this.children, this.childNodes)
         if (this.childNodes.length > 0) {
             let rosterContent = this.childNodes[0].nodeValue
             for (let line of rosterContent.split("\n")) {
-                let flag = document.createElement("img")
-                flag.setAttribute("src", `http://${line}/favicon.png`)
-                flag.setAttribute("title", line)
-                p.appendChild(flag)
+                if (line.includes('.')) {
+                    let flag = document.createElement("img")
+                    flag.setAttribute("src", `http://${line}/favicon.png`)
+                    flag.setAttribute("title", line)
+                    shadow.appendChild(flag)
+                } else {
+                    let txt = document.createTextNode(line)
+                    if (line.match(/\S/)) {
+                        shadow.appendChild(txt)
+                        let br = document.createElement('br')
+                        shadow.appendChild(br)
+                    }
+                }
+
             }
         }
-        shadow.appendChild(p)
     }
 
     set json(json) {
