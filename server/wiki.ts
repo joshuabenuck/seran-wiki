@@ -281,6 +281,13 @@ export function serveJson(req: Request, data) {
     if (data.dynamic == undefined) {
       data.dynamic = true;
     }
+    if (!req.authenticated) {
+      if (data.protected) {
+        data = page(data.title, [paragraph("Login required to view")])
+      } else {
+        data.story = data.story.filter((i) => !i.protected)
+      }
+    }
     if (!data.journal) {
       let date = new Date().getTime()
       data.journal = []
@@ -288,25 +295,10 @@ export function serveJson(req: Request, data) {
         type: "create",
         item: {
           title: data.title,
-          story: []
+          story: data.story,
         },
         date
       })
-      for(let item of data.story) {
-        data.journal.push({
-          type: "add",
-          item,
-          id: item.id,
-          date
-        })
-      }
-    }
-    if (!req.authenticated) {
-      if (data.protected) {
-        data = page(data.title, [paragraph("Login required to view")])
-      } else {
-        data.story = data.story.filter((i) => !i.protected)
-      }
     }
   }
   req.respond({
