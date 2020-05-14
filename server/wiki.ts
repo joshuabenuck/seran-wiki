@@ -444,7 +444,7 @@ export function asSlug(title) {
   return title.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase();
 }
 
-export function pages(metaText) {
+export function pages(metaText,mp) {
 
   function parse(sep, text, fn) {
     let v = text.split(sep)
@@ -464,9 +464,9 @@ export function pages(metaText) {
       } else {
         page.story.push({type:'paragraph',text,id})
       }
-    })
+    });
     // console.log(JSON.stringify(page,null,2))
-    metaPages[`/${asSlug(title)}.json`] = async (req, _system) => {serveJson(req, page)}
+    (mp||metaPages)[`/${asSlug(title)}.json`] = async (req, _system) => {serveJson(req, page)}
   })
 
 }
