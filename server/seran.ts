@@ -1,4 +1,4 @@
-const { exit, args, stat, permissions } = Deno;
+const { exit, args, stat, permissions, readDir } = Deno;
 import { exists, readJson } from "std/fs/mod.ts";
 import { parse } from "std/flags/mod.ts";
 import {
@@ -53,16 +53,6 @@ const s = serve(`${intf}:${bind}`);
 
 convertToArray("domain", params);
 
-async function readdir(path) {
-  let fileInfo = await stat(path);
-  if (!fileInfo.isDirectory()) {
-    console.log(`path ${path} is not a directory.`);
-    return [];
-  }
-
-  return await Deno.readdir(path);
-}
-
 if (!await exists(params.root)) {
   console.log(`Creating: ${params.root}`)
   await Deno.mkdir(params.root)
@@ -84,14 +74,15 @@ for (let entry of params._) {
     exit(1);
   }
   let info = await stat(entry);
-  if (info.isFile()) {
+  if (info.isFile) {
     if (entry.match(/.*\.json$/)) {
       configFile = entry;
       continue;
     }
     await system.importMetaSite(entry);
-  } else if (info.isDirectory()) {
-    for (let metaSitePath of await readdir(entry)) {
+  } else if (info.isDirectory) {
+    for await (let metaSitePath of readDir(entry)) {
+      console.log("readDir1", metaSitePath.name);
       let fullPath = join(entry, metaSitePath.name);
       if (!isAbsolute(fullPath)) {
         fullPath = "./" + fullPath;
@@ -118,6 +109,7 @@ system.checkEtcHosts()
 
 console.log("listening on port ", bind);
 for await (const r of s) {
+  try {
   let req = r as wiki.Request
   let requestedSite = req.headers.get("host");
   let metaSite = system.metaSiteFor(requestedSite);
@@ -131,13 +123,13 @@ for await (const r of s) {
       status: 302,
       headers
     };
-    req.respond(res);
+    await req.respond(res);
   }
   if (metaSite) {
     req.site = metaSite;
     req.authenticated = wiki.authenticated(req)
     if (!await metaSite.serve(req)) {
-      wiki.serve(req, system);
+      await wiki.serve(req, system);
     }
     continue;
   }
@@ -164,24 +156,24 @@ for await (const r of s) {
         }
       }
     }
-    wiki.serveJson(req, wiki.page("Not in Service", items))
+    await wiki.serveJson(req, wiki.page("Not in Service", items))
     continue
   }
   // minimum routes needed to display a default error page
   // creating a meta-site just for this purpose
   // would likely be better, but this works for now
   if (req.url == "/index.html?page=not-in-service") {
-    wiki.serveFile(req, "text/html", "./client/index.html");
+    await wiki.serveFile(req, "text/html", "./client/index.html");
     continue
   }
   if (req.url == "/" ||
       req.url.indexOf("/index.html") == 0) {
       req.url = "/view/not-in-service"
-      wiki.serve(req, system)
+    await wiki.serve(req, system)
   }
   if (req.url.match(/^\/client\/.*\.mjs$/) ||
       req.url.match(/^\/.*\.png$/)) {
-    wiki.serve(req, system)
+    await wiki.serve(req, system)
     continue
   }
 
@@ -191,5 +183,8 @@ for await (const r of s) {
     requestedSite,
     req.url
   );
-  wiki.serve404(req);
+  await wiki.serve404(req);
+  } catch (error) {
+    console.error(error);
+  }
 }

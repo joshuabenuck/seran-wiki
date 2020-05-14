@@ -17,7 +17,7 @@ export async function init({site, system}: {site: MetaSite, system: System}) {
 
 export async function sites(req, system) {
   let sites = [];
-  for (let metaSite of system.metaSitesInDomain(req)) {
+  for (let metaSite of []) { //system.metaSitesInDomain(req)) {
     sites.push(
       wiki.reference(
         metaSite,
@@ -57,7 +57,7 @@ handler.page(wiki.welcomePage("[[SeranWiki]]", "[[Admin]], [[Outposts]]"))
 handler.items("Admin", async (req: Request, system: System) => {
   let items = []
   items.push(wiki.paragraph("Active meta-sites:"))
-  for (let siteName of system.metaSitesInDomain(req)) {
+  for (let siteName of []) { //system.metaSitesInDomain(req)) {
     items.push(wiki.paragraph(`[http://${siteName}/view/welcome-visitors ${siteName}]`))
   }
   items.push(wiki.paragraph("Sites with passwords:"))
@@ -89,7 +89,7 @@ async function serve(req: Request, system: System) {
       console.log("Unknown filetype:", ext, req.url)
       Deno.exit(1)
     }
-    wiki.serveFile(req, filetype, join("./client", req.url))
+    await wiki.serveFile(req, filetype, join("./client", req.url))
     return true
   }
 }

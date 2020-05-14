@@ -1,4 +1,4 @@
-const { args, stat, open, exit, writeFile } = Deno;
+const { args, stat, open, exit, writeFile, readDir } = Deno;
 import { readFileStr, exists, writeJson } from "std/fs/mod.ts";
 import { BufReader } from "std/io/bufio.ts";
 import * as wiki from "seran/wiki.ts";
@@ -26,14 +26,14 @@ function aboutStatic() {
 export async function serve(req: Request, system: System) {
     if (req.site.name.indexOf("static") != -1 &&
         req.url == "/welcome-visitors.json") {
-            wiki.serveJson(req, wiki.welcomePage("[[DenoWiki]]", "[[About static]]"))
+            await wiki.serveJson(req, wiki.welcomePage("[[DenoWiki]]", "[[About static]]"))
             return
     }
     if (req.url == "/about-static.json") {
-        wiki.serveJson(req, aboutStatic())
+        await wiki.serveJson(req, aboutStatic())
         return
     }
-    wiki.serve(req, system)
+    await wiki.serve(req, system)
 }
 
 let _siteMap = []
@@ -65,8 +65,8 @@ export async function init({site, system}: {site: MetaSite, system: System}) {
     }
     // Uncomment to register all existing wikis
     return
-    for (let dir of await Deno.readdir(system.root)) {
-        if (dir.isFile() ||
+    for await (let dir of readDir(system.root)) {
+        if (dir.isFile ||
             dir.name == "assets" ||
             dir.name == "pages" ||
             dir.name == "recycle" ||
