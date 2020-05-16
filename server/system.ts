@@ -76,22 +76,9 @@ export class MetaSite {
   }
 
   async serve(req) {
-    if (this.exports.serve) {
-      console.log("meta-site:", req.site.name, req.url);
-      if (await this.exports.serve(req, this.system)) {
-        return true;
-      }
-    }
     if (this.exports.handler &&
       await this.exports.handler.serve(req, this.system)) {
         return true;
-    } else if (this.exports.metaPages) {
-      console.log("meta-page:", req.site.name, req.url);
-      let metaPage = this.exports.metaPages[req.url];
-      if (metaPage) {
-        await metaPage(req, this.system);
-        return true;
-      }
     }
     return false;
   }
