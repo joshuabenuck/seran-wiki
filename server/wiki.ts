@@ -22,7 +22,7 @@ let metaPages = {
   "/system/site-index.json": serveSiteIndex,
   "/system/sitemap.json": serveSiteMap,
   "/system/plugins.json": servePlugins,
-  "/denowiki.json": serveMetaAboutUs,
+  "/seranwiki.json": serveMetaAboutUs,
   "/login": login,
   "/logout": logout
 };
