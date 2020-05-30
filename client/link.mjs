@@ -111,10 +111,12 @@ export class Link extends HTMLElement {
         }
         let site = this.getAttribute("site")
         let slug = this.getAttribute("slug")
-        if (site) {
-            slug = `${site};${slug}`
-        }
-        url.searchParams.append("page", slug)
+        // if (site) {
+        //     slug = `${site};${slug}`
+        // }
+        // join...
+        url.pathname += `/${site}/${slug}`
+        // url.searchParams.append("page", slug)
         this.anchor.setAttribute("href", url.toString())
     }
 

@@ -357,17 +357,6 @@ export async function serve404(req: Request) {
 }
 
 export async function serve(req: Request, system: System) {
-  let nodeStyle = req.url.match(/^\/view\/([a-z0-9-]+)$/)
-  if (nodeStyle) {
-    let headers = baseHeaders()
-    headers.set("Refresh", `0; url=/index.html?page=${nodeStyle[1]}`)
-    await req.respond({
-      status: 200,
-      body: `<html><body>Redirecting to: <a href="/index.html?page=${nodeStyle[1]}">new style url</a>.</body></html>`,
-      headers
-    });
-    return
-  }
   let metaPage = metaPages[req.url];
   if (metaPage) {
     let data = await metaPage(req, system);
@@ -403,7 +392,7 @@ export async function serve(req: Request, system: System) {
       return
     }
   }
-  if (req.url.indexOf("/index.html") == 0) {
+  if (req.url == "/" || req.url.indexOf("/index.html") == 0) {
     await serveFile(req, "text/html", "./client/index.html");
     return
   }
@@ -433,7 +422,12 @@ export async function serve(req: Request, system: System) {
       return
     }
   }
-  await serve404(req);
+  // let nodeStyle = req.url.match(/^\/view\/([a-z0-9-]+)/)
+  // if (nodeStyle) {
+  await serveFile(req, "text/html", "./client/index.html");
+    // return
+  // }
+  // await serve404(req);
 }
 
 export function asSlug(title) {

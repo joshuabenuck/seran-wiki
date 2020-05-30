@@ -3,6 +3,12 @@ class Wiki extends HTMLElement {
         super()
         window.wiki = this
         this.pluginsLoadedFor = new Set()
+        // create web socket (duplex or multiplex?)
+        // listen for a message
+        // broadcast (or direclty send?) to interested parties
+        // support reload
+        // support for sys admin and plugin actors
+        // remote pages
     }
 
     connectedCallback() {

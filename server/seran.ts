@@ -9,6 +9,11 @@ import {
 import { serve, ServerRequest } from "std/http/server.ts";
 import * as wiki from "seran/wiki.ts";
 import { System } from "seran/system.ts";
+import {
+  acceptWebSocket,
+  isWebSocketCloseEvent,
+  isWebSocketPingEvent,
+} from "std/ws/mod.ts";
 
 function convertToArray(param, params) {
   if (!Array.isArray(params[param])) {
@@ -107,24 +112,66 @@ if (Object.keys(system.metaSites).length == 0) {
 
 system.checkEtcHosts()
 
+async function handleWS(req) {
+  const { conn, r: bufReader, w: bufWriter, headers } = req;
+  try {
+    const sock = await acceptWebSocket({
+      conn,
+      bufReader,
+      bufWriter,
+      headers,
+    });
+    console.log("socket connected!");
+    try {
+      for await (const ev of sock) {
+        if (typeof ev === "string") {
+          // text message
+          console.log("ws:Text", ev);
+          await sock.send(ev);
+        } else if (ev instanceof Uint8Array) {
+          // binary message
+          console.log("ws:Binary", ev);
+        } else if (isWebSocketPingEvent(ev)) {
+          const [, body] = ev;
+          // ping
+          console.log("ws:Ping", body);
+        } else if (isWebSocketCloseEvent(ev)) {
+          // close
+          const { code, reason } = ev;
+          console.log("ws:Close", code, reason);
+        }
+      }
+    } catch (err) {
+      console.error(`failed to receive frame: ${err}`);
+      if (!sock.isClosed) {
+        await sock.close(1000).catch(console.error);
+      }
+    }
+  } catch (err) {
+    console.error(`failed to accept websocket: ${err}`);
+    await req.respond({ status: 400 });
+  }
+}
+
 console.log("listening on port ", bind);
 for await (const r of s) {
   try {
+  // handleWS(r)
   let req = r as wiki.Request
   let requestedSite = req.headers.get("host");
   let metaSite = system.metaSiteFor(requestedSite);
-  if (req.url == "/" && metaSite) {
-    let headers = new Headers();
-    headers.set(
-      "Location",
-      `http://${params["external-client"]}/${requestedSite}/welcome-visitors`
-    );
-    const res = {
-      status: 302,
-      headers
-    };
-    await req.respond(res);
-  }
+  // if (req.url == "/" && metaSite) {
+  //   let headers = new Headers();
+  //   headers.set(
+  //     "Location",
+  //     `http://${params["external-client"]}/${requestedSite}/welcome-visitors`
+  //   );
+  //   const res = {
+  //     status: 302,
+  //     headers
+  //   };
+  //   await req.respond(res);
+  // }
   if (metaSite) {
     req.site = metaSite;
     req.authenticated = wiki.authenticated(req)

@@ -131,20 +131,22 @@
             }
             let wiki = document.querySelector("wiki-wiki")
             async function loadPages() {
-                if (document.URL.indexOf("?") == -1) {
+                if (document.URL == "/") {
                     console.log("loading default page")
                     wiki.loadPage("welcome-visitors")
+                    return
                 }
-                for (let [name, value] of new URL(document.URL).searchParams.entries()) {
-                    if (name != "page") {
-                        continue;
+                let url = new URL(document.URL)
+                let parts = url.pathname.split("/")
+                for (let i = 1; i < parts.length; i+=2) {
+                    let site = url.origin
+                    if (parts[i] != "view") {
+                        site = parts[i]
                     }
-                    if (value.indexOf(";") != -1) {
-                        let [site, slug] = value.split(";")
-                        await wiki.loadRemotePage(site, slug)
-                        continue;
-                    }
-                    await wiki.loadPage(value)
+                    // a page to fetch
+                    let slug = parts[i+1]
+                    console.log("index loading", site, slug)
+                    await wiki.loadRemotePage(site, slug)
                 }
             }
             loadPages()
