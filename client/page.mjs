@@ -214,10 +214,10 @@ class Page extends HTMLElement {
     get fullSlug() {
         let site = this.site
         let slug = this.slug
-        if (site != undefined && site != location.origin) {
-            slug = `${site};${slug}`
+        if (site == undefined || site == this.lineup.wiki.origin) {
+            site = "view"
         }
-        return slug
+        return `/${site}/${slug}`
     }
 
     get URL() {
@@ -271,7 +271,7 @@ class Page extends HTMLElement {
         for (let site of sites) {
             let url = `/${slug}.json`
             if (site) {
-                url = `http://${site}` + url
+                //url = `http://${site}` + url
             }
             try {
                 let json = await fetch(url).then((r) => r.json()).then((j) => this.json = j)

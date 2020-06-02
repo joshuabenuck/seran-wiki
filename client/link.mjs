@@ -142,7 +142,7 @@ export class Link extends HTMLElement {
 
     _findParent(name) {
         let parent = this.parentElement
-        while(parent) {
+        while (parent) {
             if (parent.nodeName == name) {
                 return parent
             }

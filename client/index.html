@@ -23,7 +23,7 @@
         footer {
             border-top: 1px solid #3d3c43;
             box-shadow: inset 0px 0px 7px rgba(0, 0, 0, 0.8);
-            background: #eeeeee url("noise.png");
+            background: #eeeeee url("/noise.png");
             flex-basis: 20px;
             padding: 10px;
             font-size: 80%;
@@ -33,7 +33,7 @@
         wiki-neighborhood:hover {
             border-top: 1px solid #3d3c43;
             box-shadow: inset 0px 0px 7px rgba(0, 0, 0, 0.8);
-            background: #eeeeee url("noise.png");
+            background: #eeeeee url("/noise.png");
             flex-basis: 20px;
             padding: 10px;
             font-size: 80%;
@@ -93,7 +93,7 @@
                 let url = match.substring(0, match.indexOf(" "))
                 try {
                     new URL(url)
-                } catch(e) {
+                } catch (e) {
                     return _full
                 }
                 let text = match.substring(match.indexOf(" "))
@@ -138,13 +138,13 @@
                 }
                 let url = new URL(document.URL)
                 let parts = url.pathname.split("/")
-                for (let i = 1; i < parts.length; i+=2) {
+                for (let i = 1; i < parts.length; i += 2) {
                     let site = url.origin
                     if (parts[i] != "view") {
                         site = parts[i]
                     }
                     // a page to fetch
-                    let slug = parts[i+1]
+                    let slug = parts[i + 1]
                     console.log("index loading", site, slug)
                     await wiki.loadRemotePage(site, slug)
                 }

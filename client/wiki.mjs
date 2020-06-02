@@ -71,9 +71,6 @@ class Wiki extends HTMLElement {
         if (!origin) {
             origin = location.origin
         }
-        else {
-            origin = "http://" + origin
-        }
         if (!this.pluginsLoadedFor.has(origin)) {
             this.pluginsLoadedFor.add(origin)
             try {
@@ -117,12 +114,13 @@ class Wiki extends HTMLElement {
     }
 
     get baseURL() {
-        return new URL(`http://${this.origin}/index.html`)
+        return new URL(`http://${this.origin}`)
     }
 
     get URL() {
         let url = this.baseURL;
-        [...this.lineup.pages].forEach((p) => url.searchParams.append("page", p.fullSlug))
+        [...this.lineup.pages].forEach((p) => url.pathname += p.fullSlug)
+        this.pathname.replace("//", "/")
         return url
     }
 
