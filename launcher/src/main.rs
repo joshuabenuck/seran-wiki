@@ -2,12 +2,14 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use dirs::home_dir;
 use log::debug;
-use std::fs::{create_dir_all, File};
+use std::fs::{metadata, create_dir_all, File};
 use std::io::copy;
 use std::path::PathBuf;
 use std::process::Command;
 use tokio::runtime::Runtime;
 use url::Url;
+#[cfg(target_family="unix")]
+use std::os::unix::fs::PermissionsExt;
 
 // DENO_DIR conflict with system installed version?
 
@@ -124,6 +126,18 @@ impl Deno {
         self.deno_path().exists()
     }
 
+    #[cfg(target_family="unix")]
+    fn set_executable(&self, path: &PathBuf) -> Result<()> {
+        println!("Changing permissions");
+        // let mut perms = metadata(&path)?.permissions();
+        // perms.set_mode(0o755);
+        let _status = Command::new("chmod")
+            .args(&["+x", path.to_str().unwrap()])
+            .status()
+            .expect("Unable to execute deno");
+        Ok(())
+    }
+
     async fn download(&self) -> Result<()> {
         let version = "v1.0.5";
         download_binary(
@@ -136,6 +150,13 @@ impl Deno {
         )
         .await?;
         unzip(&self.deno_zip(), &self.bin_dir)?;
+        println!("path: {}", &self.deno_path().display());
+        #[cfg(target_family="unix")]
+        self.set_executable(&self.deno_path())?;
+        // match self.set_executable(&self.deno_zip()) {
+        //     Ok(value) => return Ok(value),
+        //     Err(err) => return Err(err)
+        // }
         Ok(())
     }
 
