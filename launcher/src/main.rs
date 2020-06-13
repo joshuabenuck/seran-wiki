@@ -2,7 +2,8 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use dirs::home_dir;
 use log::debug;
-use std::fs::{metadata, create_dir_all, File};
+use std::fs;
+use std::env;
 use std::io::copy;
 use std::path::PathBuf;
 use std::process::Command;
@@ -10,6 +11,13 @@ use tokio::runtime::Runtime;
 use url::Url;
 #[cfg(target_family="unix")]
 use std::os::unix::fs::PermissionsExt;
+
+// Approaches explored:
+// * Using PermisssionsExt to change deno exe permissions
+//   vs shelling out to chmod
+// * Rewriting import paths in import_map.json
+//   vs using git to download a copy of seran-wiki
+//   vs pulling down a zip from a releases folder
 
 // DENO_DIR conflict with system installed version?
 
@@ -31,13 +39,13 @@ async fn download_binary(url: &Url, dest_file: &PathBuf) -> Result<()> {
         .expect("Unable to retrieve image from url");
     assert!(resp.status().is_success());
     let bytes = resp.bytes().await?;
-    copy(&mut bytes.as_ref(), &mut File::create(dest_file)?)?;
+    copy(&mut bytes.as_ref(), &mut fs::File::create(dest_file)?)?;
     Ok(())
 }
 
 fn unzip(zip_file: &PathBuf, dest_dir: &PathBuf) -> Result<PathBuf> {
     // Zip extration taken from example in zip crate.
-    let file = File::open(&zip_file).unwrap();
+    let file = fs::File::open(&zip_file).unwrap();
 
     let mut archive = zip::ZipArchive::new(file).unwrap();
     let root = archive.by_index(0)?.sanitized_name();
@@ -56,7 +64,7 @@ fn unzip(zip_file: &PathBuf, dest_dir: &PathBuf) -> Result<PathBuf> {
                 i,
                 outpath.as_path().display()
             );
-            create_dir_all(&outpath).unwrap();
+            fs::create_dir_all(&outpath).unwrap();
         } else {
             debug!(
                 "File {} extracted to \"{}\" ({} bytes)",
@@ -66,10 +74,10 @@ fn unzip(zip_file: &PathBuf, dest_dir: &PathBuf) -> Result<PathBuf> {
             );
             if let Some(p) = outpath.parent() {
                 if !p.exists() {
-                    create_dir_all(&p).unwrap();
+                    fs::create_dir_all(&p).unwrap();
                 }
             }
-            let mut outfile = File::create(&outpath).unwrap();
+            let mut outfile = fs::File::create(&outpath).unwrap();
             copy(&mut file, &mut outfile).unwrap();
         }
     }
@@ -97,7 +105,7 @@ impl Deno {
         println!("~/.seran: {}", deno.bin_dir.display());
         if !deno.bin_dir.exists() {
             println!("Creating ~/.seran");
-            create_dir_all(&deno.bin_dir)?;
+            fs::create_dir_all(&deno.bin_dir)?;
         }
         Ok(deno)
     }
@@ -196,14 +204,31 @@ impl Deno {
     }
 }
 
-struct Seran {}
+struct Seran {
+    bin: PathBuf,
+}
 
 impl Seran {
-    fn new() -> Seran {
-        Seran {}
+    fn new(bin: PathBuf) -> Seran {
+        Seran {
+            bin
+        }
     }
 
     fn run() {}
+
+    async fn download(&self) -> Result<()> {
+        let base_url = "https://raw.githubusercontent.com/joshuabenuck/seran-wiki/master";
+        let tsconfig_url = format!("{}/tsconfig.json", base_url);
+        download_binary(&Url::parse(&tsconfig_url)?, &self.bin.join("tsconfig.json")).await?;
+        let importmap_url = format!("{}/import_map.json", base_url);
+        let importmap_path = &self.bin.join("import_map.json");
+        download_binary(&Url::parse(&importmap_url)?, &importmap_path).await?;
+        let importmap = fs::read_to_string(&importmap_path)?;
+        let importmap = importmap.replace("./server/", &format!("{}/server/", &base_url));
+        fs::write(importmap_path, importmap)?;
+        Ok(())
+    }
 }
 
 fn main() {
@@ -242,18 +267,15 @@ fn main() {
         .get_matches();
 
     let deno_args = vec!["allow-read", "allow-net", "allow-write", "-L"];
-    let mut deno = Deno::new(
-        home_dir()
+    let bin = home_dir()
             .expect("Unable to determine home directory.")
             .join(".seran")
-            .join("bin"),
-    )
-    .unwrap();
+            .join("bin");
+    let mut deno = Deno::new(bin.clone()).unwrap();
     let mut version = deno.version();
+    let mut runtime = Runtime::new().expect("Unable to create Tokio runtime");
     if version.is_none() {
-        Runtime::new()
-            .expect("Unable to create Tokio runtime")
-            .block_on(deno.download())
+            runtime.block_on(deno.download())
             .unwrap();
         version = deno.version();
     }
@@ -276,12 +298,30 @@ fn main() {
         }
     }
 
+    let seran_src = if matches.is_present("src") {
+        matches.value_of("src").unwrap().to_owned()
+    } else {
+        // env::var("SERAN_SRC").expect("Must specify --src or set SERAN_SRC env var!")
+        match env::var("SERAN_SRC") {
+            Ok(value) => value,
+            Err(_) => panic!("Must specifc --src or set SERAN_SRC env var!")
+        }
+    };
+    let seran = Seran::new(bin);
+    runtime.block_on(seran.download()).unwrap();
     if let Some(matches) = matches.subcommand_matches("run") {
         let sites = matches.values_of("meta-site");
         let sites = sites.expect("No meta-sites specified!");
+        let tsconfig = deno.bin_dir.join("tsconfig.json");
+        let importmap = deno.bin_dir.join("import_map.json");
+        let seran_path = format!("{}/seran.ts", seran_src);
         let mut args = vec![
             "run",
-            "https://raw.githubusercontent.com/joshuabenuck/seran-wiki/master/server/seran.ts",
+            "--unstable",
+            "--allow-env", "--allow-read", "--allow-net",
+            "-c", tsconfig.to_str().unwrap(), "--importmap", importmap.to_str().unwrap(),
+            // "https://raw.githubusercontent.com/joshuabenuck/seran-wiki/master/server/seran.ts",
+            &seran_path,
         ];
         args.extend(sites);
         println!("{:?}", args);
