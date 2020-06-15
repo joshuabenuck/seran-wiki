@@ -2,15 +2,16 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use dirs::home_dir;
 use log::debug;
-use std::fs;
 use std::env;
+use std::fs;
 use std::io::copy;
+#[cfg(feature = "rust-perms")]
+#[cfg(target_family = "unix")]
+use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use std::process::Command;
 use tokio::runtime::Runtime;
 use url::Url;
-#[cfg(target_family="unix")]
-use std::os::unix::fs::PermissionsExt;
 
 // Approaches explored:
 // * Using PermisssionsExt to change deno exe permissions
@@ -134,15 +135,18 @@ impl Deno {
         self.deno_path().exists()
     }
 
-    #[cfg(target_family="unix")]
+    #[cfg(target_family = "unix")]
     fn set_executable(&self, path: &PathBuf) -> Result<()> {
         println!("Changing permissions");
-        // let mut perms = metadata(&path)?.permissions();
-        // perms.set_mode(0o755);
-        let _status = Command::new("chmod")
-            .args(&["+x", path.to_str().unwrap()])
-            .status()
-            .expect("Unable to execute deno");
+        if cfg(feature = "rust-perms") {
+            let mut perms = metadata(&path)?.permissions();
+            perms.set_mode(0o755);
+        } else {
+            let _status = Command::new("chmod")
+                .args(&["+x", path.to_str().unwrap()])
+                .status()
+                .expect("Unable to execute deno");
+        }
         Ok(())
     }
 
@@ -159,7 +163,7 @@ impl Deno {
         .await?;
         unzip(&self.deno_zip(), &self.bin_dir)?;
         println!("path: {}", &self.deno_path().display());
-        #[cfg(target_family="unix")]
+        #[cfg(target_family = "unix")]
         self.set_executable(&self.deno_path())?;
         // match self.set_executable(&self.deno_zip()) {
         //     Ok(value) => return Ok(value),
@@ -210,23 +214,24 @@ struct Seran {
 
 impl Seran {
     fn new(bin: PathBuf) -> Seran {
-        Seran {
-            bin
-        }
+        Seran { bin }
     }
 
     fn run() {}
 
     async fn download(&self) -> Result<()> {
-        let base_url = "https://raw.githubusercontent.com/joshuabenuck/seran-wiki/master";
-        let tsconfig_url = format!("{}/tsconfig.json", base_url);
-        download_binary(&Url::parse(&tsconfig_url)?, &self.bin.join("tsconfig.json")).await?;
-        let importmap_url = format!("{}/import_map.json", base_url);
-        let importmap_path = &self.bin.join("import_map.json");
-        download_binary(&Url::parse(&importmap_url)?, &importmap_path).await?;
-        let importmap = fs::read_to_string(&importmap_path)?;
-        let importmap = importmap.replace("./server/", &format!("{}/server/", &base_url));
-        fs::write(importmap_path, importmap)?;
+        if cfg!(feature = "rewrite-urls") {
+            let base_url = "https://raw.githubusercontent.com/joshuabenuck/seran-wiki/master";
+            let tsconfig_url = format!("{}/tsconfig.json", base_url);
+            download_binary(&Url::parse(&tsconfig_url)?, &self.bin.join("tsconfig.json")).await?;
+            let importmap_url = format!("{}/import_map.json", base_url);
+            let importmap_path = &self.bin.join("import_map.json");
+            download_binary(&Url::parse(&importmap_url)?, &importmap_path).await?;
+            let importmap = fs::read_to_string(&importmap_path)?;
+            let importmap = importmap.replace("./server/", &format!("{}/server/", &base_url));
+            fs::write(importmap_path, importmap)?;
+        } else {
+        }
         Ok(())
     }
 }
@@ -268,15 +273,14 @@ fn main() {
 
     let deno_args = vec!["allow-read", "allow-net", "allow-write", "-L"];
     let bin = home_dir()
-            .expect("Unable to determine home directory.")
-            .join(".seran")
-            .join("bin");
+        .expect("Unable to determine home directory.")
+        .join(".seran")
+        .join("bin");
     let mut deno = Deno::new(bin.clone()).unwrap();
     let mut version = deno.version();
     let mut runtime = Runtime::new().expect("Unable to create Tokio runtime");
     if version.is_none() {
-            runtime.block_on(deno.download())
-            .unwrap();
+        runtime.block_on(deno.download()).unwrap();
         version = deno.version();
     }
     println!("{}", version.unwrap());
@@ -304,7 +308,7 @@ fn main() {
         // env::var("SERAN_SRC").expect("Must specify --src or set SERAN_SRC env var!")
         match env::var("SERAN_SRC") {
             Ok(value) => value,
-            Err(_) => panic!("Must specifc --src or set SERAN_SRC env var!")
+            Err(_) => panic!("Must specifc --src or set SERAN_SRC env var!"),
         }
     };
     let seran = Seran::new(bin);
@@ -318,8 +322,13 @@ fn main() {
         let mut args = vec![
             "run",
             "--unstable",
-            "--allow-env", "--allow-read", "--allow-net",
-            "-c", tsconfig.to_str().unwrap(), "--importmap", importmap.to_str().unwrap(),
+            "--allow-env",
+            "--allow-read",
+            "--allow-net",
+            "-c",
+            tsconfig.to_str().unwrap(),
+            "--importmap",
+            importmap.to_str().unwrap(),
             // "https://raw.githubusercontent.com/joshuabenuck/seran-wiki/master/server/seran.ts",
             &seran_path,
         ];

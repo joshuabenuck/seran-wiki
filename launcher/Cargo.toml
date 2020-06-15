@@ -6,6 +6,16 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = []
+
+# Uses rust to set the permissions on the deno executable
+rust-perms = []
+
+# Rewrite urls and use a remotely hosted version of seran-wiki
+# This is broken and likely a non-workable approach
+rewrite-urls = []
+
 [dependencies.reqwest]
 version = "0.10.6"
 features = ["stream"]
