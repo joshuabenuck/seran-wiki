@@ -1,12 +1,14 @@
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use dirs::home_dir;
+use git2;
 use log::debug;
 use std::env;
 use std::fs;
 use std::io::copy;
-#[cfg(feature = "rust-perms")]
+use std::iter::Iterator;
 #[cfg(target_family = "unix")]
+#[cfg(feature = "rust-perms")]
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use std::process::Command;
@@ -138,8 +140,10 @@ impl Deno {
     #[cfg(target_family = "unix")]
     fn set_executable(&self, path: &PathBuf) -> Result<()> {
         println!("Changing permissions");
-        if cfg(feature = "rust-perms") {
-            let mut perms = metadata(&path)?.permissions();
+        if cfg!(feature = "rust-perms") {
+            let mut perms = fs::metadata(&path)?.permissions();
+            // Needed to make the compiler happy
+            #[cfg(feature = "rust-perms")]
             perms.set_mode(0o755);
         } else {
             let _status = Command::new("chmod")
@@ -197,30 +201,81 @@ impl Deno {
         Some(deno_version.to_owned())
     }
 
-    fn run(&self, extra_args: Vec<String>) {
+    fn run(&self, extra_args: Vec<String>) -> Result<()> {
         let mut args = self.args.to_vec();
         args.extend(extra_args.into_iter());
         let status = Command::new(&self.deno_path())
             .args(&args)
+            .current_dir(env::current_dir()?)
             .status()
             .expect("Unable to execute deno");
-        println!("Deno exited with: {}", status)
+        println!("Deno exited with: {}", status);
+        Ok(())
     }
 }
 
 struct Seran {
+    deno: Deno,
     bin: PathBuf,
+    src: PathBuf,
+    tsconfig: PathBuf,
+    importmap: PathBuf,
 }
 
 impl Seran {
-    fn new(bin: PathBuf) -> Seran {
-        Seran { bin }
+    fn new(deno: Deno, bin: PathBuf) -> Seran {
+        let src = bin.join("src");
+        let tsconfig = if cfg!(feature = "rewrite-urls") {
+            bin.join("tsconfig.json")
+        } else {
+            src.join("tsconfig.json")
+        };
+        let importmap = if cfg!(feature = "rewrite-urls") {
+            bin.join("import_map.json")
+        } else {
+            src.join("import_map.json")
+        };
+        Seran {
+            deno,
+            bin,
+            src,
+            tsconfig,
+            importmap,
+        }
     }
 
-    fn run() {}
+    fn run<I>(&self, sites: I) -> Result<()>
+    where
+        I: Iterator<Item = String>,
+    {
+        let seran_path = if cfg!(feature = "rewrite-urls") {
+            "https://raw.githubusercontent.com/joshuabenuck/seran-wiki/master/server/seran.ts"
+                .to_owned()
+        } else {
+            format!("{}/server/seran.ts", self.src.to_str().unwrap())
+        };
+        let mut args = vec![
+            "run".to_owned(),
+            "--unstable".to_owned(),
+            "--allow-env".to_owned(),
+            "--allow-read".to_owned(),
+            "--allow-net".to_owned(),
+            "-c".to_owned(),
+            self.tsconfig.to_str().unwrap().to_owned(),
+            "--importmap".to_owned(),
+            self.importmap.to_str().unwrap().to_owned(),
+            seran_path,
+        ];
+        args.extend(sites);
+        println!("{:?}", args);
+        self.deno
+            .run(args.into_iter().map(|s| s.to_string()).collect())?;
+        Ok(())
+    }
 
     async fn download(&self) -> Result<()> {
         if cfg!(feature = "rewrite-urls") {
+            println!("Rewriting urls");
             let base_url = "https://raw.githubusercontent.com/joshuabenuck/seran-wiki/master";
             let tsconfig_url = format!("{}/tsconfig.json", base_url);
             download_binary(&Url::parse(&tsconfig_url)?, &self.bin.join("tsconfig.json")).await?;
@@ -231,6 +286,25 @@ impl Seran {
             let importmap = importmap.replace("./server/", &format!("{}/server/", &base_url));
             fs::write(importmap_path, importmap)?;
         } else {
+            if self.src.exists() {
+                let _status = Command::new("git")
+                    .args(&["pull"])
+                    .current_dir(&self.src)
+                    .status()
+                    .expect("Unable to update seran wiki");
+                //     let repo = git2::Repository::open(&self.src)?;
+                //     let commit = repo.head()?.peel(git2::ObjectType::Commit)?;
+                //     // repo.rebase(None, None, None, None)?;
+                //     repo.merge(
+                //         &commit,
+                //         &repo.find_reference("FETCH_HEAD")?.peel_to_commit()?,
+                //         Some(&git2::MergeOptions::new()),
+                //     );
+                return Ok(());
+            }
+            println!("Cloning repo");
+            let url = "https://github.com/joshuabenuck/seran-wiki";
+            let _repo = git2::Repository::clone(url, &self.src)?;
         }
         Ok(())
     }
@@ -302,39 +376,24 @@ fn main() {
         }
     }
 
-    let seran_src = if matches.is_present("src") {
-        matches.value_of("src").unwrap().to_owned()
-    } else {
-        // env::var("SERAN_SRC").expect("Must specify --src or set SERAN_SRC env var!")
-        match env::var("SERAN_SRC") {
-            Ok(value) => value,
-            Err(_) => panic!("Must specifc --src or set SERAN_SRC env var!"),
-        }
-    };
-    let seran = Seran::new(bin);
+    // let seran_src = if matches.is_present("src") {
+    //     matches.value_of("src").unwrap().to_owned()
+    // } else {
+    //     // env::var("SERAN_SRC").expect("Must specify --src or set SERAN_SRC env var!")
+    //     match env::var("SERAN_SRC") {
+    //         Ok(value) => value,
+    //         Err(_) => panic!("Must specifc --src or set SERAN_SRC env var!"),
+    //     }
+    // };
+    let seran = Seran::new(deno, bin);
     runtime.block_on(seran.download()).unwrap();
     if let Some(matches) = matches.subcommand_matches("run") {
         let sites = matches.values_of("meta-site");
         let sites = sites.expect("No meta-sites specified!");
-        let tsconfig = deno.bin_dir.join("tsconfig.json");
-        let importmap = deno.bin_dir.join("import_map.json");
-        let seran_path = format!("{}/seran.ts", seran_src);
-        let mut args = vec![
-            "run",
-            "--unstable",
-            "--allow-env",
-            "--allow-read",
-            "--allow-net",
-            "-c",
-            tsconfig.to_str().unwrap(),
-            "--importmap",
-            importmap.to_str().unwrap(),
-            // "https://raw.githubusercontent.com/joshuabenuck/seran-wiki/master/server/seran.ts",
-            &seran_path,
-        ];
-        args.extend(sites);
-        println!("{:?}", args);
-        deno.run(args.into_iter().map(|s| s.to_string()).collect());
+        match seran.run(sites.into_iter().map(|s| s.to_owned())) {
+            Ok(_) => (),
+            Err(err) => panic!(err),
+        };
     } else {
         println!("No command specified!");
     }
