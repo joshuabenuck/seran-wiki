@@ -6,13 +6,13 @@ Experiment to create a Deno based implementation of Federated Wiki.
 Get the prerequsites (derive from the official [instructions](https://deno.land/x/install/))
 ```
 export DENO_INSTALL=/usr/local
-curl -fsSL https://deno.land/x/install/install.sh | sh -s v1.0.0
+curl -fsSL https://deno.land/x/install/install.sh | sh -s v1.0.5
 ```
 Ensure /usr/local/bin is on your path.
 
 or
 ```
-iwr https://deno.land/x/install/install.ps1 -useb -outf install.ps1; .\install.ps1 v1.0.0
+iwr https://deno.land/x/install/install.ps1 -useb -outf install.ps1; .\install.ps1 v1.0.5
 ```
 then
 ```
