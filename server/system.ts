@@ -59,7 +59,7 @@ export class MetaSite {
     console.log(`Registering ${normalize(this.path)} as ${this.name}`);
     this.exports = await import(this.path);
     if (this.exports.init) {
-      await this.exports.init({site: this, system: this.system});
+      await this.exports.init({ site: this, system: this.system });
     }
     this.siteMap = [];
     if (this.exports.siteMap) {
@@ -78,7 +78,7 @@ export class MetaSite {
   async serve(req) {
     if (this.exports.handler &&
       await this.exports.handler.serve(req, this.system)) {
-        return true;
+      return true;
     }
     return false;
   }
@@ -134,59 +134,6 @@ export class System {
     // append domain to all non-localhost sites
     sites = sites.map((s) => `${s}.${domain}`)
     return sites
-  }
-
-  async processConfig(config) {
-    /* Pseudo-json example
-    // Equivalent of an @domain for a meta-sites-dir
-    root-domains: []
-    meta-sites: {
-      // Must specific each meta-site to register
-      static.localhost.ts: {
-        subdomains: [],
-        hostnames: [],
-        // possible meta-site specific config?
-        register-all: true,
-        enabled-wikis: []
-      }
-      // Additional parameters are not required
-      localhost.ts: {}
-    }
-    */
-    let domains = config["root-domains"]
-    if (!domains) {
-      domains = []
-    }
-    let sites = config["meta-sites"]
-    if (!sites) {
-      sites = []
-    }
-    // TODO: Rework once host agnostic refactoring is complete.
-    // for (let site of Object.keys(sites)) {
-    //   // register meta-site specific subdomains of root domains
-    //   let subdomains = sites[site].subdomains
-    //   if (subdomains) {
-    //     for (let subdomain of subdomains) {
-    //       for (let domain of domains) {
-    //         await this.importMetaSite(`${site}@${subdomain}`, domain)
-    //       }
-    //     }
-    //   }
-    //   // register meta-site specific hostname mappiings
-    //   let hostnames = sites[site].hostnames
-    //   if (hostnames) {
-    //     for (let hostname of hostnames) {
-    //       await this.importMetaSite(`${site}@${hostname}`, null)
-    //     }
-    //   }
-    // }
-    // // register meta-sites for each specified root domain
-    // for (let domain of domains) {
-    //   for (let site of Object.keys(sites)) {
-    //     // should meta-sites with local mappings be skipped?
-    //     await this.importMetaSite(site, domain)
-    //   }
-    // }
   }
 
   async checkEtcHosts() {
