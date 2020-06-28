@@ -88,8 +88,6 @@ for (let entry of params._) {
   }
 }
 
-system.checkEtcHosts()
-
 console.log("listening on port ", bind);
 for await (const r of s) {
   try {

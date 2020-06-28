@@ -135,34 +135,5 @@ export class System {
     sites = sites.map((s) => `${s}.${domain}`)
     return sites
   }
-
-  async checkEtcHosts() {
-    let etcHosts = null;
-    if (await exists("/etc/hosts")) {
-      etcHosts = "/etc/hosts";
-    }
-    if (await exists("/Windows/System32/drivers/etc/hosts")) {
-      etcHosts = "/Windows/System32/drivers/etc/hosts";
-    }
-    if (etcHosts) {
-      let metaSites = Object.values(this.metaSites).map((s) => s.name);
-      let hosts = (await readFileStr(etcHosts)).split("\n");
-      for (let host of hosts) {
-        if (host.indexOf("127.0.0.1") == -1) {
-          continue;
-        }
-        host = host.replace("127.0.0.1", "").trim();
-        metaSites = metaSites.filter((metaSite) => {
-          if (metaSite + ".localhost" == host) {
-            return false;
-          }
-          return true;
-        });
-      }
-      if (metaSites.length > 0) {
-        console.log(`WARN: missing /etc/hosts entries for ${metaSites.join(", ")}.`)
-      }
-    }
-  }
 }
 
