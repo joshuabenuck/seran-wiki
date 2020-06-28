@@ -53,7 +53,7 @@ export class Handler {
         }
         return i
       })
-      await serveJson(req, Object.assign({}, page, {story}));
+      await serveJson(req, Object.assign({}, page, { story }));
       return true;
     });
   }
@@ -64,7 +64,7 @@ export class Handler {
    * @param items The list of items to be in the story of the page
    * @param extraProps Extra properties to add to the page object
    */
-  items(title: string, items, extraProps={}) {
+  items(title: string, items, extraProps = {}) {
     this.page(Object.assign({ title, story: items }, extraProps))
   }
 
@@ -141,7 +141,7 @@ async function login(req: Request, system: System) {
   let headers = baseHeaders()
   const failure = {
     status: 401,
-    body: JSON.stringify({success: false}),
+    body: JSON.stringify({ success: false }),
     headers
   };
   if (!secret) {
@@ -170,7 +170,7 @@ async function login(req: Request, system: System) {
   }
   const res = {
     status: 200,
-    body: JSON.stringify({success: true}),
+    body: JSON.stringify({ success: true }),
     headers
   };
   await req.respond(res);
@@ -344,7 +344,7 @@ export async function serveMetaAboutUs(req: Request, system: System) {
     paragraph(`Site: ${req.site.name}`),
     paragraph(`Meta-Pages: TODO - Add info about the site's meta-pages`),
     paragraph(`Source: TODO - Add link to meta-site's source`),
-    item("paragraph", {text: `Secret: ${req.site.secret}`, protected: true})
+    item("paragraph", { text: `Secret: ${req.site.secret}`, protected: true })
   ]));
 }
 
@@ -399,7 +399,7 @@ export async function serve(req: Request, system: System) {
     let pagePath = join(req.site.root, "pages", slug)
     if (!await exists(pagePath)) {
       // TODO: Handle initial page creation
-      await serveJson(req, {success: true})
+      await serveJson(req, { success: true })
       return
     }
   }
@@ -417,7 +417,7 @@ export async function serve(req: Request, system: System) {
     let favicon = join(req.site.root, "status", "favicon.png")
     if (req.url == "/favicon.png" && await exists(favicon)) {
       await serveFile(req, "image/png", favicon)
-        return
+      return
     }
   }
   if (req.url.match(/^\/.*\.png$/)) {
@@ -436,33 +436,81 @@ export async function serve(req: Request, system: System) {
   await serve404(req);
 }
 
+export async function serveNotInService(req: Request, system: System, allowDisclosure: boolean) {
+  if (req.url == "/not-in-service.json") {
+    let items = [
+      paragraph("You have reach a site that has been disconnected or is no longer in service."),
+      paragraph("If you feel you have reached this page in error, please check the server configuration and try again."),
+      paragraph("The most common cause for this during development is for there to be a mismatch between the hostname the server is listening on and the hostname you attempted to access."),
+    ]
+    if (allowDisclosure) {
+      let sites = Object.values(system.metaSites);
+      if (sites.length == 0) {
+        items.push(paragraph("WARNING: There are no registered meta-sites."))
+        items.push(paragraph("Did you forget to start the server with --meta-site or --meta-sites-dir?"))
+      }
+      else {
+        items.push(paragraph("Registered domains:"))
+        for (let domain of system.domains) {
+          items.push(paragraph(domain))
+        }
+        items.push(paragraph("Registered sites:"))
+        for (let site of sites) {
+          items.push(paragraph(site.name))
+        }
+      }
+    }
+    await serveJson(req, page("Not in Service", items))
+    return true
+  }
+  // minimum routes needed to display a default error page
+  // creating a meta-site just for this purpose
+  // would likely be better, but this works for now
+  if (req.url == "/index.html?page=not-in-service") {
+    await serveFile(req, "text/html", "./client/index.html");
+    return true
+  }
+  if (req.url == "/" ||
+    req.url.indexOf("/index.html") == 0) {
+    req.url = "/view/not-in-service"
+    await serve(req, system)
+    return true
+  }
+  if (req.url.match(/^\/client\/.*\.mjs$/) ||
+    req.url.match(/^\/.*\.png$/)) {
+    await serve(req, system)
+    return true
+  }
+  return false
+}
+
 export function asSlug(title) {
   return title.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase();
 }
 
-export function pages(metaText,mp) {
+export function pages(metaText, mp) {
 
   function parse(sep, text, fn) {
     let v = text.split(sep)
-    for(let i = 1; i<v.length; i+=2)
-      fn(v[i], v[i+1])
+    for (let i = 1; i < v.length; i += 2)
+      fn(v[i], v[i + 1])
   }
 
   parse(/\n([A-Z].*)/g, metaText, (title, body) => {
-    let page = {title,story:[]}
+    let page = { title, story: [] }
     parse(/(\n\n\s*)/g, body, (blank, text) => {
       let id = itemId()
       let m = text.match(/^ *([a-z-]+):/)
       if (m) {
-        let expr = `({${text.replace(/([a-z-]+):/,'')}})`
+        let expr = `({${text.replace(/([a-z-]+):/, '')}})`
         let args = eval(expr)
-        page.story.push(Object.assign({type:m[1],id},args))
+        page.story.push(Object.assign({ type: m[1], id }, args))
       } else {
-        page.story.push({type:'paragraph',text,id})
+        page.story.push({ type: 'paragraph', text, id })
       }
     });
     // console.log(JSON.stringify(page,null,2))
-    (mp||metaPages)[`/${asSlug(title)}.json`] = async (req, _system) => {await serveJson(req, page)}
+    (mp || metaPages)[`/${asSlug(title)}.json`] = async (req, _system) => { await serveJson(req, page) }
   })
 
 }

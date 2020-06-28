@@ -105,6 +105,37 @@ export class System {
     this.secret = secret;
   }
 
+  async importMetaSites(params: any) {
+    for (let entry of params._) {
+      entry = entry.toString()
+      try {
+        let url = new URL(entry);
+        await this.importMetaSite(entry);
+        continue;
+      } catch (e) {
+        // ignore exception
+      }
+      if (!await exists(entry)) {
+        console.log(`FATAL: ${entry} is not a file, directory, or URL.`);
+        Deno.exit(1);
+      }
+      let info = await Deno.stat(entry);
+      if (info.isFile) {
+        await this.importMetaSite(entry);
+      } else if (info.isDirectory) {
+        for await (let metaSitePath of Deno.readDir(entry)) {
+          console.log("readDir1", metaSitePath.name);
+          let fullPath = join(entry, metaSitePath.name);
+          if (!isAbsolute(fullPath)) {
+            fullPath = "./" + fullPath;
+          }
+          await this.importMetaSite(fullPath);
+          continue;
+        }
+      }
+    }
+  }
+
   async importMetaSite(path: string) {
     let metaSite = new MetaSite(this, path);
     await metaSite.init();
