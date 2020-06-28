@@ -89,7 +89,7 @@ function renderLinks(html, site) {
         // return `<a href='javascript:wiki.loadPage("${asSlug(match)}");wiki.updateURL()'>${match}</a>`
         return `<wiki-link slug="${asSlug(match)}">${match}</wiki-link>`
     })
-    return html.replace(/\[([^+]*)\]/g, (_full, match) => {
+    return html.replace(/\[([^+]*?)\]/g, (_full, match) => {
         let url = match.substring(0, match.indexOf(" "))
         try {
             new URL(url)
